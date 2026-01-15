@@ -1,0 +1,22 @@
+# System files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Environment
+.env
+.env.local
+config.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# Backups (stored separately)
+*_backup_*.html

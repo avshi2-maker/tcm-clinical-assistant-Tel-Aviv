@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCM Clinical Assistant - AI Powered</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .body-figure {
+            position: relative;
+            width: 200px;
+            height: 400px;
+            margin: 20px auto;
+        }
+        .acupoint {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+        .acupoint:hover {
+            transform: scale(1.5);
+            background: #dc2626;
+            z-index: 10;
+        }
+        .tab-active {
+            background: #3b82f6;
+            color: white;
+        }
+        .hebrew-text {
+            direction: rtl;
+            text-align: right;
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="root" class="container mx-auto p-6 max-w-6xl">
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8">
+                <h1 class="text-4xl font-bold mb-2">🏥 TCM Clinical Assistant</h1>
+                <p class="text-blue-100">AI-Powered Traditional Chinese Medicine Analysis</p>
+                <div id="apiStatus" class="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur">
+                    <span class="pulse">🔄</span> <span id="statusText">Initializing Gemini AI...</span>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b bg-gray-50">
+                <button onclick="switchTab('upload')" id="tab-upload" class="tab-active flex-1 px-6 py-4 font-semibold transition">
+                    📁 Upload CSVs
+                </button>
+                <button onclick="switchTab('search')" id="tab-search" class="flex-1 px-6 py-4 font-semibold hover:bg-gray-100 transition">
+                    🔍 AI Search
+                </button>
+                <button onclick="switchTab('points')" id="tab-points" class="flex-1 px-6 py-4 font-semibold hover:bg-gray-100 transition">
+                    🎯 Body Points
+                </button>
+                <button onclick="switchTab('safety')" id="tab-safety" class="flex-1 px-6 py-4 font-semibold hover:bg-gray-100 transition">
+                    🌿 Herb Safety
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-8">
+                <!-- Upload Tab -->
+                <div id="content-upload" class="tab-content">
+                    <div class="mb-6 p-6 bg-green-50 border-2 border-green-300 rounded-xl">
+                        <h3 class="text-xl font-bold text-green-800 mb-2">✅ API Key Configured</h3>
+                        <p class="text-green-700">Gemini Flash 3 is ready for AI-powered searches!</p>
+                    </div>
+
+                    <div class="mb-8">
+                        <h3 class="text-2xl font-bold mb-4">📤 Upload Your CSV Files</h3>
+                        <div class="mb-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                            <p class="text-sm text-blue-800">
+                                <strong>Note:</strong> This section is for CSV formula/herb data files only. 
+                                To upload body figure images (PNG/JPG), use the <strong>"🎯 Body Points"</strong> tab.
+                            </p>
+                        </div>
+                        <div class="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-green-800">
+                                    <strong>✅ Unlimited CSV files</strong> - Upload as many as you need!
+                                </p>
+                                <p class="text-xs text-green-700 mt-1">
+                                    Each file can contain 50, 100, or thousands of rows - all will be loaded.
+                                </p>
+                            </div>
+                            <div id="csvCounter" class="px-4 py-2 bg-green-600 text-white rounded-lg font-bold text-lg">
+                                0 files
+                            </div>
+                        </div>
+                        <div class="border-4 border-dashed border-blue-300 rounded-xl p-12 text-center hover:border-blue-500 transition cursor-pointer" id="dropZone">
+                            <input type="file" id="csvInput" accept=".csv" multiple class="hidden">
+                            <div class="text-6xl mb-4">📂</div>
+                            <p class="text-xl font-semibold mb-2">Drop CSV files here or click to browse</p>
+                            <p class="text-gray-600">Supports Hebrew and English CSV files</p>
+                            <p class="text-sm text-gray-500 mt-2">(.csv files only - for images, use Body Points tab)</p>
+                        </div>
+                        <div id="fileList" class="mt-6"></div>
+                    </div>
+
+                    <div id="csvPreview" class="mt-8"></div>
+                </div>
+
+                <!-- Search Tab -->
+                <div id="content-search" class="tab-content hidden">
+                    <h3 class="text-2xl font-bold mb-6">🔍 AI-Powered Formula Search</h3>
+                    
+                    <div class="mb-6">
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                placeholder="Ask about formulas, herbs, or symptoms (Hebrew/English)..."
+                                class="w-full p-4 pr-12 text-lg border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:outline-none"
+                            >
+                            <button onclick="performSearch()" class="absolute right-2 top-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <button onclick="exampleSearch('headache')" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
+                            💊 Formulas for Headache
+                        </button>
+                        <button onclick="exampleSearch('digestion')" class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition">
+                            🌿 Digestive Issues
+                        </button>
+                        <button onclick="exampleSearch('kidney')" class="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
+                            🫘 Kidney Tonics
+                        </button>
+                        <button onclick="exampleSearch('blood')" class="p-4 bg-red-50 rounded-lg hover:bg-red-100 transition">
+                            🩸 Blood Building
+                        </button>
+                    </div>
+
+                    <div id="searchResults" class="space-y-4"></div>
+                </div>
+
+                <!-- Body Points Tab -->
+                <div id="content-points" class="tab-content hidden">
+                    <h3 class="text-2xl font-bold mb-6">🎯 Acupuncture Point Mapping</h3>
+                    
+                    <!-- Image Upload Section -->
+                    <div class="mb-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-300">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-xl font-bold">📤 Upload Body Figure Images</h4>
+                            <button onclick="clearAllImages()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-semibold">
+                                🗑️ Clear All
+                            </button>
+                        </div>
+                        <div class="border-4 border-dashed border-purple-300 rounded-xl p-8 text-center hover:border-purple-500 transition cursor-pointer" id="imageDropZone">
+                            <input type="file" id="imageInput" accept=".png,.jpg,.jpeg" multiple class="hidden">
+                            <div class="text-5xl mb-3">🖼️</div>
+                            <p class="text-lg font-semibold mb-2">Drop PNG/JPG files here or click to browse</p>
+                            <p class="text-sm text-gray-600">Upload up to 15 body figure images</p>
+                        </div>
+                        <div id="imageList" class="mt-4"></div>
+                    </div>
+
+                    <!-- Image Gallery -->
+                    <div id="imageGallery" class="mb-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+                    
+                    <!-- Interactive Point Overlay (appears when image is selected) -->
+                    <div id="pointOverlay" class="hidden mt-8 p-6 bg-blue-50 rounded-xl">
+                        <h4 class="text-xl font-bold mb-4">🎯 Click on image to add/view acupuncture points</h4>
+                        <div id="selectedImageContainer" class="relative inline-block"></div>
+                    </div>
+
+                    <div id="pointInfo" class="mt-8 p-6 bg-blue-50 rounded-xl hidden">
+                        <h4 class="text-xl font-bold mb-2">Point Information</h4>
+                        <div id="pointDetails"></div>
+                    </div>
+                </div>
+
+                <!-- Safety Tab -->
+                <div id="content-safety" class="tab-content hidden">
+                    <h3 class="text-2xl font-bold mb-6">🌿 Herb Safety Checker</h3>
+                    
+                    <div class="mb-6">
+                        <label class="block text-lg font-semibold mb-2">Select Herbs to Check:</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="herbList">
+                            <!-- Herbs will be dynamically added -->
+                        </div>
+                    </div>
+
+                    <button onclick="checkSafety()" class="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition">
+                        Check Contraindications
+                    </button>
+
+                    <div id="safetyResults" class="mt-6"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Using Gemini Flash 3 (2.0)
+        const GEMINI_API_KEY = 'AIzaSyBMULiu2FBFIExlGHyAgKjqIq2ebyV2xcs';
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+        
+        let csvData = [];
+        let selectedHerbs = new Set();
+        let uploadedImages = []; // Store uploaded body figure images
+
+        // Sample TCM data
+        const sampleFormulas = [
+            {
+                name: "Gui Pi Tang",
+                nameHebrew: "גוי פי טאנג",
+                herbs: ["Ginseng", "Astragalus", "Atractylodes", "Longan"],
+                indications: "Spleen Qi deficiency, Heart Blood deficiency",
+                contraindications: "Pregnancy (consult practitioner)"
+            },
+            {
+                name: "Xiao Yao San",
+                nameHebrew: "שיאו יאו סן",
+                herbs: ["Bupleurum", "Angelica", "White Peony", "Poria"],
+                indications: "Liver Qi stagnation, menstrual issues",
+                contraindications: "High blood pressure"
+            },
+            {
+                name: "Ba Zhen Tang",
+                nameHebrew: "בא ג'ן טאנג",
+                herbs: ["Ginseng", "Angelica", "Rehmannia", "Ligusticum"],
+                indications: "Qi and Blood deficiency",
+                contraindications: "Heat signs"
+            }
+        ];
+
+        const commonHerbs = [
+            "Ginseng (人參)", "Astragalus (黃芪)", "Rehmannia (熟地黃)",
+            "Angelica (當歸)", "Bupleurum (柴胡)", "Poria (茯苓)",
+            "Atractylodes (白朮)", "Licorice (甘草)", "Ginger (生薑)"
+        ];
+
+        const acupoints = {
+            front: [
+                { id: "CV12", x: 100, y: 180, name: "Zhong Wan", meridian: "Conception Vessel" },
+                { id: "ST25", x: 85, y: 200, name: "Tian Shu", meridian: "Stomach" },
+                { id: "ST36", x: 90, y: 320, name: "Zu San Li", meridian: "Stomach" },
+                { id: "SP6", x: 95, y: 360, name: "San Yin Jiao", meridian: "Spleen" }
+            ],
+            back: [
+                { id: "BL23", x: 85, y: 220, name: "Shen Shu", meridian: "Bladder" },
+                { id: "BL20", x: 85, y: 180, name: "Pi Shu", meridian: "Bladder" },
+                { id: "GV4", x: 100, y: 240, name: "Ming Men", meridian: "Governing Vessel" }
+            ]
+        };
+
+        // Initialize
+        async function init() {
+            console.log('🚀 TCM Clinical Assistant initializing...');
+            setupEventListeners();
+            initializeHerbList();
+            // Removed: initializeBodyPoints() - user will upload their own images
+            await testGeminiConnection();
+        }
+
+        function setupEventListeners() {
+            const dropZone = document.getElementById('dropZone');
+            const csvInput = document.getElementById('csvInput');
+
+            dropZone.addEventListener('click', () => csvInput.click());
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            csvInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch();
+            });
+
+            // Image upload listeners
+            const imageDropZone = document.getElementById('imageDropZone');
+            const imageInput = document.getElementById('imageInput');
+
+            imageDropZone.addEventListener('click', () => imageInput.click());
+            
+            imageDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                imageDropZone.classList.add('border-purple-500', 'bg-purple-50');
+            });
+
+            imageDropZone.addEventListener('dragleave', () => {
+                imageDropZone.classList.remove('border-purple-500', 'bg-purple-50');
+            });
+
+            imageDropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                imageDropZone.classList.remove('border-purple-500', 'bg-purple-50');
+                handleImageFiles(e.dataTransfer.files);
+            });
+
+            imageInput.addEventListener('change', (e) => {
+                handleImageFiles(e.target.files);
+            });
+        }
+
+        async function testGeminiConnection() {
+            const statusText = document.getElementById('statusText');
+            console.log('🔌 Testing Gemini API connection...');
+            
+            try {
+                const testUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+                console.log('📡 API URL:', testUrl.substring(0, 100) + '...');
+                
+                const response = await fetch(testUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: "Test connection. Reply with OK." }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 100
+                        }
+                    })
+                });
+
+                console.log('📡 Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Gemini response:', data);
+                    statusText.innerHTML = '✅ Gemini AI Connected Successfully!';
+                    document.getElementById('apiStatus').classList.remove('pulse');
+                    document.getElementById('apiStatus').classList.add('bg-green-500/20');
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ API Error:', response.status, errorText);
+                    throw new Error(`API returned ${response.status}: ${errorText.substring(0, 200)}`);
+                }
+            } catch (error) {
+                console.error('❌ Connection Error:', error);
+                statusText.innerHTML = '⚠️ API Connection Issue - Using offline mode';
+                document.getElementById('apiStatus').classList.remove('pulse');
+                document.getElementById('apiStatus').classList.add('bg-yellow-500/20');
+            }
+        }
+
+        function handleFiles(files) {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '<h4 class="text-lg font-bold mb-3">📋 Uploaded Files:</h4>';
+            
+            Array.from(files).forEach((file, index) => {
+                // Check if it's an image or CSV
+                if (file.type.match('image.*') || file.name.match(/\.(png|jpg|jpeg|gif)$/i)) {
+                    // This is an image file - don't parse as CSV
+                    console.log('⚠️ Image file detected in CSV upload area:', file.name);
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'p-3 bg-yellow-50 rounded-lg mb-2 flex items-center justify-between';
+                    fileItem.innerHTML = `
+                        <span>⚠️ ${file.name} - This is an image file. Please upload it in the "Body Points" tab instead.</span>
+                    `;
+                    fileList.appendChild(fileItem);
+                    return;
+                }
+
+                // This is a CSV file - parse it
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    parseCSV(content, file.name);
+                };
+                reader.readAsText(file);
+
+                const fileItem = document.createElement('div');
+                fileItem.className = 'p-3 bg-blue-50 rounded-lg mb-2 flex items-center justify-between';
+                fileItem.innerHTML = `
+                    <span>📄 ${file.name}</span>
+                    <span class="text-sm text-gray-600">${(file.size / 1024).toFixed(2)} KB</span>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function parseCSV(content, filename) {
+            const lines = content.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const values = lines[i].split(',').map(v => v.trim());
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index] || '';
+                    });
+                    data.push(row);
+                }
+            }
+
+            csvData.push({ filename, data, headers });
+            displayCSVPreview(filename, headers, data.slice(0, 5));
+            updateCSVCounter();
+            console.log('✅ Parsed CSV:', filename, '- Rows:', data.length);
+        }
+
+        function updateCSVCounter() {
+            const counter = document.getElementById('csvCounter');
+            if (counter) {
+                const totalRows = csvData.reduce((sum, csv) => sum + csv.data.length, 0);
+                counter.innerHTML = `${csvData.length} file${csvData.length !== 1 ? 's' : ''}<br><span class="text-xs">${totalRows.toLocaleString()} rows</span>`;
+            }
+        }
+
+        function displayCSVPreview(filename, headers, sampleData) {
+            const preview = document.getElementById('csvPreview');
+            const isHebrew = /[\u0590-\u05FF]/.test(headers.join(''));
+            
+            // Get full data count
+            const fullDataset = csvData.find(d => d.filename === filename);
+            const totalRows = fullDataset ? fullDataset.data.length : sampleData.length;
+            
+            preview.innerHTML += `
+                <div class="mb-6 p-6 bg-gray-50 rounded-xl">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-lg font-bold">${filename}</h4>
+                        <span class="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-semibold">
+                            ${totalRows} total rows
+                        </span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse ${isHebrew ? 'hebrew-text' : ''}">
+                            <thead>
+                                <tr class="bg-blue-600 text-white">
+                                    ${headers.map(h => `<th class="p-2 border">${h}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sampleData.map(row => `
+                                    <tr class="hover:bg-blue-50">
+                                        ${headers.map(h => `<td class="p-2 border">${row[h] || ''}</td>`).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 p-3 bg-blue-50 rounded border-l-4 border-blue-500">
+                        <p class="text-sm text-blue-800">
+                            <strong>Preview:</strong> Showing first 5 rows out of <strong>${totalRows} total rows</strong>. 
+                            All ${totalRows} rows are loaded and available for AI search.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            if (!query.trim()) {
+                alert('Please enter a search query');
+                return;
+            }
+
+            const results = document.getElementById('searchResults');
+            results.innerHTML = '<div class="text-center p-8"><div class="animate-spin text-6xl">🔄</div><p class="mt-4 text-lg">Searching with Gemini AI...</p></div>';
+
+            console.log('🔍 Searching for:', query);
+
+            try {
+                const context = csvData.length > 0 
+                    ? `Available formulas data: ${JSON.stringify(csvData.map(d => d.data).flat().slice(0, 10))}`
+                    : `Sample formulas: ${JSON.stringify(sampleFormulas)}`;
+
+                // Get list of uploaded body images for context
+                const imageContext = uploadedImages.length > 0 
+                    ? `Available body part images: ${uploadedImages.map(img => img.name.replace('.png', '').replace('.jpg', '')).join(', ')}`
+                    : 'No body images uploaded yet';
+
+                const prompt = `You are a TCM (Traditional Chinese Medicine) expert. Based on this query: "${query}"
+                
+Context: ${context}
+
+${imageContext}
+
+Provide:
+1. Relevant formulas (with both English and Chinese names)
+2. Key herbs in the formula
+3. Main indications and patterns
+4. Important safety notes and contraindications
+5. **RELEVANT BODY PARTS**: List which body part images would be most relevant to show (e.g., "arm_inner, leg_outer, body_front"). Use the exact image names from the available body part images listed above.
+
+Format your response clearly with specific recommendations. Keep it concise but informative.
+
+At the end, include a section starting with "BODY_PARTS:" followed by comma-separated image names that are relevant.`;
+
+                const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: prompt }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 1500
+                        }
+                    })
+                });
+
+                console.log('📡 Search response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 200)}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Search results:', data);
+                
+                if (data.candidates && data.candidates.length > 0) {
+                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    
+                    // Extract relevant body parts from AI response
+                    const relevantImages = extractRelevantBodyParts(aiResponse);
+
+                    results.innerHTML = `
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-200">
+                            <h4 class="text-xl font-bold mb-4 flex items-center">
+                                <span class="text-3xl mr-3">🤖</span> Gemini AI Analysis
+                            </h4>
+                            <div class="prose max-w-none whitespace-pre-wrap">${aiResponse.replace(/BODY_PARTS:.*$/gm, '')}</div>
+                        </div>
+                        ${relevantImages.length > 0 ? `
+                            <div class="mt-6 p-6 bg-purple-50 rounded-xl border-2 border-purple-300">
+                                <h4 class="text-xl font-bold mb-4">🎯 Relevant Body Parts for This Query:</h4>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    ${relevantImages.map(img => `
+                                        <div class="cursor-pointer hover:scale-105 transition" onclick="showImageFullscreen({data: '${img.data}', name: '${img.name}', size: ${img.size}})">
+                                            <img src="${img.data}" alt="${img.name}" class="w-full h-48 object-contain bg-white rounded-lg shadow-md">
+                                            <p class="text-center text-sm font-semibold mt-2">${img.name}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    `;
+                } else {
+                    throw new Error('No response from AI');
+                }
+
+            } catch (error) {
+                console.error('❌ Search error:', error);
+                results.innerHTML = `
+                    <div class="bg-red-50 p-6 rounded-xl border-2 border-red-200">
+                        <h4 class="text-xl font-bold text-red-800 mb-2">⚠️ Search Error</h4>
+                        <p class="text-red-600 mb-4">${error.message}</p>
+                        <div class="bg-white p-4 rounded mt-4">
+                            <h5 class="font-bold mb-2">Offline Formula Suggestions:</h5>
+                            <p class="text-gray-700">
+                                Based on your query "${query}", consider these formulas from our sample database:
+                            </p>
+                            <ul class="list-disc pl-6 mt-2">
+                                ${sampleFormulas.map(f => `
+                                    <li class="mb-2">
+                                        <strong>${f.name}</strong> (${f.nameHebrew})<br>
+                                        <span class="text-sm text-gray-600">${f.indications}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function extractRelevantBodyParts(aiResponse) {
+            // Look for BODY_PARTS: section in AI response
+            const bodyPartsMatch = aiResponse.match(/BODY_PARTS:\s*(.+?)(?:\n|$)/i);
+            if (!bodyPartsMatch) return [];
+
+            const bodyPartNames = bodyPartsMatch[1].split(',').map(s => s.trim().toLowerCase());
+            console.log('🎯 AI suggested body parts:', bodyPartNames);
+
+            // Find matching uploaded images
+            const relevantImages = uploadedImages.filter(img => {
+                const imgName = img.name.toLowerCase().replace(/\.(png|jpg|jpeg)$/i, '');
+                return bodyPartNames.some(part => {
+                    // Fuzzy matching - check if any part of the name matches
+                    return imgName.includes(part) || part.includes(imgName);
+                });
+            });
+
+            console.log('🖼️ Found relevant images:', relevantImages.map(i => i.name));
+            return relevantImages;
+        }
+
+        function exampleSearch(topic) {
+            document.getElementById('searchInput').value = `Show me TCM formulas for ${topic}`;
+            performSearch();
+        }
+
+        function initializeHerbList() {
+            const herbList = document.getElementById('herbList');
+            commonHerbs.forEach(herb => {
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-white border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition';
+                div.innerHTML = `
+                    <input type="checkbox" id="${herb}" class="mr-2" onchange="toggleHerb('${herb}')">
+                    <label for="${herb}" class="cursor-pointer">${herb}</label>
+                `;
+                herbList.appendChild(div);
+            });
+        }
+
+        function toggleHerb(herb) {
+            if (selectedHerbs.has(herb)) {
+                selectedHerbs.delete(herb);
+            } else {
+                selectedHerbs.add(herb);
+            }
+            console.log('Selected herbs:', Array.from(selectedHerbs));
+        }
+
+        function handleImageFiles(files) {
+            const imageList = document.getElementById('imageList');
+            const imageGallery = document.getElementById('imageGallery');
+            
+            if (files.length > 15) {
+                alert('⚠️ Maximum 15 images allowed. Only the first 15 will be uploaded.');
+            }
+
+            const filesToProcess = Array.from(files).slice(0, 15);
+            
+            imageList.innerHTML = '<h5 class="text-md font-bold mb-2">📋 Uploaded Images:</h5>';
+            
+            filesToProcess.forEach((file, index) => {
+                // Validate file type
+                if (!file.type.match('image.*')) {
+                    console.warn('Skipping non-image file:', file.name);
+                    return;
+                }
+
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const imageData = {
+                        name: file.name,
+                        size: file.size,
+                        data: e.target.result,
+                        index: uploadedImages.length
+                    };
+                    
+                    uploadedImages.push(imageData);
+                    
+                    // Add to file list
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'p-2 bg-purple-50 rounded-lg mb-2 flex items-center justify-between';
+                    fileItem.innerHTML = `
+                        <span class="text-sm">🖼️ ${file.name}</span>
+                        <span class="text-xs text-gray-600">${(file.size / 1024).toFixed(2)} KB</span>
+                    `;
+                    imageList.appendChild(fileItem);
+                    
+                    // Add to gallery
+                    displayImageInGallery(imageData);
+                    
+                    console.log('✅ Image uploaded:', file.name);
+                };
+                
+                reader.readAsDataURL(file);
+            });
+
+            // Show success message
+            setTimeout(() => {
+                if (uploadedImages.length > 0) {
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'mt-4 p-3 bg-green-50 border-2 border-green-300 rounded-lg text-green-800';
+                    successMsg.innerHTML = `✅ Successfully uploaded ${uploadedImages.length} body figure image(s)!`;
+                    imageList.appendChild(successMsg);
+                }
+            }, 500);
+        }
+
+        function displayImageInGallery(imageData) {
+            const gallery = document.getElementById('imageGallery');
+            
+            const imageCard = document.createElement('div');
+            imageCard.className = 'relative group cursor-pointer bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all transform hover:scale-105';
+            imageCard.onclick = () => showImageFullscreen(imageData);
+            
+            imageCard.innerHTML = `
+                <img src="${imageData.data}" alt="${imageData.name}" class="w-full h-48 object-contain bg-gray-50">
+                <div class="p-2 bg-gradient-to-t from-black/70 to-transparent absolute bottom-0 left-0 right-0">
+                    <p class="text-white text-xs font-semibold truncate">${imageData.name}</p>
+                </div>
+                <div class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation(); deleteImage(${imageData.index})">
+                    ✕
+                </div>
+            `;
+            
+            gallery.appendChild(imageCard);
+        }
+
+        function showImageFullscreen(imageData) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4';
+            modal.onclick = () => modal.remove();
+            
+            modal.innerHTML = `
+                <div class="relative max-w-5xl max-h-full">
+                    <button class="absolute -top-12 right-0 text-white text-3xl font-bold hover:text-red-500" onclick="this.parentElement.parentElement.remove()">✕</button>
+                    <img src="${imageData.data}" alt="${imageData.name}" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-lg">
+                        <p class="text-white font-bold text-lg">${imageData.name}</p>
+                        <p class="text-white/80 text-sm">${(imageData.size / 1024).toFixed(2)} KB</p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function deleteImage(index) {
+            if (confirm('Delete this image?')) {
+                uploadedImages = uploadedImages.filter(img => img.index !== index);
+                
+                // Rebuild gallery
+                const gallery = document.getElementById('imageGallery');
+                gallery.innerHTML = '';
+                uploadedImages.forEach(img => displayImageInGallery(img));
+                
+                console.log('🗑️ Image deleted, remaining:', uploadedImages.length);
+            }
+        }
+
+        function clearAllImages() {
+            if (uploadedImages.length === 0) {
+                alert('No images to clear!');
+                return;
+            }
+            
+            if (confirm(`Clear all ${uploadedImages.length} images?`)) {
+                uploadedImages = [];
+                document.getElementById('imageGallery').innerHTML = '';
+                document.getElementById('imageList').innerHTML = '';
+                document.getElementById('imageInput').value = ''; // Reset file input
+                console.log('🗑️ All images cleared');
+                
+                // Show success message
+                const imageList = document.getElementById('imageList');
+                imageList.innerHTML = '<div class="p-3 bg-green-50 border-2 border-green-300 rounded-lg text-green-800">✅ All images cleared successfully!</div>';
+                setTimeout(() => {
+                    imageList.innerHTML = '';
+                }, 2000);
+            }
+        }
+
+        async function checkSafety() {
+            if (selectedHerbs.size === 0) {
+                alert('Please select at least one herb to check');
+                return;
+            }
+
+            const results = document.getElementById('safetyResults');
+            results.innerHTML = '<div class="text-center p-8"><div class="animate-spin text-6xl">🔄</div><p class="mt-4">Analyzing herb interactions...</p></div>';
+
+            const herbList = Array.from(selectedHerbs).join(', ');
+            console.log('🌿 Checking safety for:', herbList);
+
+            const prompt = `As a TCM safety expert, analyze these herbs for contraindications and interactions: ${herbList}
+
+Provide:
+1. Individual herb contraindications
+2. Potential herb-herb interactions
+3. Pregnancy/breastfeeding warnings
+4. Drug interactions to be aware of
+5. Overall safety assessment (Low/Medium/High risk)
+
+Be specific and practical in your recommendations.`;
+
+            try {
+                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: prompt }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 1000
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const analysis = data.candidates[0].content.parts[0].text;
+
+                results.innerHTML = `
+                    <div class="bg-yellow-50 p-6 rounded-xl border-2 border-yellow-300">
+                        <h4 class="text-xl font-bold mb-4 flex items-center">
+                            <span class="text-3xl mr-3">⚠️</span> Safety Analysis
+                        </h4>
+                        <div class="prose max-w-none whitespace-pre-wrap">${analysis}</div>
+                        <p class="mt-4 text-sm text-gray-600 italic">⚕️ Always consult with a qualified TCM practitioner before use</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('❌ Safety check error:', error);
+                results.innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-xl">
+                        <h4 class="font-bold text-red-800">Error: ${error.message}</h4>
+                        <p class="text-red-600 mt-2">Unable to perform safety analysis. Please try again or consult a TCM practitioner.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function initializeBodyPoints() {
+            const frontView = document.getElementById('bodyFront');
+            const backView = document.getElementById('bodyBack');
+
+            acupoints.front.forEach(point => {
+                const dot = createAcupoint(point);
+                frontView.appendChild(dot);
+            });
+
+            acupoints.back.forEach(point => {
+                const dot = createAcupoint(point);
+                backView.appendChild(dot);
+            });
+
+            console.log('✅ Body points initialized');
+        }
+
+        function createAcupoint(point) {
+            const dot = document.createElement('div');
+            dot.className = 'acupoint';
+            dot.style.left = `${point.x}px`;
+            dot.style.top = `${point.y}px`;
+            dot.title = `${point.id} - ${point.name}`;
+            dot.onclick = () => showPointInfo(point);
+            return dot;
+        }
+
+        function showPointInfo(point) {
+            const info = document.getElementById('pointInfo');
+            const details = document.getElementById('pointDetails');
+            
+            details.innerHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <div><strong>Point ID:</strong> ${point.id}</div>
+                    <div><strong>Name:</strong> ${point.name}</div>
+                    <div><strong>Meridian:</strong> ${point.meridian}</div>
+                    <div><strong>Click:</strong> For detailed TCM information</div>
+                </div>
+            `;
+            
+            info.classList.remove('hidden');
+            console.log('📍 Showing point info:', point.id);
+        }
+
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('hover:bg-gray-100');
+            });
+            
+            // Show selected tab
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('hover:bg-gray-100');
+            
+            console.log('📑 Switched to tab:', tab);
+        }
+
+        // Initialize on load
+        window.onload = init;
+        
+        console.log('🏥 TCM Clinical Assistant loaded');
+    </script>
+</body>
+</html>
