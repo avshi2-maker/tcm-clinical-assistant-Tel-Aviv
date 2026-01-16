@@ -217,6 +217,10 @@
         let csvData = [];
         let selectedHerbs = new Set();
         let uploadedImages = []; // Store uploaded body figure images
+        
+        // Acupoint database
+        let acupointDatabase = [];
+        let acupointByFile = {};
 
         // Sample TCM data
         const sampleFormulas = [
@@ -270,6 +274,96 @@
             initializeHerbList();
             // Removed: initializeBodyPoints() - user will upload their own images
             await testGeminiConnection();
+            await loadAcupointDatabase(); // Load acupoint database
+        }
+        
+        // Load acupoint database from CSV
+        async function loadAcupointDatabase() {
+            try {
+                console.log('📂 Loading acupoint database...');
+                
+                const response = await fetch('acupoint_database/acupoint_master_database_MERGED.csv');
+                if (!response.ok) {
+                    console.warn('⚠️ Acupoint database not found - running without acupoint data');
+                    return false;
+                }
+                
+                const csvText = await response.text();
+                const lines = csvText.split('\n');
+                const headers = lines[0].split('\t'); // Tab-separated
+                
+                acupointDatabase = [];
+                acupointByFile = {};
+                
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    
+                    const values = lines[i].split('\t');
+                    if (values.length < 6) continue;
+                    
+                    const entry = {
+                        Image_File: values[0]?.trim() || '',
+                        Body_Part: values[1]?.trim() || '',
+                        Acupoint_Code: values[2]?.trim() || '',
+                        English_Name: values[3]?.trim() || '',
+                        Meridian: values[4]?.trim() || '',
+                        Point_Number: values[5]?.trim() || ''
+                    };
+                    
+                    // Skip NONE entries
+                    if (entry.Acupoint_Code === 'NONE') continue;
+                    
+                    acupointDatabase.push(entry);
+                    
+                    // Group by file
+                    const filename = entry.Image_File;
+                    if (!acupointByFile[filename]) {
+                        acupointByFile[filename] = [];
+                    }
+                    acupointByFile[filename].push(entry);
+                }
+                
+                console.log('✅ Acupoint database loaded:', acupointDatabase.length, 'entries');
+                console.log('📊 Body parts:', Object.keys(acupointByFile).length);
+                return true;
+            } catch (error) {
+                console.error('❌ Error loading acupoint database:', error);
+                return false;
+            }
+        }
+        
+        // Search acupoints by query
+        function searchAcupoints(query) {
+            if (acupointDatabase.length === 0) return [];
+            
+            const queryUpper = query.toUpperCase();
+            const queryLower = query.toLowerCase();
+            
+            const matches = acupointDatabase.filter(point => {
+                return (
+                    point.Acupoint_Code.toUpperCase().includes(queryUpper) ||
+                    point.English_Name.toLowerCase().includes(queryLower) ||
+                    point.Meridian.toUpperCase().includes(queryUpper) ||
+                    point.Body_Part.toLowerCase().includes(queryLower)
+                );
+            });
+            
+            console.log('🔍 Acupoint search:', query, '→', matches.length, 'matches');
+            return matches;
+        }
+        
+        // Get relevant images from acupoint matches
+        function getRelevantImagesFromAcupoints(acupointMatches) {
+            if (acupointMatches.length === 0) return [];
+            
+            const imageFiles = [...new Set(acupointMatches.map(point => point.Image_File))];
+            
+            const relevantImages = uploadedImages.filter(img => 
+                imageFiles.some(filename => img.name.toLowerCase() === filename.toLowerCase())
+            );
+            
+            console.log('🖼️ Relevant images from acupoints:', relevantImages.length);
+            return relevantImages;
         }
 
         function setupEventListeners() {
@@ -488,36 +582,46 @@
             }
 
             const results = document.getElementById('searchResults');
-            results.innerHTML = '<div class="text-center p-8"><div class="animate-spin text-6xl">🔄</div><p class="mt-4 text-lg">Searching with Gemini AI...</p></div>';
+            results.innerHTML = '<div class="text-center p-8"><div class="animate-spin text-6xl">🔄</div><p class="mt-4 text-lg">Searching formulas and acupoints...</p></div>';
 
-            console.log('🔍 Searching for:', query);
+            console.log('🔍 Enhanced search for:', query);
 
             try {
+                // Build formula context
                 const context = csvData.length > 0 
                     ? `Available formulas data: ${JSON.stringify(csvData.map(d => d.data).flat().slice(0, 10))}`
                     : `Sample formulas: ${JSON.stringify(sampleFormulas)}`;
 
-                // Get list of uploaded body images for context
+                // Search acupoints
+                const acupointMatches = searchAcupoints(query);
+                const acupointContext = acupointMatches.length > 0
+                    ? `Relevant acupoints found: ${acupointMatches.slice(0, 10).map(p => 
+                        `${p.Acupoint_Code} (${p.English_Name}) on ${p.Body_Part}`
+                      ).join(', ')}`
+                    : '';
+
+                // Get list of uploaded body images
                 const imageContext = uploadedImages.length > 0 
                     ? `Available body part images: ${uploadedImages.map(img => img.name.replace('.png', '').replace('.jpg', '')).join(', ')}`
-                    : 'No body images uploaded yet';
+                    : '';
 
                 const prompt = `You are a TCM (Traditional Chinese Medicine) expert. Based on this query: "${query}"
                 
-Context: ${context}
+Context:
+${context}
+
+${acupointContext}
 
 ${imageContext}
 
 Provide:
-1. Relevant formulas (with both English and Chinese names)
-2. Key herbs in the formula
+1. Relevant TCM formulas (with Chinese and English names)
+2. Key herbs in the formulas
 3. Main indications and patterns
-4. Important safety notes and contraindications
-5. **RELEVANT BODY PARTS**: List which body part images would be most relevant to show (e.g., "arm_inner, leg_outer, body_front"). Use the exact image names from the available body part images listed above.
+4. Specific acupoint recommendations with codes (e.g., LI-4, ST-36, GB-20)
+5. Safety notes and contraindications
 
-Format your response clearly with specific recommendations. Keep it concise but informative.
-
-At the end, include a section starting with "BODY_PARTS:" followed by comma-separated image names that are relevant.`;
+Format your response clearly with specific recommendations. Include acupoint codes when relevant.`;
 
                 const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
                 
@@ -532,7 +636,7 @@ At the end, include a section starting with "BODY_PARTS:" followed by comma-sepa
                         }],
                         generationConfig: {
                             temperature: 0.7,
-                            maxOutputTokens: 1500
+                            maxOutputTokens: 2000
                         }
                     })
                 });
@@ -550,27 +654,64 @@ At the end, include a section starting with "BODY_PARTS:" followed by comma-sepa
                 if (data.candidates && data.candidates.length > 0) {
                     const aiResponse = data.candidates[0].content.parts[0].text;
                     
-                    // Extract relevant body parts from AI response
-                    const relevantImages = extractRelevantBodyParts(aiResponse);
+                    // Find acupoints mentioned in AI response
+                    const mentionedPoints = acupointDatabase.filter(point => 
+                        aiResponse.includes(point.Acupoint_Code) || 
+                        aiResponse.includes(point.English_Name)
+                    );
+                    
+                    // Get relevant images (from search matches or mentioned points)
+                    const allMatches = mentionedPoints.length > 0 ? mentionedPoints : acupointMatches;
+                    const relevantImages = getRelevantImagesFromAcupoints(allMatches);
+                    
+                    // Also try keyword-based image matching as fallback
+                    const keywordImages = relevantImages.length === 0 ? extractRelevantBodyParts(aiResponse) : [];
 
                     results.innerHTML = `
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-200">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-200 mb-6">
                             <h4 class="text-xl font-bold mb-4 flex items-center">
-                                <span class="text-3xl mr-3">🤖</span> Gemini AI Analysis
+                                <span class="text-3xl mr-3">🤖</span> AI Analysis
                             </h4>
-                            <div class="prose max-w-none whitespace-pre-wrap">${aiResponse.replace(/BODY_PARTS:.*$/gm, '')}</div>
+                            <div class="prose max-w-none whitespace-pre-wrap">${aiResponse}</div>
                         </div>
-                        ${relevantImages.length > 0 ? `
-                            <div class="mt-6 p-6 bg-purple-50 rounded-xl border-2 border-purple-300">
-                                <h4 class="text-xl font-bold mb-4">🎯 Relevant Body Parts for This Query:</h4>
-                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    ${relevantImages.map(img => `
-                                        <div class="cursor-pointer hover:scale-105 transition" onclick="showImageFullscreen({data: '${img.data}', name: '${img.name}', size: ${img.size}})">
-                                            <img src="${img.data}" alt="${img.name}" class="w-full h-48 object-contain bg-white rounded-lg shadow-md">
-                                            <p class="text-center text-sm font-semibold mt-2">${img.name}</p>
+                        
+                        ${acupointMatches.length > 0 ? `
+                            <div class="bg-green-50 p-6 rounded-xl border-2 border-green-300 mb-6">
+                                <h4 class="text-xl font-bold mb-4">🎯 Relevant Acupoints Found (${acupointMatches.length}):</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    ${acupointMatches.slice(0, 12).map(point => `
+                                        <div class="bg-white p-3 rounded-lg shadow">
+                                            <div class="font-bold text-red-600">${point.Acupoint_Code}</div>
+                                            <div class="text-sm text-gray-700">${point.English_Name}</div>
+                                            <div class="text-xs text-gray-500">${point.Body_Part} · ${point.Meridian}-${point.Point_Number}</div>
                                         </div>
                                     `).join('')}
                                 </div>
+                                ${acupointMatches.length > 12 ? `<p class="text-sm text-gray-600 mt-3">... and ${acupointMatches.length - 12} more acupoints</p>` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        ${(relevantImages.length > 0 || keywordImages.length > 0) ? `
+                            <div class="bg-purple-50 p-6 rounded-xl border-2 border-purple-300">
+                                <h4 class="text-xl font-bold mb-4">🖼️ Body Part Diagrams (${relevantImages.length + keywordImages.length}):</h4>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    ${[...relevantImages, ...keywordImages].map(img => {
+                                        const pointCount = acupointByFile[img.name]?.length || 0;
+                                        return `
+                                        <div class="cursor-pointer hover:scale-105 transition" onclick="showImageFullscreen({data: '${img.data}', name: '${img.name}', size: ${img.size}})">
+                                            <img src="${img.data}" alt="${img.name}" class="w-full h-48 object-contain bg-white rounded-lg shadow-md">
+                                            <p class="text-center text-sm font-semibold mt-2">${img.name}</p>
+                                            ${pointCount > 0 ? `<p class="text-center text-xs text-gray-600">${pointCount} acupoints</p>` : ''}
+                                        </div>
+                                    `}).join('')}
+                                </div>
+                            </div>
+                        ` : uploadedImages.length > 0 ? `
+                            <div class="mt-6 p-4 bg-yellow-50 rounded-xl border-2 border-yellow-300">
+                                <p class="text-yellow-800">
+                                    ℹ️ No specific body part images matched this query. 
+                                    <button onclick="document.getElementById('tab-points').click()" class="underline font-semibold">View all ${uploadedImages.length} uploaded images</button>
+                                </p>
                             </div>
                         ` : ''}
                     `;
