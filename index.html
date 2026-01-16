@@ -1,1064 +1,1413 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCM Clinical Assistant - AI Powered</title>
+    <title>CM Clinical Assistant - Complete Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .body-figure {
-            position: relative;
-            width: 200px;
-            height: 400px;
-            margin: 20px auto;
+        body { margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+        
+        /* Left Panel - Scrollable CSV list */
+        .left-panel {
+            width: 280px;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
-        .acupoint {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #ef4444;
-            border-radius: 50%;
+        
+        /* Right Panel - Scrollable questions */
+        .right-panel {
+            width: 320px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .csv-box {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            word-wrap: break-word;
+        }
+        .csv-box.active {
+            animation: glow 1.5s ease-in-out infinite;
+            transform: scale(1.02);
+            border-color: #22c55e;
+            background: #f0fdf4;
+            font-weight: bold;
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); }
+            50% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.9); }
+        }
+        .csv-box.bible {
+            border-color: #fbbf24;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            font-weight: bold;
+        }
+        
+        /* Golden Clock Styling */
+        .golden-clock {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            padding: 8px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+            min-width: 200px;
+        }
+        
+        .clock-icon {
+            animation: tick 1s infinite;
+            font-size: 18px;
+        }
+        
+        .clock-time {
+            font-weight: bold;
+            color: #1a1a1a;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        @keyframes tick {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-5deg); }
+        }
+        
+        .metrics-box {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+        
+        .query-box {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: white;
+            direction: rtl;
+        }
+        .query-box.filled {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .quick-question {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: right;
+            font-size: 14px;
+        }
+        .quick-question:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            transform: translateX(-2px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .cost-display {
+            font-size: 14px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        
+        /* Animated Run Query Button */
+        .run-query-button {
+            transition: all 0.3s ease;
+        }
+        
+        .run-query-button.pulse-attention {
+            animation: pulseGlow 1s ease-in-out 3;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px 10px rgba(59, 130, 246, 0.3);
+            }
+        }
+        
+        /* Pause/Continue Button Styles */
+        .pause-button {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
-            border: 2px solid white;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
         }
-        .acupoint:hover {
-            transform: scale(1.5);
-            background: #dc2626;
-            z-index: 10;
+        
+        .pause-button:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
         }
-        .tab-active {
-            background: #3b82f6;
-            color: white;
-        }
-        .hebrew-text {
-            direction: rtl;
-            text-align: right;
-        }
-        .pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
+        
+        .paused-state {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div id="root" class="container mx-auto p-6 max-w-6xl">
-        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+<body>
+    <!-- 3-PANEL LAYOUT -->
+    <div class="flex h-screen">
+        <!-- LEFT PANEL: CSV Sources -->
+        <div class="left-panel bg-gray-50 border-r">
+            <div class="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white sticky top-0 z-10">
+                <h3 class="font-bold text-sm">📁 מקורות ידע</h3>
+                <p class="text-xs opacity-90">40 קבצי CSV</p>
+            </div>
+            <div id="csvIndicatorsLeft" class="p-3 space-y-2"></div>
+        </div>
+
+        <!-- CENTER PANEL: Main Dashboard -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Metrics Bar with GOLDEN CLOCK -->
+            <div class="metrics-box flex justify-between items-center">
+                <div class="flex items-center space-x-reverse space-x-4">
+                    <div class="flex items-center golden-clock">
+                        <span class="mr-2 clock-icon">🕐</span>
+                        <span id="sessionTimer" class="clock-time">0:00</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="ml-2">🔢</span>
+                        <span id="tokenCount">0</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="ml-2">💰</span>
+                        <span class="cost-display" id="totalCost">$0.0000</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="ml-2">📊</span>
+                        <span id="assetsSearched">0</span> נכסים
+                    </div>
+                    <div class="flex items-center">
+                        <span class="ml-2">✅</span>
+                        <span id="successRate">0%</span>
+                    </div>
+                </div>
+                <button onclick="resetSession()" class="bg-white/20 hover:bg-white/30 px-4 py-1 rounded-lg transition text-sm">
+                    🔄 התחל מחדש
+                </button>
+            </div>
+
             <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8">
-                <h1 class="text-4xl font-bold mb-2">🏥 TCM Clinical Assistant</h1>
-                <p class="text-blue-100">AI-Powered Traditional Chinese Medicine Analysis</p>
-                <div id="apiStatus" class="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur">
-                    <span class="pulse">🔄</span> <span id="statusText">Initializing Gemini AI...</span>
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+                <h1 class="text-3xl font-bold mb-2 text-right">🏥 עוזר קליני - רפואה סינית</h1>
+                <p class="text-blue-100 text-right">מערכת RAG מבוססת בינה מלאכותית • 450 שאלות מוכנות</p>
+                <div id="apiStatus" class="mt-3 p-3 bg-white/10 rounded-lg backdrop-blur text-right">
+                    <span id="statusText">מאתחל מערכת...</span>
                 </div>
             </div>
 
-            <!-- Tabs -->
-            <div class="flex border-b bg-gray-50">
-                <button onclick="switchTab('upload')" id="tab-upload" class="tab-active flex-1 px-6 py-4 font-semibold transition">
-                    📁 Upload CSVs
-                </button>
-                <button onclick="switchTab('search')" id="tab-search" class="flex-1 px-6 py-4 font-semibold hover:bg-gray-100 transition">
-                    🔍 AI Search
-                </button>
-                <button onclick="switchTab('points')" id="tab-points" class="flex-1 px-6 py-4 font-semibold hover:bg-gray-100 transition">
-                    🎯 Body Points
-                </button>
-                <button onclick="switchTab('safety')" id="tab-safety" class="flex-1 px-6 py-4 font-semibold hover:bg-gray-100 transition">
-                    🌿 Herb Safety
-                </button>
-            </div>
-
-            <!-- Tab Content -->
-            <div class="p-8">
-                <!-- Upload Tab -->
-                <div id="content-upload" class="tab-content">
-                    <div class="mb-6 p-6 bg-green-50 border-2 border-green-300 rounded-xl">
-                        <h3 class="text-xl font-bold text-green-800 mb-2">✅ API Key Configured</h3>
-                        <p class="text-green-700">Gemini Flash 3 is ready for AI-powered searches!</p>
+            <!-- Main Content Area -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- Multi-Query System -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm text-gray-600">עד 3 שאלות בבת אחת</span>
+                        <label class="block text-lg font-bold">🔍 חיפוש רב-שאלות</label>
                     </div>
 
-                    <div class="mb-8">
-                        <h3 class="text-2xl font-bold mb-4">📤 Upload Your CSV Files</h3>
-                        <div class="mb-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-                            <p class="text-sm text-blue-800">
-                                <strong>Note:</strong> This section is for CSV formula/herb data files only. 
-                                To upload body figure images (PNG/JPG), use the <strong>"🎯 Body Points"</strong> tab.
-                            </p>
-                        </div>
-                        <div class="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded flex justify-between items-center">
-                            <div>
-                                <p class="text-sm text-green-800">
-                                    <strong>✅ Unlimited CSV files</strong> - Upload as many as you need!
-                                </p>
-                                <p class="text-xs text-green-700 mt-1">
-                                    Each file can contain 50, 100, or thousands of rows - all will be loaded.
-                                </p>
-                            </div>
-                            <div id="csvCounter" class="px-4 py-2 bg-green-600 text-white rounded-lg font-bold text-lg">
-                                0 files
-                            </div>
-                        </div>
-                        <div class="border-4 border-dashed border-blue-300 rounded-xl p-12 text-center hover:border-blue-500 transition cursor-pointer" id="dropZone">
-                            <input type="file" id="csvInput" accept=".csv" multiple class="hidden">
-                            <div class="text-6xl mb-4">📂</div>
-                            <p class="text-xl font-semibold mb-2">Drop CSV files here or click to browse</p>
-                            <p class="text-gray-600">Supports Hebrew and English CSV files</p>
-                            <p class="text-sm text-gray-500 mt-2">(.csv files only - for images, use Body Points tab)</p>
-                        </div>
-                        <div id="fileList" class="mt-6"></div>
-                    </div>
-
-                    <div id="csvPreview" class="mt-8"></div>
-                </div>
-
-                <!-- Search Tab -->
-                <div id="content-search" class="tab-content hidden">
-                    <h3 class="text-2xl font-bold mb-6">🔍 AI-Powered Formula Search</h3>
-                    
-                    <div class="mb-6">
-                        <div class="relative">
+                    <div class="space-y-3">
+                        <div class="query-box" id="queryBox1">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 1 (חובה)</label>
                             <input 
                                 type="text" 
-                                id="searchInput" 
-                                placeholder="Ask about formulas, herbs, or symptoms (Hebrew/English)..."
-                                class="w-full p-4 pr-12 text-lg border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:outline-none"
+                                id="searchInput1" 
+                                placeholder="תסמין או מצב עיקרי..." 
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
+                                dir="rtl"
+                                oninput="updateQueryBox(1)"
                             >
-                            <button onclick="performSearch()" class="absolute right-2 top-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                                Search
-                            </button>
+                        </div>
+
+                        <div class="query-box" id="queryBox2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 2 (אופציונלי)</label>
+                            <input 
+                                type="text" 
+                                id="searchInput2" 
+                                placeholder="תסמין נוסף או מצב קשור..." 
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
+                                dir="rtl"
+                                oninput="updateQueryBox(2)"
+                            >
+                        </div>
+
+                        <div class="query-box" id="queryBox3">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 3 (אופציונלי)</label>
+                            <input 
+                                type="text" 
+                                id="searchInput3" 
+                                placeholder="תסמין שלישי או נקודת דיקור..." 
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
+                                dir="rtl"
+                                oninput="updateQueryBox(3)"
+                            >
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <button onclick="exampleSearch('headache')" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
-                            💊 Formulas for Headache
+                    <div class="flex gap-3 mt-4">
+                        <button 
+                            onclick="clearAllQueries()" 
+                            class="px-6 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold transition">
+                            נקה הכל
                         </button>
-                        <button onclick="exampleSearch('digestion')" class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition">
-                            🌿 Digestive Issues
+                        <button 
+                            onclick="performMultiQuery()" 
+                            class="run-query-button flex-1 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-black hover:from-blue-700 hover:to-indigo-700 transition text-xl shadow-lg">
+                            🔍 הרץ חיפוש
                         </button>
-                        <button onclick="exampleSearch('kidney')" class="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
-                            🫘 Kidney Tonics
+                        <button 
+                            id="pauseButton"
+                            onclick="togglePause()" 
+                            class="pause-button hidden px-6 py-4 rounded-xl transition">
+                            ⏸️ השהה
                         </button>
-                        <button onclick="exampleSearch('blood')" class="p-4 bg-red-50 rounded-lg hover:bg-red-100 transition">
-                            🩸 Blood Building
-                        </button>
-                    </div>
-
-                    <div id="searchResults" class="space-y-4"></div>
-                </div>
-
-                <!-- Body Points Tab -->
-                <div id="content-points" class="tab-content hidden">
-                    <h3 class="text-2xl font-bold mb-6">🎯 Acupuncture Point Mapping</h3>
-                    
-                    <!-- Image Upload Section -->
-                    <div class="mb-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-300">
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-xl font-bold">📤 Upload Body Figure Images</h4>
-                            <button onclick="clearAllImages()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-semibold">
-                                🗑️ Clear All
-                            </button>
-                        </div>
-                        <div class="border-4 border-dashed border-purple-300 rounded-xl p-8 text-center hover:border-purple-500 transition cursor-pointer" id="imageDropZone">
-                            <input type="file" id="imageInput" accept=".png,.jpg,.jpeg" multiple class="hidden">
-                            <div class="text-5xl mb-3">🖼️</div>
-                            <p class="text-lg font-semibold mb-2">Drop PNG/JPG files here or click to browse</p>
-                            <p class="text-sm text-gray-600">Upload up to 15 body figure images</p>
-                        </div>
-                        <div id="imageList" class="mt-4"></div>
-                    </div>
-
-                    <!-- Image Gallery -->
-                    <div id="imageGallery" class="mb-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"></div>
-                    
-                    <!-- Interactive Point Overlay (appears when image is selected) -->
-                    <div id="pointOverlay" class="hidden mt-8 p-6 bg-blue-50 rounded-xl">
-                        <h4 class="text-xl font-bold mb-4">🎯 Click on image to add/view acupuncture points</h4>
-                        <div id="selectedImageContainer" class="relative inline-block"></div>
-                    </div>
-
-                    <div id="pointInfo" class="mt-8 p-6 bg-blue-50 rounded-xl hidden">
-                        <h4 class="text-xl font-bold mb-2">Point Information</h4>
-                        <div id="pointDetails"></div>
                     </div>
                 </div>
 
-                <!-- Safety Tab -->
-                <div id="content-safety" class="tab-content hidden">
-                    <h3 class="text-2xl font-bold mb-6">🌿 Herb Safety Checker</h3>
-                    
-                    <div class="mb-6">
-                        <label class="block text-lg font-semibold mb-2">Select Herbs to Check:</label>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="herbList">
-                            <!-- Herbs will be dynamically added -->
+                <!-- Active Queries Display -->
+                <div id="activeQueries" class="mb-6"></div>
+
+                <!-- Report Options -->
+                <div id="reportOptions" class="mb-6 hidden">
+                    <div class="p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
+                        <h4 class="font-bold mb-3 text-right">📊 רמת פירוט הדוח:</h4>
+                        <div class="flex gap-4 justify-end">
+                            <label class="flex items-center cursor-pointer">
+                                <span class="ml-2">📄 דוח מפורט מלא</span>
+                                <input type="radio" name="reportDetail" value="full" checked onchange="toggleReportDetail()" class="ml-2">
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <span class="ml-2">📝 נושאים קצרים</span>
+                                <input type="radio" name="reportDetail" value="short" onchange="toggleReportDetail()" class="ml-2">
+                            </label>
                         </div>
                     </div>
+                </div>
 
-                    <button onclick="checkSafety()" class="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition">
-                        Check Contraindications
-                    </button>
+                <!-- Search Results -->
+                <div id="searchResults" class="mt-6"></div>
 
-                    <div id="safetyResults" class="mt-6"></div>
+                <!-- Share Buttons -->
+                <div id="shareButtons" class="mt-6 hidden">
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="downloadPDF()" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                            💾 הורד PDF
+                        </button>
+                        <button onclick="emailReport()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                            📧 שלח במייל
+                        </button>
+                        <button onclick="shareWhatsApp()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                            📱 שתף בוואטסאפ
+                        </button>
+                        <button onclick="printReport()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                            🖨️ הדפס דוח
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fallback -->
+                <div id="fallbackBrowser" class="hidden mt-6 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl">
+                    <div class="flex items-start mb-3">
+                        <div class="text-right flex-1">
+                            <h4 class="font-bold text-orange-800">⚠️ חיפוש חיצוני ברשת</h4>
+                            <p class="text-sm text-orange-700">לא נמצאו תוצאות במאגר הידע המאומת שלך. מחפש במקורות ציבוריים...</p>
+                            <p class="text-xs text-orange-600 mt-1">
+                                <strong>אזהרה:</strong> תוצאות ממקורות אינטרנט חייבות להיבדק בקפידה על ידי המטפל. לא ממאגר הידע המאומת שלך.
+                            </p>
+                        </div>
+                    </div>
+                    <div id="fallbackResults" class="bg-white p-4 rounded-lg border border-orange-300 mt-3 text-right"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- RIGHT PANEL: 450 Quick Hebrew Questions -->
+        <div class="right-panel bg-gray-50 border-l">
+            <div class="p-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white sticky top-0 z-10">
+                <h3 class="font-bold text-sm text-right">⚡ 450 שאלות מוכנות</h3>
+                <p class="text-xs opacity-90 text-right">30 קטגוריות • בחר לחיפוש מהיר</p>
+            </div>
+            
+            <!-- Category Filter -->
+            <div class="p-3">
+                <select id="categoryFilter" onchange="filterQuestions()" class="w-full p-2 border-2 border-gray-300 rounded-lg text-right text-sm">
+    <option value="all">כל הקטגוריות (450 שאלות)</option>
+    <option value="אבחון דופק ולשון">אבחון דופק ולשון (15)</option>
+    <option value="אריכות ימים ואיכות חיים">אריכות ימים ואיכות חיים (15)</option>
+    <option value="איזון וחיזוק (מבוגרים)">איזון וחיזוק (מבוגרים) (15)</option>
+    <option value="שיקום וטיפול בכאב">שיקום וטיפול בכאב (15)</option>
+    <option value="בהירות וחוסן מנטלי">בהירות וחוסן מנטלי (15)</option>
+    <option value="בקרת אקלים פנימית">בקרת אקלים פנימית (15)</option>
+    <option value="חיוניות ואריכות ימים">חיוניות ואריכות ימים (15)</option>
+    <option value="חוסן חיסוני והתאוששות">חוסן חיסוני והתאוששות (15)</option>
+    <option value="הזנת החיים (תזונה)">הזנת החיים (תזונה) (15)</option>
+    <option value="תסמונות זאנג-פו">תסמונות זאנג-פו (15)</option>
+    <option value="נקודות דיקור">נקודות דיקור (15)</option>
+    <option value="ארבע הבדיקות">ארבע הבדיקות (15)</option>
+    <option value="בריאות האישה">בריאות האישה (15)</option>
+    <option value="רפואה סינית לילדים">רפואה סינית לילדים (15)</option>
+    <option value="רפואה סינית לקשישים">רפואה סינית לקשישים (15)</option>
+    <option value="בריאות רגשית">בריאות רגשית (15)</option>
+    <option value="הפרעות שינה">הפרעות שינה (15)</option>
+    <option value="בריאות מערכת העיכול">בריאות מערכת העיכול (15)</option>
+    <option value="בריאות מערכת הנשימה">בריאות מערכת הנשימה (15)</option>
+    <option value="מערכת השלד והשרירים">מערכת השלד והשרירים (15)</option>
+    <option value="כאבי ראש ומיגרנות">כאבי ראש ומיגרנות (15)</option>
+    <option value="מחלות עור">מחלות עור (15)</option>
+    <option value="מערכת הלב וכלי הדם">מערכת הלב וכלי הדם (15)</option>
+    <option value="נוסחאות צמחים">נוסחאות צמחים (15)</option>
+    <option value="מוקסה וכוסות רוח">מוקסה וכוסות רוח (15)</option>
+    <option value="כלי הדם המיוחדים">כלי הדם המיוחדים (15)</option>
+    <option value="דיקור אוזן">דיקור אוזן (15)</option>
+    <option value="טיפול לפי עונות">טיפול לפי עונות (15)</option>
+    <option value="חמשת היסודות">חמשת היסודות (15)</option>
+    <option value="יין ויאנג">יין ויאנג (15)</option>                </select>
+            </div>
+
+            <div id="quickQuestions" class="p-3 space-y-2"></div>
         </div>
     </div>
 
     <script>
-        // Configuration - Using Gemini Flash 3 (2.0)
+        // Configuration
+        const SUPABASE_URL = 'https://iqfglrwjemogoycbzltt.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxZmdscndqZW1vZ295Y2J6bHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NTM4ODMsImV4cCI6MjA4NDEyOTg4M30.DTREv3efs86_HzESyWm-7480ImfEVgC6T-xBdS6A2F8';
         const GEMINI_API_KEY = 'AIzaSyBMULiu2FBFIExlGHyAgKjqIq2ebyV2xcs';
         const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
         
-        let csvData = [];
-        let selectedHerbs = new Set();
-        let uploadedImages = []; // Store uploaded body figure images
+        // Gemini Flash 3 Pricing (per token)
+        const INPUT_TOKEN_COST = 0.0000005;   // $0.50 per 1M tokens
+        const OUTPUT_TOKEN_COST = 0.000003;   // $3.00 per 1M tokens
         
-        // Acupoint database
-        let acupointDatabase = [];
-        let acupointByFile = {};
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Global state
+        let formulasData = [];
+        let acupointsData = [];
+        let imagesData = [];
+        let csvPriorities = {};
+        let currentQueries = [];
+        let lastSearchResults = '';
+        let usedCSVs = new Set();
+        
+        // Session metrics
+        let sessionStartTime = Date.now();
+        let totalInputTokens = 0;
+        let totalOutputTokens = 0;
+        let totalCost = 0;
+        let totalAssets = 0;
+        let successfulQueries = 0;
+        let totalQueries = 0;
+        let timerInterval;
+        
+        // Pause/Continue state
+        let isPaused = false;
+        let searchAbortController = null;
 
-        // Sample TCM data
-        const sampleFormulas = [
-            {
-                name: "Gui Pi Tang",
-                nameHebrew: "גוי פי טאנג",
-                herbs: ["Ginseng", "Astragalus", "Atractylodes", "Longan"],
-                indications: "Spleen Qi deficiency, Heart Blood deficiency",
-                contraindications: "Pregnancy (consult practitioner)"
-            },
-            {
-                name: "Xiao Yao San",
-                nameHebrew: "שיאו יאו סן",
-                herbs: ["Bupleurum", "Angelica", "White Peony", "Poria"],
-                indications: "Liver Qi stagnation, menstrual issues",
-                contraindications: "High blood pressure"
-            },
-            {
-                name: "Ba Zhen Tang",
-                nameHebrew: "בא ג'ן טאנג",
-                herbs: ["Ginseng", "Angelica", "Rehmannia", "Ligusticum"],
-                indications: "Qi and Blood deficiency",
-                contraindications: "Heat signs"
+        // ===== 450 HEBREW QUESTIONS =====
+        const hebrewQuestions = [
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מה המשמעות הקלינית של לשון חיוורת ונפוחה עם סימני שיניים?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "על מה מעיד חיפוי לשון צהוב ועבה במחמם האמצעי?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "כיצד מתואר דופק \"מיתרי\" (Wiry) ומה הוא מסמל?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מה ההבדל באבחנה בין לשון סגולה (Purple) לבין לשון אדומה כהה (Crimson)?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מהי המשמעות של חריץ מרכזי המגיע עד קצה הלשון?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "כיצד נזהה דופק \"מתגלגל\" (Slippery) ומה הקשר שלו לליחה?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מה מעיד קצה לשון אדום מאוד עם נקודות אדומות (Red Points)?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מהי האינדיקציה של דופק \"צף\" (Floating) לעומת דופק \"שוקע\" (Deep)?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מה מסמל חיפוי לשון \"מקורף\" (Peeled) או גאוגרפי?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "כיצד מתבטא חוסר יין (Yin Def) במראה הלשון?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מה ההבדל בין דופק \"דק\" (Thin/Fine) לדופק \"חלש\" (Weak)?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "האם ורידים תת-לשוניים (Sublingual) כהים מוזכרים, ומה משמעותם?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מה המשמעות של לשון רועדת (Quivering) אצל מטופל מבוגר?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "כיצד נראה חיפוי של \"לחות-חמה\" (Damp-Heat) על הלשון?" },
+    { category: "אבחון דופק ולשון", categoryEn: "Pulse & Tongue Diagnosis", text: "מה ההבדל בין דופק מהיר (Rapid) לדופק דהור (Racing/Hurried)?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "במשפט אחד, מהו הקושי הבריאותי העיקרי שמפריע לאיכות החיים שלך כיום?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם היציאות שלך סדירות, או שאת/ה סובל/ת מעצירות כרונית או משלשולים תכופים?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם את/ה סובל/ת מצרבות, תחושת \"שריפה\" בחזה, או חוסר נוחות בבטן העליונה לאחר האוכל?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם יש לך תיאבון בריא ואת/ה מצליח/ה לשמור על משקל יציב, או שיש ירידה במשקל ובחשק לאכול?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם את/ה חווה קוצר נשימה או התעייפות מהירה גם במאמץ קל?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם שנת הלילה שלך שקטה, או שאת/ה מתעורר/ת לעיתים קרובות?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם את/ה מרגיש/ה לעיתים סחרחורת, חוסר יציבות בהליכה, או חשש מנפילה?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם כאבים במפרקים או בגב מגבילים את התנועה שלך בבית או בחוץ?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם את/ה סובל/ת מקור קיצוני בכפות הידיים והרגליים, או דווקא מגלי חום והזעה?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם את/ה או הקרובים אליך מבחינים בשינויים בזיכרון, בלבול, או קושי בריכוז לאחרונה?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם מצב הרוח שלך יציב, או שאת/ה חווה תקופות של עצבות עמוקה, חרדה או תחושת בדידות?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם את/ה נתקל/ת בקושי לשלוט בשתן, או בקושי להתחיל במתן שתן?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם חלה ירידה משמעותית בראייה או בשמיעה שמפריעה לך בתקשורת עם הסביבה?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "האם ריבוי התרופות גורם לך לתופעות לוואי במערכת העיכול?" },
+    { category: "אריכות ימים ואיכות חיים", categoryEn: "Longevity & Dignity", text: "מהו הדבר החשוב לך ביותר לשמר בשנים הקרובות?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "במשפט אחד, מהו האתגר הבריאותי המרכזי שמונע ממך להרגיש במיטבך כיום?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "כיצד את/ה חווה מתח בחיי היומיום? (התפרצויות כעס, תחושת תקיעות בגרון/חזה, חרדה)" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "(לנשים) האם המחזור החודשי שלך סדיר? האם את סובלת מכאבים חזקים או PMS?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם את/ה סובל/ת מנפיחות בבטן, צרבות, IBS או עייפות בולטת לאחר ארוחות?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם קשה לך להירדם בגלל \"ראש רץ\", או שאת/ה מתעורר/ת עייף/ה גם אחרי שנת לילה?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "בסולם של 1-10, כמה אנרגיה יש לך באמצע היום? האם את/ה זקוק/ה לקפה כדי לתפקד?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם את/ה סובל/ת מכאבי ראש, מיגרנות, או מתח כרוני באזור הכתפיים והצוואר?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם יש לך פציעות ספורט ישנות שחוזרות להציק, או כאבי גב תחתון?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם הידיים והרגליים שלך נוטות להיות קרות תמיד, או שאת/ה סובל/ת מחום והזעת יתר?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם את/ה נוטה לחלות לעיתים קרובות, או סובל/ת מאלרגיות עונתיות וסינוסיטיס?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם העור שלך נוטה לאקנה, אדמומיות, פריחות או יובש קיצוני?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם את/ה חווה קושי להתרכז, \"ערפל מחשבתי\" או מוסחות דעת גבוהה?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם אורח החיים שלך כולל ישיבה ממושכת, או פעילות גופנית אינטנסיבית מדי?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "האם יש לך חשקים עזים וספציפיים (מתוק, מלוח, שומני) כשאת/ה עייף/ה או לחוץ/ה?" },
+    { category: "איזון וחיזוק (מבוגרים)", categoryEn: "Balance & Strength (Adults)", text: "אם הטיפול יצליח מעבר למצופה, איך ייראו החיים שלך בעוד 3 חודשים מהיום?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "במשפט אחד, מהי הפציעה או הטראומה העיקרית שמביאה אותך לטיפול היום?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "כיצד היית מתאר/ת את הכאב? האם הוא חד ודוקר, עמום ולוחץ, או שורף?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם הכאב מחמיר באופן משמעותי בלילה, או אפילו מעיר אותך משינה?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם את/ה מרגיש/ה החמרה בכאב או בנוקשות כשמזג האוויר משתנה?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם יש נפיחות נראית לעין, בצקת או תחושת \"מלאות\" באזור הפגוע?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם הכאב מחמיר בתחילת תנועה ומשתפר לאחר \"חימום\", או שהוא מחמיר ככל שאת/ה פעיל/ה יותר?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם את/ה סובל/ת מנוקשות שמגבילה את טווח התנועה?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם המקום הפגוע מרגיש חם למגע ואדום, או קר ונוטה להכחיל?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם יש תחושת נימול, הירדמות, או זרמים חשמליים המקרינים מהאזור הפגוע לגפיים?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם הכאב קשור לתנוחת עבודה (ישיבה ממושכת מול מחשב, עמידה על הרגליים)?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם הכאב מוחמר בתקופות של מתח רגשי או עומס נפשי?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "האם הכאב הנוכחי קשור לטראומה ישנה (תאונת דרכים, נפילה מלפני שנים) שמעולם לא טופלה כראוי?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "אילו תרופות או משככי כאבים את/ה נוטל/ת באופן קבוע, ומה רמת ההקלה שהם מספקים?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "אילו טיפולים ניסית בעבר לבעיה זו (פיזיותרפיה, כירופרקטיקה, הזרקות)?" },
+    { category: "שיקום וטיפול בכאב", categoryEn: "Pain Rehabilitation", text: "מהי הפעולה הספציפית שתרצה/י לחזור לעשות ללא כאב?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם קשה לך להתרכז במשימה אחת לאורך זמן, או שדעתך מוסחת בקלות (תחושת \"ערפל\")?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם את/ה שם/ה לב לירידה בזיכרון לטווח קצר, או קושי לשלוף מילים?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם את/ה מתקשה לקבל החלטות, ולעיתים קרובות מרגיש/ה \"שיתוק\" מול אפשרויות?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם המחשבות שלך נוטות \"לרוץ במעגלים\" סביב אותו נושא, במיוחד לפני השינה?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם את/ה חווה תשישות מנטלית, כאילו המוח \"מלא\" ולא מסוגל לקלוט מידע חדש?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "כיצד את/ה מגיב/ה לדד-ליין או ללחץ? האם את/ה נכנס/ת לחרדה וקיפאון, או פועל/ת?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם יש לך רעיונות ורצונות, אך חסר לך ה\"דרייב\" (הכוח המניע) כדי להתחיל ולבצע?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם את/ה מרגיש/ה חסום/ה יצירתית, ללא השראה או \"זרימה\"?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם את/ה רגיש/ה מאוד לרעשים חזקים, המונים, או למצבי רוח של אנשים אחרים?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם את/ה מאבד/ת סבלנות מהר או מתרגז/ת בקלות כשדברים לא מסתדרים?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם את/ה חווה ספק עצמי לעיתים קרובות, או תחושה שאת/ה \"לא מספיק טוב/ה\"?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם בבוקר המוח שלך צלול, או שאת/ה מתעורר/ת עם תחושת כבדות וערפל?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם קשה לך להתמודד עם שינויים בלתי צפויים בתוכניות?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "האם אינטראקציה חברתית ממושכת מרוקנת אותך מאנרגיה מנטלית?" },
+    { category: "בהירות וחוסן מנטלי", categoryEn: "Mental Clarity & Resilience", text: "מהו הכוח המנטלי שהכי היית רוצה לחזק? (מיקוד, רוגע, זיכרון, או ביטחון עצמי)" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם את/ה מרגיש/ה שינויים פיזיים בגוף (כאבי ראש, מפרקים, עייפות) עוד לפני שמזג האוויר משתנה בחוץ?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם את/ה סובל/ת יותר בחום הקיץ או בקור החורף?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "בימים לחים ודביקים, האם את/ה מרגיש/ה תחושת \"משקולת\" על הגוף, נפיחות או ערפל מחשבתי?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם חשיפה לרוח חזקה או למזגן ישיר גורמת לך לכאבי ראש, צוואר תפוס או צינון מיידי?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם את/ה נוטה לסבול מיובש קיצוני (עור סדוק, צמא תמידי, שיעול יבש) בסביבות ממוזגות?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם כאבי הראש שלך מופיעים בעיקר כשחם מאוד או כשיש לחץ ברומטרי נמוך/סופות?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם את/ה חווה קשיי נשימה או החמרה באלרגיות בעונות מעבר?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם המפרקים שלך \"נוקשים\" וכואבים יותר בימים גשומים וקרים?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם את/ה סובל/ת משלשולים או חוסר נוחות בבטן בקיץ או מכאבי בטן בחורף?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם העור שלך מגיב בפריחות מגרדות בחום או באקזמה וסדקים בקור?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם את/ה מתקשה להתעורר או לתפקד בימים אפורים וחסרי שמש?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם את/ה מרגיש/ה מיובש/ת באופן כרוני למרות שתייה מרובה, או שאת/ה צובר/ת נוזלים בקלות?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "האם השינה שלך מופרעת יותר בלילות חמים או שאת/ה מתעורר/ת מקור?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "כשאת/ה טס/ה או משנה סביבה גיאוגרפית, האם לוקח לגוף שלך זמן רב \"להתאפס\"?" },
+    { category: "בקרת אקלים פנימית", categoryEn: "Internal Climate Control", text: "אם הטיפול יכול לעזור לך להתמודד עם עונה אחת בלבד בצורה מושלמת – איזו עונה הכי קשה לך כיום?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה מרגיש/ה שהאנרגיה שלך נגמרת בשעות הצהריים, או שיש לך כוח יציב לאורך כל היום?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה מתעורר/ת מספר פעמים בלילה, או מתקשה לחזור לישון לפנות בוקר?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם חל שינוי בתחושת הטמפרטורה שלך לאחרונה – גלי חום פתאומיים, או תחושת קור עמוקה?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה מרגיש/ה ירידה בחדות הזיכרון לטווח קצר, או קושי לשלוף מילים?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "כשאת/ה חולה או מבצע/ת מאמץ פיזי, האם לגוף לוקח זמן רב יותר לחזור לעצמו?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה סובל/ת מנוקשות בוקר במפרקים שמשתחררת רק אחרי תנועה וחימום?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה סובל/ת לעיתים מסחרחורות, טינטון או תחושת \"לחץ\" וכבדות בראש?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם יש תחושת כבדות או נפיחות בבטן גם אחרי ארוחות קטנות וקלות?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה מרגיש/ה נימול או הירדמות של הגפיים בזמן מנוחה או בשינה?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם ישנו כאב קבוע המלווה אותך ומחמיר במזג אוויר קר או לח?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם השינויים בחיים (ילדים עוזבים, פרישה) מעוררים בך תחושת חופש ושמחה, או ריקנות וחרדה?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה מוצא/ת את עצמך חסר/ת סבלנות או נוטה למצבי רוח דכדוכיים?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה נוטל/ת מספר תרופות מרשם באופן קבוע?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "האם את/ה סובל/ת מיובש טורדני – בעיניים, בפה, בעור או בריריות?" },
+    { category: "חיוניות ואריכות ימים", categoryEn: "Vitality & Longevity", text: "מהו הדבר האחד שתרצה/י להמשיך לעשות ב-10 השנים הבאות ללא הגבלה?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "באיזו תדירות את/ה חולה במהלך השנה? האם את/ה מרגיש/ה שאת/ה \"תופס/ת\" כל וירוס?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "כשאת/ה מרגיש/ה סימנים ראשונים של מחלה, האם את/ה עוצר/ת ונח/ה, או ממשיך/ה בשגרה?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "כאשר את/ה חולה, כמה זמן לוקח לך להחלים לחלוטין ולחזור לאנרגיה מלאה?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם את/ה חשוף/ה באופן קבוע לאנשים חולים (עבודה בבית ספר, בית חולים)?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם את/ה נוטה לסבול מקור, במיוחד בידיים וברגליים, או צמרמורות בקלות?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם את/ה שם/ה לב שחוסר שינה או תקופות עמוסות מובילים כמעט מייד למחלה?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם את/ה נוטה לחזור לפעילות גופנית מאומצת מיד כשאת/ה מרגיש/ה מעט יותר טוב?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם את/ה מתעורר/ת בבוקר עם גודש באף, ליחה בגרון או התעטשויות?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם שינויים בתזונה (סוכר או מוצרי חלב) משפיעים לרעה על מערכת הנשימה שלך?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם את/ה חולה לעיתים קרובות דווקא בסופי שבוע או בחופשות (כשמפלס הלחץ יורד)?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם יש לך נטייה לשיעול מתמשך שנשאר שבועות אחרי שהצינון חלף?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם יש ילדים קטנים בבית ש\"מביאים\" וירוסים מהגן/בית ספר באופן קבוע?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם את/ה מקפיד/ה על שתייה מספקת במהלך היום, או שאת/ה נוטה לשכוח לשתות?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "האם יש עונה מסוימת בשנה שבה הבריאות שלך תמיד מתערערת?" },
+    { category: "חוסן חיסוני והתאוששות", categoryEn: "Immune Shield & Recovery", text: "מהי המטרה העיקרית שלך בחיזוק המערכת החיסונית?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "במשפט אחד, מהו האתגר התזונתי הגדול ביותר שלך כיום?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם את/ה אוכל/ת ארוחת בוקר? אם כן, האם היא חמה או קרה?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם את/ה נוהג/ת לאכול ארוחות כבדות בשעות המאוחרות של הלילה?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "מהי העדפת המזון שלך? מזון נא/קר או מזון מבושל וחם?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם את/ה מרגיש/ה \"צניחת אנרגיה\" וצורך לישון מיד לאחר האוכל?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם את/ה סובל/ת מנפיחות בבטן, גזים או תחושת \"בלון\" שמתגברת במהלך היום?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם את/ה מעדיף/ה לשתות מים קפואים/קרים מאוד, או משקאות חמים/פושרים?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם יש לך צורך עז במתוקים או בפחמימות, במיוחד בשעות אחר הצהריים?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם את/ה מוצא/ת את עצמך ממליח/ה את האוכל בצורה מוגזמת, או מחפש/ת טעמים חריפים?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם צריכת מוצרי חלב גורמת לך לליחה, נזלת או אי-נוחות בבטן?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם אכילת סלט גדול או ירקות חיים גורמת לך לכאבי בטן או ליציאות רכות?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם את/ה חווה רעב תמידי שלא יודע שובע, או חוסר תיאבון מוחלט?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "האם את/ה נוטה לפנות לאוכל מנחם בזמנים של מתח, עצב או שעמום?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "כמה כוסות קפה את/ה שותה ביום? האם את/ה מרגיש/ה שבלעדיו המערכת לא מתפקדת?" },
+    { category: "הזנת החיים (תזונה)", categoryEn: "Nourishing Life (Nutrition)", text: "אם היית יכול/ה לשנות הרגל תזונתי אחד בלבד שישפר את בריאותך, מה הוא היה?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מהי האטיולוגיה המרכזית לחוסר יאנג בכליות?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "אילו סימפטומים מבדילים בין חוסר צ\'י בטחול לבין חוסר יאנג בטחול?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מהו עקרון הטיפול המדויק לסטגנציה של צ\'י הכבד שהפכה לאש?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "האם טיניטוס המופיע בקובץ שייך לסינדרום עודף או חוסר?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מה הקשר בין \"חוסר דם בלב\" לבין הפרעות שינה?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "כיצד מתבטא \"חום ולחות במחמם התחתון\" אצל גברים לעומת נשים?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מנה שלושה סימני מפתח לזיהוי \"רוח פנימית של הכבד\"." },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מה ההבדל באבחנה בין ליחה-אל-חומרית לבין ליחה-אש בלב?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "כיצד משפיע רגש ה\"דאגה\" על הטחול והריאות?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מהם הסימפטומים של \"טחול אינו שולט בדם\"?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מה ההבדל בין חוסר יין בריאות לבין יובש בריאות?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מהו הקשר בין חוסר יין בכליות לחוסר יאנג בכליות?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מהם הסימנים הקלאסיים של סטגנציית דם?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "כיצד מתבטא \"קור ברחם\" ומה הנקודות המרכזיות לטיפול?" },
+    { category: "תסמונות זאנג-פו", categoryEn: "Zang Fu Syndromes", text: "מהם הסימנים של הפרעה ב-Shen וכיצד מאבחנים את הדפוס?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "מהם המאפיינים המיוחדים של נקודות Yuan (מקור)?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "כיצד משתמשים בנקודות Luo (מחברות)?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "מהו תפקיד נקודות Xi-Cleft?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "כיצד נקודות Shu (גב) משמשות לאבחון וטיפול?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "מהן נקודות Mu (קדמיות) וכיצד משתמשים בהן?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "מהם עקרונות בחירת הנקודות המרוחקות?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "כיצד משלבים נקודות מקומיות עם נקודות מרוחקות?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "מהן נקודות Hui (השפעה) ולמה הן משמשות?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "כיצד נקודות Jing-Well משמשות במצבי חירום?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "מהו הקשר בין נקודות Five Elements לטיפול?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "כיצד בוחרים נקודות לפי שעון האיברים?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "מהן נקודות Windows of Heaven?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "כיצד נקודות Shen משפיעות על הרוח?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "מהן הנקודות לטיפול בדם?" },
+    { category: "נקודות דיקור", categoryEn: "Acupuncture Points", text: "כיצד משתמשים בנקודות לפי עונות השנה?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "מהם ארבעת שלבי הבדיקה ברפואה הסינית?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "כיצד מפרשים את גוון הפנים?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "מהם הסימנים החזותיים של חוסר דם?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "כיצד מאבחנים לפי הקול?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "מהי החשיבות של ריח הגוף באבחון?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "כיצד שואלים על שינה באנמנזה?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "מהם שאלות המפתח על העיכול?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "כיצד מפרשים העדפות טמפרטורה?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "מהי החשיבות של שאלות על צמא ושתייה?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "כיצד מאבחנים לפי מישוש הבטן?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "מהם הסימנים של חום לעומת קור?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "כיצד מזהים דפוסי עודף לעומת חוסר?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "מהי החשיבות של שאלות על הזעה?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "כיצד מפרשים כאבים ותחושות?" },
+    { category: "ארבע הבדיקות", categoryEn: "Four Examinations", text: "מהם הסימנים של לחות בגוף?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "כיצד מאבחנים דפוסי אי-פוריות ב-TCM?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "מהו הטיפול בכאבי מחזור (דיסמנוריאה)?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "כיצד מטפלים ב-PMS?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "מהם הדפוסים השכיחים בהפסקת מחזור?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "כיצד מטפלים בדימום רב במחזור (מנורגיה)?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "מהם הנקודות החשובות לפוריות?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "כיצד מטפלים בציסטות שחלתיות?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "מהו הטיפול באנדומטריוזיס?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "כיצד מלווים הריון בטיפול?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "מהם הנקודות האסורות בהריון?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "כיצד מטפלים בבחילות הריון?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "מהו הטיפול בתסמונת המעבר (מנופאוזה)?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "כיצד מטפלים בגלי חום?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "מהי חשיבות הדם והכבד לבריאות האישה?" },
+    { category: "בריאות האישה", categoryEn: "Women's Health", text: "כיצד מטפלים במסה בשד לפי TCM?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "מהם המאפיינים הייחודיים של פיזיולוגיית הילד ב-TCM?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "כיצד מאבחנים ילדים שלא יכולים לתאר תסמינים?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "מהו הטיפול בשיעול כרוני אצל ילדים?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "כיצד מטפלים בבעיות עיכול שכיחות בילדות?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "מהם הסימנים של חום מזון אצל תינוקות?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "כיצד Tuina (עיסוי סיני) מתאים לילדים?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "מהו הטיפול בהרטבת לילה (Enuresis)?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "כיצד מחזקים את החסינות של ילדים שחולים תכופות?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "מהם הנקודות הבטוחות לדיקור בילדים?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "כיצד מטפלים באלרגיות עונתיות אצל ילדים?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "מהו הטיפול בהפרעות קשב וריכוז (ADHD)?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "כיצד מזהים חולשת טחול אצל ילדים?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "מהם המזונות המומלצים לחיזוק ילדים?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "כיצד מטפלים בחרדה ופחדים בילדות?" },
+    { category: "רפואה סינית לילדים", categoryEn: "Pediatric TCM", text: "מהי גישת TCM לבעיות שינה אצל ילדים?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "מהם השינויים הפיזיולוגיים העיקריים בהזדקנות לפי TCM?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "כיצד מטפלים בדמנציה ואובדן זיכרון?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "מהו הטיפול באוסטאופורוזיס מנקודת מבט TCM?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "כיצד מחזקים את הכליות לאריכות ימים?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "מהם הסימנים של דלדול ה-Jing וכיצד מאטים אותו?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "כיצד מטפלים בנוקשות מפרקים בגיל מבוגר?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "מהו הטיפול בעצירות כרונית אצל קשישים?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "כיצד מאזנים טיפול בתרופות מרובות (פוליפארמקולוגיה)?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "מהם הנקודות החשובות לשיפור הזרימה הדמית?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "כיצד מטפלים בסחרחורת וחוסר יציבות?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "מהו הטיפול בבעיות שתן שכיחות בגיל מבוגר?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "כיצד משמרים את כוח הראייה והשמיעה?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "מהם המזונות התומכים בבריאות הקשיש?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "כיצד מטפלים בדיכאון וחרדה בגיל מבוגר?" },
+    { category: "רפואה סינית לקשישים", categoryEn: "Geriatric TCM", text: "מהי גישת TCM למניעת נפילות?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "מהם שבעת הרגשות ברפואה הסינית וכיצד הם משפיעים על האיברים?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "כיצד כעס ותסכול פוגעים בכבד?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "מהו הטיפול בחרדה כרונית מנקודת מבט TCM?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "כיצד אבל וצער משפיעים על הריאות?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "מהי הגישה לטיפול בדיכאון ב-TCM?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "כיצד פחד משפיע על הכליות ועל אנרגיית הגוף?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "מהם הנקודות להרגעת הנפש (Shen)?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "כיצד מטפלים בנדודי שינה מרקע רגשי?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "מהו הקשר בין דאגה יתרה לבעיות עיכול?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "כיצד טראומה רגשית נשמרת בגוף לפי TCM?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "מהו הטיפול בהתקפי פאניקה?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "כיצד שמחה יתרה יכולה לפגוע בלב?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "מהם הנקודות לשחרור רגשות כבושים?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "כיצד מאזנים בין עבודה רגשית לטיפול פיזי?" },
+    { category: "בריאות רגשית", categoryEn: "Emotional Health", text: "מהי חשיבות ה-Hun וה-Po לבריאות רגשית?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "מהי הפתופיזיולוגיה של נדודי שינה ב-TCM?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "כיצד מבחינים בין סוגי נדודי שינה שונים?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "מהו הטיפול בקושי להירדם לעומת התעוררויות ליליות?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "כיצד חוסר דם בלב משפיע על השינה?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "מהם הסימנים של אש בלב הגורמת לנדודי שינה?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "כיצד מטפלים בחלומות מטרידים וסיוטים?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "מהן הנקודות היעילות ביותר לשיפור איכות השינה?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "כיצד דאגה יתרה פוגעת בשינה?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "מהו הטיפול בעייפות כרונית למרות שינה ארוכה?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "כיצד מטפלים בדום נשימה בשינה (Sleep Apnea)?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "מהי חשיבות שעות השינה לפי שעון האיברים?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "כיצד התזונה משפיעה על איכות השינה?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "מהם הצמחים המסייעים לשינה ב-TCM?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "כיצד מטפלים בהתעוררות בשעה קבועה כל לילה?" },
+    { category: "הפרעות שינה", categoryEn: "Sleep Disorders", text: "מהי הגישה לטיפול בג\'ט לאג מנקודת מבט TCM?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "מהו תפקיד הטחול ב\"טרנספורמציה וטרנספורט\"?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "כיצד מאבחנים חולשת טחול?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "מהו הטיפול בנפיחות וגזים כרוניים?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "כיצד מטפלים ב-IBS (תסמונת המעי הרגיז)?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "מהם הסימנים של לחות בטחול?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "כיצד סטגנציה של צ\'י הכבד משפיעה על העיכול?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "מהו הטיפול בצרבת וריפלוקס חומצי?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "כיצד מטפלים בעצירות כרונית לפי הדפוס?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "מהם הסימנים של חום בקיבה?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "כיצד מטפלים בשלשולים חוזרים?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "מהי חשיבות ארוחת הבוקר לפי TCM?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "כיצד מזונות קרים ונאים פוגעים בעיכול?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "מהם הנקודות החשובות לחיזוק הטחול?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "כיצד מטפלים בחוסר תיאבון?" },
+    { category: "בריאות מערכת העיכול", categoryEn: "Digestive Health", text: "מהי הגישה לטיפול במחלות מעי דלקתיות?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "מהם תפקידי הריאות ב-TCM מעבר לנשימה?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "כיצד מטפלים בשיעול יבש לעומת שיעול עם ליחה?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "מהו הטיפול באסתמה מנקודת מבט TCM?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "כיצד מטפלים בסינוסיטיס כרוני?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "מהם הסימנים של חוסר יין בריאות?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "כיצד ליחה בריאות משפיעה על הנשימה?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "מהו הטיפול באלרגיות עונתיות?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "כיצד מחזקים את Wei Qi למניעת הצטננויות?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "מהם הנקודות היעילות לפתיחת דרכי הנשימה?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "כיצד מטפלים בקוצר נשימה?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "מהו הקשר בין הריאות לעור?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "כיצד מטפלים בשיעול כרוני לאחר הצטננות?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "מהי חשיבות לחות הריאות?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "כיצד עשן ואוויר מזוהם פוגעים בריאות?" },
+    { category: "בריאות מערכת הנשימה", categoryEn: "Respiratory Health", text: "מהם הצמחים המחזקים את הריאות?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "מהי הגישה של TCM לכאבי גב תחתון?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "כיצד מבחינים בין כאב מעודף לכאב מחוסר?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "מהו הטיפול בדלקת מפרקים (ארתריטיס)?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "כיצד מטפלים בפריצת דיסק?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "מהם הסימנים של Bi Syndrome (סינדרום החסימה)?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "כיצד מטפלים בכאבי צוואר וכתפיים תפוסות?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "מהו תפקיד הכליות בבריאות העצמות?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "כיצד מטפלים בפציעות ספורט?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "מהם הנקודות היעילות לכאבי ברכיים?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "כיצד מטפלים בתעלת שורש כף היד (Carpal Tunnel)?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "מהו הטיפול בפיברומיאלגיה?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "כיצד דם וצ\'י משפיעים על תפקוד השרירים?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "מהם הסימנים של רוח-לחות במפרקים?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "כיצד מטפלים בגיד אכילס דלקתי?" },
+    { category: "מערכת השלד והשרירים", categoryEn: "Musculoskeletal System", text: "מהי חשיבות התנועה לבריאות הגידים והשרירים?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "כיצד מסווגים כאבי ראש לפי מיקום ב-TCM?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "מהו הטיפול בכאב ראש מעליית יאנג הכבד?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "כיצד מבחינים בין מיגרנה לכאב ראש מתח?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "מהם הסימנים של כאב ראש מחוסר דם?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "כיצד מטפלים בכאב ראש מליחה?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "מהו הטיפול בכאב ראש קדמי (מצח)?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "כיצד מטפלים בכאב ראש צדי (רקות)?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "מהם הנקודות העיקריות לכאבי ראש?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "כיצד סטגנציה של דם גורמת לכאב ראש כרוני?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "מהו הקשר בין הורמונים לכאבי ראש?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "כיצד מטפלים בכאב ראש המחמיר עם מזג אוויר?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "מהי חשיבות הטיפול בין התקפים למניעה?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "כיצד מזון ושתייה משפיעים על כאבי ראש?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "מהו הטיפול בכאב ראש עורפי?" },
+    { category: "כאבי ראש ומיגרנות", categoryEn: "Headaches & Migraines", text: "כיצד מטפלים במיגרנה עם אאורה?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "מהו הקשר בין הריאות לבריאות העור ב-TCM?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "כיצד מטפלים באקזמה (אטופיק דרמטיטיס)?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "מהו הטיפול בפסוריאזיס?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "כיצד מאבחנים דפוסים שונים של אקנה?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "מהם הסימנים של חום בדם הגורם לפריחות?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "כיצד לחות ורעילות משפיעים על העור?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "מהו הטיפול באורטיקריה (סרפדת)?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "כיצד מטפלים בשלבקת חוגרת (Shingles)?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "מהם הנקודות היעילות לטיפול בגרד?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "כיצד חוסר דם מתבטא בעור?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "מהו הטיפול ברוזציאה?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "כיצד מטפלים בוויטיליגו?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "מהי חשיבות התזונה לבריאות העור?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "כיצד רגשות משפיעים על מצב העור?" },
+    { category: "מחלות עור", categoryEn: "Skin Disorders", text: "מהם הצמחים המטפלים בבעיות עור?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "מהם תפקידי הלב ב-TCM מעבר לשאיבת דם?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "כיצד מטפלים ביתר לחץ דם?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "מהו הטיפול בהפרעות קצב לב?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "כיצד סטגנציה של דם משפיעה על הלב?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "מהם הסימנים של חוסר דם בלב?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "כיצד מטפלים בחרדה עם דפיקות לב?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "מהו הקשר בין הלב לכליות (ציר לב-כליות)?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "כיצד ליחה חוסמת את פתחי הלב?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "מהם הנקודות החשובות לבריאות הלב?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "כיצד מטפלים בכאבים בחזה?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "מהו הטיפול בדליות ובעיות ורידים?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "כיצד משפרים את זרימת הדם?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "מהי חשיבות השן (Shen) לבריאות הלב?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "כיצד מונעים מחלות לב לפי TCM?" },
+    { category: "מערכת הלב וכלי הדם", categoryEn: "Cardiovascular System", text: "מהם הצמחים התומכים בבריאות הלב?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "מהם העקרונות לבניית נוסחת צמחים?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "מה תפקיד ה\"מלך\" (Jun) בנוסחה?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "כיצד בוחרים צמחי \"שר\" (Chen)?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "מהו תפקיד צמחי ה\"שליח\" (Shi)?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "כיצד משנים נוסחה קלאסית למטופל ספציפי?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "מהי נוסחת Si Jun Zi Tang ולמה היא משמשת?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "כיצד משתמשים ב-Xiao Yao San?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "מהי נוסחת Liu Wei Di Huang Wan?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "כיצד מטפלים בצינון עם Ma Huang Tang?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "מהי נוסחת Gui Pi Tang ומתי משתמשים בה?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "כיצד מחליטים על מינון ותדירות נטילה?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "מהם הצמחים האסורים בהריון?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "כיצד מתאימים נוסחאות לגילאים שונים?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "מהן האינטראקציות החשובות בין צמחים לתרופות?" },
+    { category: "נוסחאות צמחים", categoryEn: "Herbal Formulas", text: "כיצד מעריכים את איכות הצמחים?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מהם סוגי המוקסה השונים וכיצד בוחרים ביניהם?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מתי מועדפת מוקסה על דיקור?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מהם הנקודות החשובות לטיפול במוקסה?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "כיצד מוקסה מחממת את הגוף ומגרשת קור?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מהם ההתוויות הנגד למוקסה?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "כיצד מבצעים טכניקת מוקסה ישירה?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מהם סוגי כוסות הרוח השונים?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "כיצד מפרשים סימני כוסות רוח?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מתי משתמשים בכוסות רוח נעות?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מהם היתרונות של כוסות רוח לטיפול בכאב?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "כיצד משלבים כוסות רוח עם דיקור?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מהם ההתוויות הנגד לכוסות רוח?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "כיצד מטפלים בצינון עם מוקסה?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "מהי טכניקת ה-\"סנדוויץ\'\" במוקסה?" },
+    { category: "מוקסה וכוסות רוח", categoryEn: "Moxibustion & Cupping", text: "כיצד מלמדים מטופלים לבצע מוקסה עצמית?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "מהם שמונת כלי הדם המיוחדים (Qi Jing Ba Mai)?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "מה תפקיד ה-Du Mai (כלי השליט)?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "כיצד ה-Ren Mai (כלי התפיסה) משפיע על הפוריות?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "מהו הקשר בין Chong Mai לדם?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "כיצד Dai Mai (כלי החגורה) קשור לבעיות במותניים?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "מהם נקודות הפתיחה והסגירה של כל כלי מיוחד?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "כיצד משתמשים ב-Yang Wei Mai לבעיות חוץ?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "מהו תפקיד Yin Wei Mai?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "כיצד Yang Qiao Mai משפיע על השינה?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "מהו הקשר בין Yin Qiao Mai לעיניים?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "כיצד משלבים כלים מיוחדים בטיפול?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "מהם הסימפטומים של חוסר איזון בכלים המיוחדים?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "כיצד מטפלים בבעיות הורמונליות דרך הכלים המיוחדים?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "מהי חשיבות הכלים המיוחדים בטיפול בטראומה?" },
+    { category: "כלי הדם המיוחדים", categoryEn: "Extraordinary Vessels", text: "כיצד הכלים המיוחדים קשורים לצ\'אקרות?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "מהי מפת האוזן ואיך היא משקפת את הגוף?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "כיצד מאתרים נקודות רגישות באוזן?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "מהם הכלים לאבחון באמצעות האוזן?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "כיצד דיקור אוזן מסייע בהפסקת עישון?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "מהי פרוטוקול NADA להתמכרויות?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "כיצד מטפלים בכאב באמצעות דיקור אוזן?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "מהם הנקודות החשובות להרגעת חרדה?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "כיצד משתמשים בזרעי אוזן (ear seeds)?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "מהו הטיפול בנדודי שינה דרך האוזן?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "כיצד מטפלים בבעיות עיכול באמצעות האוזן?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "מהם הנקודות לאיזון הורמונלי?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "כיצד דיקור אוזן מסייע בהרזיה?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "מהם ההתוויות הנגד לדיקור אוזן?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "כיצד משלבים דיקור אוזן עם דיקור גוף?" },
+    { category: "דיקור אוזן", categoryEn: "Auricular Acupuncture", text: "מהי נקודת ה-Shen Men ולמה היא חשובה?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "כיצד עונת האביב משפיעה על הכבד?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "מהו הטיפול המומלץ בקיץ לשמירה על הלב?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "כיצד מכינים את הגוף לסתיו?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "מהי חשיבות שמירת האנרגיה בחורף?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "כיצד התזונה משתנה לפי העונות?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "מהם הנקודות החשובות לכל עונה?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "כיצד מטפלים באלרגיות עונתיות?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "מהו הקשר בין \"עונה חמישית\" לטחול?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "כיצד שעות השינה משתנות לפי העונה?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "מהם הסימנים של חוסר הסתגלות לעונה?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "כיצד מונעים הצטננויות בתחילת הסתיו?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "מהי חשיבות \"פתיחת האביב\" לכבד?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "כיצד מטפלים בדיכאון עונתי (SAD)?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "מהם הצמחים המתאימים לכל עונה?" },
+    { category: "טיפול לפי עונות", categoryEn: "Seasonal Treatment", text: "כיצד פעילות גופנית משתנה לפי העונה?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "מהם חמשת היסודות (Wu Xing) וכיצד הם קשורים לאיברים?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "כיצד מחזור השליטה והחיזוק פועלים?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "מהו הקשר בין יסוד העץ לכבד ולמרה?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "כיצד יסוד האש משפיע על הלב והמעי הדק?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "מהי החשיבות של יסוד האדמה לעיכול?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "כיצד יסוד המתכת קשור לריאות?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "מהו תפקיד יסוד המים לכליות?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "כיצד מאזנים יסוד חלש באמצעות יסוד אחר?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "מהם הסימנים של חוסר איזון ביסוד העץ?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "כיצד רגשות קשורים לחמשת היסודות?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "מהו הקשר בין עונות השנה ליסודות?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "כיצד צבעים משקפים את היסודות?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "מהם הטעמים הקשורים לכל יסוד?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "כיצד משתמשים בחמשת היסודות בבחירת נקודות?" },
+    { category: "חמשת היסודות", categoryEn: "Five Elements", text: "מהי גישת חמשת היסודות לטיפול פסיכו-רגשי?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "מהם העקרונות הבסיסיים של תורת הין-יאנג?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "כיצד יין ויאנג מתקיימים יחד ובאיזון?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "מהם הסימנים של עודף יאנג?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "כיצד מזהים חוסר יין?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "מהו הקשר בין יין-יאנג לזמנים ביום?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "כיצד יין ויאנג מתבטאים בגוף?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "מהי חשיבות האיזון בין יין ליאנג?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "כיצד מטפלים בחוסר יאנג?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "מהם המזונות שמזינים יין או יאנג?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "כיצד יין-יאנג משפיעים על הרגשות?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "מהו הקשר בין יין-יאנג למחלות כרוניות?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "כיצד מאבחנים דפוסי יין-יאנג?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "מהם הנקודות לחיזוק יין?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "כיצד מגרשים קור (יין עודף)?" },
+    { category: "יין ויאנג", categoryEn: "Yin & Yang", text: "מהי הגישה להחלפת יין ויאנג במחלות חמורות?" }        ];
+
+        // Pause/Continue Control
+        function togglePause() {
+            const pauseBtn = document.getElementById('pauseButton');
+            
+            if (isPaused) {
+                // Continue
+                isPaused = false;
+                pauseBtn.textContent = '⏸️ השהה';
+                pauseBtn.classList.remove('paused-state');
+                updateStatus('✅ ממשיך בחיפוש...');
+            } else {
+                // Pause
+                isPaused = true;
+                pauseBtn.textContent = '▶️ המשך';
+                pauseBtn.classList.add('paused-state');
+                updateStatus('⏸️ מושהה - לחץ המשך כדי להמשיך');
+                
+                // Abort current request if exists
+                if (searchAbortController) {
+                    searchAbortController.abort();
+                    searchAbortController = null;
+                }
             }
-        ];
-
-        const commonHerbs = [
-            "Ginseng (人參)", "Astragalus (黃芪)", "Rehmannia (熟地黃)",
-            "Angelica (當歸)", "Bupleurum (柴胡)", "Poria (茯苓)",
-            "Atractylodes (白朮)", "Licorice (甘草)", "Ginger (生薑)"
-        ];
-
-        const acupoints = {
-            front: [
-                { id: "CV12", x: 100, y: 180, name: "Zhong Wan", meridian: "Conception Vessel" },
-                { id: "ST25", x: 85, y: 200, name: "Tian Shu", meridian: "Stomach" },
-                { id: "ST36", x: 90, y: 320, name: "Zu San Li", meridian: "Stomach" },
-                { id: "SP6", x: 95, y: 360, name: "San Yin Jiao", meridian: "Spleen" }
-            ],
-            back: [
-                { id: "BL23", x: 85, y: 220, name: "Shen Shu", meridian: "Bladder" },
-                { id: "BL20", x: 85, y: 180, name: "Pi Shu", meridian: "Bladder" },
-                { id: "GV4", x: 100, y: 240, name: "Ming Men", meridian: "Governing Vessel" }
-            ]
-        };
-
-        // Initialize
-        async function init() {
-            console.log('🚀 TCM Clinical Assistant initializing...');
-            setupEventListeners();
-            initializeHerbList();
-            // Removed: initializeBodyPoints() - user will upload their own images
-            await testGeminiConnection();
-            await loadAcupointDatabase(); // Load acupoint database
         }
-        
-        // Load acupoint database from CSV
-        async function loadAcupointDatabase() {
-            try {
-                console.log('📂 Loading acupoint database...');
-                
-                const response = await fetch('acupoint_database/acupoint_master_database_MERGED.csv');
-                if (!response.ok) {
-                    console.warn('⚠️ Acupoint database not found - running without acupoint data');
-                    return false;
-                }
-                
-                const csvText = await response.text();
-                const lines = csvText.split('\n');
-                const headers = lines[0].split('\t'); // Tab-separated
-                
-                acupointDatabase = [];
-                acupointByFile = {};
-                
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
-                    
-                    const values = lines[i].split('\t');
-                    if (values.length < 6) continue;
-                    
-                    const entry = {
-                        Image_File: values[0]?.trim() || '',
-                        Body_Part: values[1]?.trim() || '',
-                        Acupoint_Code: values[2]?.trim() || '',
-                        English_Name: values[3]?.trim() || '',
-                        Meridian: values[4]?.trim() || '',
-                        Point_Number: values[5]?.trim() || ''
-                    };
-                    
-                    // Skip NONE entries
-                    if (entry.Acupoint_Code === 'NONE') continue;
-                    
-                    acupointDatabase.push(entry);
-                    
-                    // Group by file
-                    const filename = entry.Image_File;
-                    if (!acupointByFile[filename]) {
-                        acupointByFile[filename] = [];
-                    }
-                    acupointByFile[filename].push(entry);
-                }
-                
-                console.log('✅ Acupoint database loaded:', acupointDatabase.length, 'entries');
-                console.log('📊 Body parts:', Object.keys(acupointByFile).length);
-                return true;
-            } catch (error) {
-                console.error('❌ Error loading acupoint database:', error);
-                return false;
+
+        // Session Management - Real-time Clock
+        function startSessionTimer() {
+            function updateClock() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const dateStr = now.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                document.getElementById('sessionTimer').textContent = `${timeStr} • ${dateStr}`;
             }
-        }
-        
-        // Search acupoints by query
-        function searchAcupoints(query) {
-            if (acupointDatabase.length === 0) return [];
-            
-            const queryUpper = query.toUpperCase();
-            const queryLower = query.toLowerCase();
-            
-            const matches = acupointDatabase.filter(point => {
-                return (
-                    point.Acupoint_Code.toUpperCase().includes(queryUpper) ||
-                    point.English_Name.toLowerCase().includes(queryLower) ||
-                    point.Meridian.toUpperCase().includes(queryUpper) ||
-                    point.Body_Part.toLowerCase().includes(queryLower)
-                );
-            });
-            
-            console.log('🔍 Acupoint search:', query, '→', matches.length, 'matches');
-            return matches;
-        }
-        
-        // Get relevant images from acupoint matches
-        function getRelevantImagesFromAcupoints(acupointMatches) {
-            if (acupointMatches.length === 0) return [];
-            
-            const imageFiles = [...new Set(acupointMatches.map(point => point.Image_File))];
-            
-            const relevantImages = uploadedImages.filter(img => 
-                imageFiles.some(filename => img.name.toLowerCase() === filename.toLowerCase())
-            );
-            
-            console.log('🖼️ Relevant images from acupoints:', relevantImages.length);
-            return relevantImages;
+            updateClock(); // Update immediately
+            timerInterval = setInterval(updateClock, 1000); // Update every second
         }
 
-        function setupEventListeners() {
-            const dropZone = document.getElementById('dropZone');
-            const csvInput = document.getElementById('csvInput');
-
-            dropZone.addEventListener('click', () => csvInput.click());
-            
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('border-blue-500', 'bg-blue-50');
-            });
-
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-                handleFiles(e.dataTransfer.files);
-            });
-
-            csvInput.addEventListener('change', (e) => {
-                handleFiles(e.target.files);
-            });
-
-            document.getElementById('searchInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') performSearch();
-            });
-
-            // Image upload listeners
-            const imageDropZone = document.getElementById('imageDropZone');
-            const imageInput = document.getElementById('imageInput');
-
-            imageDropZone.addEventListener('click', () => imageInput.click());
-            
-            imageDropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                imageDropZone.classList.add('border-purple-500', 'bg-purple-50');
-            });
-
-            imageDropZone.addEventListener('dragleave', () => {
-                imageDropZone.classList.remove('border-purple-500', 'bg-purple-50');
-            });
-
-            imageDropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                imageDropZone.classList.remove('border-purple-500', 'bg-purple-50');
-                handleImageFiles(e.dataTransfer.files);
-            });
-
-            imageInput.addEventListener('change', (e) => {
-                handleImageFiles(e.target.files);
-            });
+        function calculateCost(inputTokens, outputTokens) {
+            const inputCost = inputTokens * INPUT_TOKEN_COST;
+            const outputCost = outputTokens * OUTPUT_TOKEN_COST;
+            return inputCost + outputCost;
         }
 
-        async function testGeminiConnection() {
-            const statusText = document.getElementById('statusText');
-            console.log('🔌 Testing Gemini API connection...');
+        function updateMetrics(newInputTokens = 0, newOutputTokens = 0) {
+            totalInputTokens += newInputTokens;
+            totalOutputTokens += newOutputTokens;
+            totalCost = calculateCost(totalInputTokens, totalOutputTokens);
             
-            try {
-                const testUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
-                console.log('📡 API URL:', testUrl.substring(0, 100) + '...');
+            const totalTokens = totalInputTokens + totalOutputTokens;
+            document.getElementById('tokenCount').textContent = totalTokens.toLocaleString();
+            document.getElementById('totalCost').textContent = `$${totalCost.toFixed(4)}`;
+            document.getElementById('assetsSearched').textContent = totalAssets;
+            
+            const successRate = totalQueries > 0 ? Math.round((successfulQueries / totalQueries) * 100) : 0;
+            document.getElementById('successRate').textContent = `${successRate}%`;
+        }
+
+        function resetSession() {
+            if (confirm('להתחיל סשן חדש? זה ינקה את כל השאלות והתוצאות.')) {
+                sessionStartTime = Date.now();
+                totalInputTokens = 0;
+                totalOutputTokens = 0;
+                totalCost = 0;
+                totalAssets = 0;
+                successfulQueries = 0;
+                totalQueries = 0;
+                currentQueries = [];
+                usedCSVs.clear();
                 
-                const response = await fetch(testUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: "Test connection. Reply with OK." }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 100
-                        }
-                    })
-                });
-
-                console.log('📡 Response status:', response.status);
+                clearAllQueries();
+                document.getElementById('searchResults').innerHTML = '';
+                document.getElementById('activeQueries').innerHTML = '';
+                document.getElementById('shareButtons').classList.add('hidden');
+                document.getElementById('reportOptions').classList.add('hidden');
+                document.getElementById('fallbackBrowser').classList.add('hidden');
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ Gemini response:', data);
-                    statusText.innerHTML = '✅ Gemini AI Connected Successfully!';
-                    document.getElementById('apiStatus').classList.remove('pulse');
-                    document.getElementById('apiStatus').classList.add('bg-green-500/20');
-                } else {
-                    const errorText = await response.text();
-                    console.error('❌ API Error:', response.status, errorText);
-                    throw new Error(`API returned ${response.status}: ${errorText.substring(0, 200)}`);
-                }
-            } catch (error) {
-                console.error('❌ Connection Error:', error);
-                statusText.innerHTML = '⚠️ API Connection Issue - Using offline mode';
-                document.getElementById('apiStatus').classList.remove('pulse');
-                document.getElementById('apiStatus').classList.add('bg-yellow-500/20');
+                resetCSVIndicators();
+                updateMetrics();
             }
         }
 
-        function handleFiles(files) {
-            const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '<h4 class="text-lg font-bold mb-3">📋 Uploaded Files:</h4>';
+        // CSV Indicators
+        function createCSVIndicators() {
+            const container = document.getElementById('csvIndicatorsLeft');
+            const csvs = Object.entries(csvPriorities).sort((a, b) => a[1] - b[1]);
             
-            Array.from(files).forEach((file, index) => {
-                // Check if it's an image or CSV
-                if (file.type.match('image.*') || file.name.match(/\.(png|jpg|jpeg|gif)$/i)) {
-                    // This is an image file - don't parse as CSV
-                    console.log('⚠️ Image file detected in CSV upload area:', file.name);
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'p-3 bg-yellow-50 rounded-lg mb-2 flex items-center justify-between';
-                    fileItem.innerHTML = `
-                        <span>⚠️ ${file.name} - This is an image file. Please upload it in the "Body Points" tab instead.</span>
-                    `;
-                    fileList.appendChild(fileItem);
-                    return;
-                }
-
-                // This is a CSV file - parse it
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const content = e.target.result;
-                    parseCSV(content, file.name);
-                };
-                reader.readAsText(file);
-
-                const fileItem = document.createElement('div');
-                fileItem.className = 'p-3 bg-blue-50 rounded-lg mb-2 flex items-center justify-between';
-                fileItem.innerHTML = `
-                    <span>📄 ${file.name}</span>
-                    <span class="text-sm text-gray-600">${(file.size / 1024).toFixed(2)} KB</span>
+            container.innerHTML = csvs.map(([filename, priority]) => {
+                const isBible = filename.toUpperCase().includes('BIBLE');
+                const shortName = filename.replace('.csv', '').substring(0, 35);
+                return `
+                    <div class="csv-box ${isBible ? 'bible' : ''}" 
+                         data-csv="${filename}" 
+                         title="${filename}">
+                        ${isBible ? '⭐ ' : ''}${shortName}
+                    </div>
                 `;
-                fileList.appendChild(fileItem);
+            }).join('');
+        }
+
+        function highlightUsedCSVs(csvFilenames) {
+            resetCSVIndicators();
+            csvFilenames.forEach(filename => {
+                const box = document.querySelector(`[data-csv="${filename}"]`);
+                if (box) box.classList.add('active');
             });
         }
 
-        function parseCSV(content, filename) {
-            const lines = content.split('\n');
-            const headers = lines[0].split(',').map(h => h.trim());
-            const data = [];
+        function resetCSVIndicators() {
+            document.querySelectorAll('.csv-box').forEach(box => box.classList.remove('active'));
+        }
 
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim()) {
-                    const values = lines[i].split(',').map(v => v.trim());
-                    const row = {};
-                    headers.forEach((header, index) => {
-                        row[header] = values[index] || '';
-                    });
-                    data.push(row);
+        // Quick Questions (450 Questions)
+        function createQuickQuestions() {
+            filterQuestions();
+        }
+
+        function filterQuestions() {
+            const category = document.getElementById('categoryFilter').value;
+            const container = document.getElementById('quickQuestions');
+            
+            const filtered = category === 'all' 
+                ? hebrewQuestions 
+                : hebrewQuestions.filter(q => q.category === category);
+            
+            container.innerHTML = filtered.map((q, i) => `
+                <div class="quick-question" onclick="applyQuickQuestion('${category}', ${i})">
+                    ${q.text}
+                </div>
+            `).join('');
+        }
+
+        function applyQuickQuestion(category, index) {
+            const filtered = category === 'all' 
+                ? hebrewQuestions 
+                : hebrewQuestions.filter(q => q.category === category);
+            
+            const question = filtered[index];
+            
+            // Find first empty query box, or use query 1 if all filled
+            let targetBox = 1;
+            for (let i = 1; i <= 3; i++) {
+                if (!document.getElementById(`searchInput${i}`).value.trim()) {
+                    targetBox = i;
+                    break;
                 }
             }
-
-            csvData.push({ filename, data, headers });
-            displayCSVPreview(filename, headers, data.slice(0, 5));
-            updateCSVCounter();
-            console.log('✅ Parsed CSV:', filename, '- Rows:', data.length);
-        }
-
-        function updateCSVCounter() {
-            const counter = document.getElementById('csvCounter');
-            if (counter) {
-                const totalRows = csvData.reduce((sum, csv) => sum + csv.data.length, 0);
-                counter.innerHTML = `${csvData.length} file${csvData.length !== 1 ? 's' : ''}<br><span class="text-xs">${totalRows.toLocaleString()} rows</span>`;
+            
+            // Fill the query box (but DON'T auto-search!)
+            document.getElementById(`searchInput${targetBox}`).value = question.text;
+            updateQueryBox(targetBox);
+            
+            // Animate the Run Query button to draw attention
+            const runButton = document.querySelector('.run-query-button');
+            if (runButton) {
+                runButton.classList.add('pulse-attention');
+                setTimeout(() => runButton.classList.remove('pulse-attention'), 2000);
             }
         }
 
-        function displayCSVPreview(filename, headers, sampleData) {
-            const preview = document.getElementById('csvPreview');
-            const isHebrew = /[\u0590-\u05FF]/.test(headers.join(''));
+        // Query Management
+        function updateQueryBox(queryNum) {
+            const input = document.getElementById(`searchInput${queryNum}`);
+            const box = document.getElementById(`queryBox${queryNum}`);
             
-            // Get full data count
-            const fullDataset = csvData.find(d => d.filename === filename);
-            const totalRows = fullDataset ? fullDataset.data.length : sampleData.length;
-            
-            preview.innerHTML += `
-                <div class="mb-6 p-6 bg-gray-50 rounded-xl">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="text-lg font-bold">${filename}</h4>
-                        <span class="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-semibold">
-                            ${totalRows} total rows
-                        </span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse ${isHebrew ? 'hebrew-text' : ''}">
-                            <thead>
-                                <tr class="bg-blue-600 text-white">
-                                    ${headers.map(h => `<th class="p-2 border">${h}</th>`).join('')}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${sampleData.map(row => `
-                                    <tr class="hover:bg-blue-50">
-                                        ${headers.map(h => `<td class="p-2 border">${row[h] || ''}</td>`).join('')}
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="mt-3 p-3 bg-blue-50 rounded border-l-4 border-blue-500">
-                        <p class="text-sm text-blue-800">
-                            <strong>Preview:</strong> Showing first 5 rows out of <strong>${totalRows} total rows</strong>. 
-                            All ${totalRows} rows are loaded and available for AI search.
-                        </p>
-                    </div>
-                </div>
-            `;
+            if (input.value.trim()) {
+                box.classList.add('filled');
+            } else {
+                box.classList.remove('filled');
+            }
         }
 
-        async function performSearch() {
-            const query = document.getElementById('searchInput').value;
-            if (!query.trim()) {
-                alert('Please enter a search query');
+        function clearAllQueries() {
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`searchInput${i}`).value = '';
+                document.getElementById(`queryBox${i}`).classList.remove('filled');
+            }
+            currentQueries = [];
+            document.getElementById('activeQueries').innerHTML = '';
+        }
+
+        async function performMultiQuery() {
+            // Check if paused
+            if (isPaused) {
+                alert('החיפוש מושהה. לחץ "המשך" כדי להמשיך.');
                 return;
             }
+            
+            // Show live token counter during search
+            document.getElementById('tokenCount').style.animation = 'pulse 1s infinite';
+            
+            currentQueries = [];
+            for (let i = 1; i <= 3; i++) {
+                const val = document.getElementById(`searchInput${i}`).value.trim();
+                if (val) currentQueries.push(val);
+            }
+
+            if (currentQueries.length === 0) {
+                alert('נא להזין לפחות שאלה אחת');
+                return;
+            }
+
+            totalQueries++;
+            
+            // Show pause button
+            document.getElementById('pauseButton').classList.remove('hidden');
+            isPaused = false;
+
+            document.getElementById('activeQueries').innerHTML = `
+                <div class="p-4 bg-blue-50 border-2 border-blue-300 rounded-xl">
+                    <h4 class="font-bold text-blue-800 mb-2 text-right">🔍 שאלות פעילות:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-right">
+                        ${currentQueries.map(q => `<li class="text-blue-700">${q}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
 
             const results = document.getElementById('searchResults');
-            results.innerHTML = '<div class="text-center p-8"><div class="animate-spin text-6xl">🔄</div><p class="mt-4 text-lg">Searching formulas and acupoints...</p></div>';
-
-            console.log('🔍 Enhanced search for:', query);
+            results.innerHTML = '<div class="text-center p-8"><div class="animate-spin text-6xl">🔄</div><p class="mt-4 text-lg">מחפש במאגר RAG...</p></div>';
 
             try {
-                // Build formula context
-                const context = csvData.length > 0 
-                    ? `Available formulas data: ${JSON.stringify(csvData.map(d => d.data).flat().slice(0, 10))}`
-                    : `Sample formulas: ${JSON.stringify(sampleFormulas)}`;
-
-                // Search acupoints
-                const acupointMatches = searchAcupoints(query);
-                const acupointContext = acupointMatches.length > 0
-                    ? `Relevant acupoints found: ${acupointMatches.slice(0, 10).map(p => 
-                        `${p.Acupoint_Code} (${p.English_Name}) on ${p.Body_Part}`
-                      ).join(', ')}`
-                    : '';
-
-                // Get list of uploaded body images
-                const imageContext = uploadedImages.length > 0 
-                    ? `Available body part images: ${uploadedImages.map(img => img.name.replace('.png', '').replace('.jpg', '')).join(', ')}`
-                    : '';
-
-                const prompt = `You are a TCM (Traditional Chinese Medicine) expert. Based on this query: "${query}"
+                // Create abort controller for this search
+                searchAbortController = new AbortController();
                 
-Context:
-${context}
-
-${acupointContext}
-
-${imageContext}
-
-Provide:
-1. Relevant TCM formulas (with Chinese and English names)
-2. Key herbs in the formulas
-3. Main indications and patterns
-4. Specific acupoint recommendations with codes (e.g., LI-4, ST-36, GB-20)
-5. Safety notes and contraindications
-
-Format your response clearly with specific recommendations. Include acupoint codes when relevant.`;
-
-                const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+                const allResults = await searchMultipleQueries(currentQueries);
                 
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: prompt }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 2000
-                        }
-                    })
-                });
-
-                console.log('📡 Search response status:', response.status);
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 200)}`);
-                }
-
-                const data = await response.json();
-                console.log('✅ Search results:', data);
-                
-                if (data.candidates && data.candidates.length > 0) {
-                    const aiResponse = data.candidates[0].content.parts[0].text;
-                    
-                    // Find acupoints mentioned in AI response
-                    const mentionedPoints = acupointDatabase.filter(point => 
-                        aiResponse.includes(point.Acupoint_Code) || 
-                        aiResponse.includes(point.English_Name)
-                    );
-                    
-                    // Get relevant images (from search matches or mentioned points)
-                    const allMatches = mentionedPoints.length > 0 ? mentionedPoints : acupointMatches;
-                    const relevantImages = getRelevantImagesFromAcupoints(allMatches);
-                    
-                    // Also try keyword-based image matching as fallback
-                    const keywordImages = relevantImages.length === 0 ? extractRelevantBodyParts(aiResponse) : [];
-
-                    results.innerHTML = `
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-200 mb-6">
-                            <h4 class="text-xl font-bold mb-4 flex items-center">
-                                <span class="text-3xl mr-3">🤖</span> AI Analysis
-                            </h4>
-                            <div class="prose max-w-none whitespace-pre-wrap">${aiResponse}</div>
-                        </div>
-                        
-                        ${acupointMatches.length > 0 ? `
-                            <div class="bg-green-50 p-6 rounded-xl border-2 border-green-300 mb-6">
-                                <h4 class="text-xl font-bold mb-4">🎯 Relevant Acupoints Found (${acupointMatches.length}):</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    ${acupointMatches.slice(0, 12).map(point => `
-                                        <div class="bg-white p-3 rounded-lg shadow">
-                                            <div class="font-bold text-red-600">${point.Acupoint_Code}</div>
-                                            <div class="text-sm text-gray-700">${point.English_Name}</div>
-                                            <div class="text-xs text-gray-500">${point.Body_Part} · ${point.Meridian}-${point.Point_Number}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                ${acupointMatches.length > 12 ? `<p class="text-sm text-gray-600 mt-3">... and ${acupointMatches.length - 12} more acupoints</p>` : ''}
-                            </div>
-                        ` : ''}
-                        
-                        ${(relevantImages.length > 0 || keywordImages.length > 0) ? `
-                            <div class="bg-purple-50 p-6 rounded-xl border-2 border-purple-300">
-                                <h4 class="text-xl font-bold mb-4">🖼️ Body Part Diagrams (${relevantImages.length + keywordImages.length}):</h4>
-                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    ${[...relevantImages, ...keywordImages].map(img => {
-                                        const pointCount = acupointByFile[img.name]?.length || 0;
-                                        return `
-                                        <div class="cursor-pointer hover:scale-105 transition" onclick="showImageFullscreen({data: '${img.data}', name: '${img.name}', size: ${img.size}})">
-                                            <img src="${img.data}" alt="${img.name}" class="w-full h-48 object-contain bg-white rounded-lg shadow-md">
-                                            <p class="text-center text-sm font-semibold mt-2">${img.name}</p>
-                                            ${pointCount > 0 ? `<p class="text-center text-xs text-gray-600">${pointCount} acupoints</p>` : ''}
-                                        </div>
-                                    `}).join('')}
-                                </div>
-                            </div>
-                        ` : uploadedImages.length > 0 ? `
-                            <div class="mt-6 p-4 bg-yellow-50 rounded-xl border-2 border-yellow-300">
-                                <p class="text-yellow-800">
-                                    ℹ️ No specific body part images matched this query. 
-                                    <button onclick="document.getElementById('tab-points').click()" class="underline font-semibold">View all ${uploadedImages.length} uploaded images</button>
-                                </p>
-                            </div>
-                        ` : ''}
-                    `;
-                } else {
-                    throw new Error('No response from AI');
-                }
-
-            } catch (error) {
-                console.error('❌ Search error:', error);
-                results.innerHTML = `
-                    <div class="bg-red-50 p-6 rounded-xl border-2 border-red-200">
-                        <h4 class="text-xl font-bold text-red-800 mb-2">⚠️ Search Error</h4>
-                        <p class="text-red-600 mb-4">${error.message}</p>
-                        <div class="bg-white p-4 rounded mt-4">
-                            <h5 class="font-bold mb-2">Offline Formula Suggestions:</h5>
-                            <p class="text-gray-700">
-                                Based on your query "${query}", consider these formulas from our sample database:
-                            </p>
-                            <ul class="list-disc pl-6 mt-2">
-                                ${sampleFormulas.map(f => `
-                                    <li class="mb-2">
-                                        <strong>${f.name}</strong> (${f.nameHebrew})<br>
-                                        <span class="text-sm text-gray-600">${f.indications}</span>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function extractRelevantBodyParts(aiResponse) {
-            // Look for BODY_PARTS: section in AI response
-            const bodyPartsMatch = aiResponse.match(/BODY_PARTS:\s*(.+?)(?:\n|$)/i);
-            if (!bodyPartsMatch) return [];
-
-            const bodyPartNames = bodyPartsMatch[1].split(',').map(s => s.trim().toLowerCase());
-            console.log('🎯 AI suggested body parts:', bodyPartNames);
-
-            // Find matching uploaded images
-            const relevantImages = uploadedImages.filter(img => {
-                const imgName = img.name.toLowerCase().replace(/\.(png|jpg|jpeg)$/i, '');
-                return bodyPartNames.some(part => {
-                    // Fuzzy matching - check if any part of the name matches
-                    return imgName.includes(part) || part.includes(imgName);
-                });
-            });
-
-            console.log('🖼️ Found relevant images:', relevantImages.map(i => i.name));
-            return relevantImages;
-        }
-
-        function exampleSearch(topic) {
-            document.getElementById('searchInput').value = `Show me TCM formulas for ${topic}`;
-            performSearch();
-        }
-
-        function initializeHerbList() {
-            const herbList = document.getElementById('herbList');
-            commonHerbs.forEach(herb => {
-                const div = document.createElement('div');
-                div.className = 'p-3 bg-white border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition';
-                div.innerHTML = `
-                    <input type="checkbox" id="${herb}" class="mr-2" onchange="toggleHerb('${herb}')">
-                    <label for="${herb}" class="cursor-pointer">${herb}</label>
-                `;
-                herbList.appendChild(div);
-            });
-        }
-
-        function toggleHerb(herb) {
-            if (selectedHerbs.has(herb)) {
-                selectedHerbs.delete(herb);
-            } else {
-                selectedHerbs.add(herb);
-            }
-            console.log('Selected herbs:', Array.from(selectedHerbs));
-        }
-
-        function handleImageFiles(files) {
-            const imageList = document.getElementById('imageList');
-            const imageGallery = document.getElementById('imageGallery');
-            
-            if (files.length > 15) {
-                alert('⚠️ Maximum 15 images allowed. Only the first 15 will be uploaded.');
-            }
-
-            const filesToProcess = Array.from(files).slice(0, 15);
-            
-            imageList.innerHTML = '<h5 class="text-md font-bold mb-2">📋 Uploaded Images:</h5>';
-            
-            filesToProcess.forEach((file, index) => {
-                // Validate file type
-                if (!file.type.match('image.*')) {
-                    console.warn('Skipping non-image file:', file.name);
+                // Check if paused during search
+                if (isPaused) {
+                    results.innerHTML = '<div class="text-center p-8 text-orange-600"><h3 class="text-2xl font-bold">⏸️ חיפוש מושהה</h3><p>לחץ "המשך" כדי להמשיך</p></div>';
                     return;
                 }
+                
+                if (allResults.formulas.length > 0 || allResults.acupoints.length > 0) {
+                    successfulQueries++;
+                    await displaySearchResults(allResults);
+                    document.getElementById('shareButtons').classList.remove('hidden');
+                    document.getElementById('reportOptions').classList.remove('hidden');
+                    document.getElementById('fallbackBrowser').classList.add('hidden');
+                } else {
+                    await triggerFallbackSearch(currentQueries);
+                }
 
-                const reader = new FileReader();
+                // Stop pulsing and hide pause button
+                document.getElementById('tokenCount').style.animation = '';
+                document.getElementById('pauseButton').classList.add('hidden');
+
+            } catch (error) {
+                console.error('Search error:', error);
                 
-                reader.onload = (e) => {
-                    const imageData = {
-                        name: file.name,
-                        size: file.size,
-                        data: e.target.result,
-                        index: uploadedImages.length
-                    };
-                    
-                    uploadedImages.push(imageData);
-                    
-                    // Add to file list
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'p-2 bg-purple-50 rounded-lg mb-2 flex items-center justify-between';
-                    fileItem.innerHTML = `
-                        <span class="text-sm">🖼️ ${file.name}</span>
-                        <span class="text-xs text-gray-600">${(file.size / 1024).toFixed(2)} KB</span>
+                // Check if it was aborted (paused)
+                if (error.name === 'AbortError') {
+                    results.innerHTML = '<div class="text-center p-8 text-orange-600"><h3 class="text-2xl font-bold">⏸️ חיפוש מושהה</h3></div>';
+                } else {
+                    results.innerHTML = `
+                        <div class="bg-red-50 p-6 rounded-xl border-2 border-red-200 text-right">
+                            <h4 class="text-xl font-bold text-red-800 mb-2">⚠️ שגיאת חיפוש</h4>
+                            <p class="text-red-600">${error.message}</p>
+                        </div>
                     `;
-                    imageList.appendChild(fileItem);
-                    
-                    // Add to gallery
-                    displayImageInGallery(imageData);
-                    
-                    console.log('✅ Image uploaded:', file.name);
-                };
+                }
                 
-                reader.readAsDataURL(file);
+                document.getElementById('tokenCount').style.animation = '';
+                document.getElementById('pauseButton').classList.add('hidden');
+            }
+        }
+
+        async function searchMultipleQueries(queries) {
+            const allFormulas = [];
+            const allAcupoints = [];
+            const allImages = [];
+            const csvSources = new Set();
+
+            console.log('Searching for queries:', queries);
+
+            for (const query of queries) {
+                // Check if paused
+                if (isPaused) {
+                    console.log('Search paused');
+                    break;
+                }
+                
+                // Search formulas with Hebrew support - try multiple fields
+                const { data: formulas, error: formulaError } = await supabaseClient
+                    .from('tcm_formulas')
+                    .select('*')
+                    .or(`name_english.ilike.%${query}%,name_chinese.ilike.%${query}%,name_hebrew.ilike.%${query}%,indications.ilike.%${query}%,additional_data::text.ilike.%${query}%`)
+                    .order('priority', { ascending: true })
+                    .limit(15);
+
+                if (formulaError) {
+                    console.error('Formula search error:', formulaError);
+                } else if (formulas && formulas.length > 0) {
+                    console.log(`Found ${formulas.length} formulas for query: ${query}`);
+                    allFormulas.push(...formulas);
+                    formulas.forEach(f => csvSources.add(f.csv_filename));
+                } else {
+                    console.log(`No formulas found for query: ${query}`);
+                }
+
+                // Search acupoints
+                const { data: acupoints, error: acupointError } = await supabaseClient
+                    .from('tcm_acupoints')
+                    .select('*')
+                    .or(`code.ilike.%${query}%,english_name.ilike.%${query}%,body_part.ilike.%${query}%,hebrew_name.ilike.%${query}%`)
+                    .limit(8);
+
+                if (acupointError) {
+                    console.error('Acupoint search error:', acupointError);
+                } else if (acupoints && acupoints.length > 0) {
+                    console.log(`Found ${acupoints.length} acupoints for query: ${query}`);
+                    allAcupoints.push(...acupoints);
+                    const imageFiles = [...new Set(acupoints.flatMap(p => p.image_files || []))];
+                    const relevantImages = imagesData.filter(img => imageFiles.includes(img.filename));
+                    allImages.push(...relevantImages);
+                } else {
+                    console.log(`No acupoints found for query: ${query}`);
+                }
+            }
+
+            // Deduplicate results
+            const uniqueFormulas = [...new Map(allFormulas.map(f => [f.id, f])).values()];
+            const uniqueAcupoints = [...new Map(allAcupoints.map(a => [a.id, a])).values()];
+            const uniqueImages = [...new Map(allImages.map(i => [i.id, i])).values()];
+
+            console.log(`Total unique results: ${uniqueFormulas.length} formulas, ${uniqueAcupoints.length} acupoints`);
+
+            totalAssets = csvSources.size + uniqueAcupoints.length;
+            highlightUsedCSVs(Array.from(csvSources));
+
+            return {
+                formulas: uniqueFormulas,
+                acupoints: uniqueAcupoints,
+                images: uniqueImages
+            };
+        }
+
+        async function displaySearchResults(results) {
+            const reportDetail = document.querySelector('input[name="reportDetail"]:checked').value;
+            const context = buildAIContext(results, reportDetail);
+            
+            const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: context }] }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: reportDetail === 'full' ? 3000 : 1500
+                    }
+                })
             });
 
-            // Show success message
-            setTimeout(() => {
-                if (uploadedImages.length > 0) {
-                    const successMsg = document.createElement('div');
-                    successMsg.className = 'mt-4 p-3 bg-green-50 border-2 border-green-300 rounded-lg text-green-800';
-                    successMsg.innerHTML = `✅ Successfully uploaded ${uploadedImages.length} body figure image(s)!`;
-                    imageList.appendChild(successMsg);
-                }
-            }, 500);
-        }
+            const data = await response.json();
+            const aiResponse = data.candidates[0].content.parts[0].text;
+            
+            // Estimate tokens (4 chars ≈ 1 token)
+            const inputTokens = Math.ceil(context.length / 4);
+            const outputTokens = Math.ceil(aiResponse.length / 4);
+            
+            updateMetrics(inputTokens, outputTokens);
+            lastSearchResults = aiResponse;
 
-        function displayImageInGallery(imageData) {
-            const gallery = document.getElementById('imageGallery');
-            
-            const imageCard = document.createElement('div');
-            imageCard.className = 'relative group cursor-pointer bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all transform hover:scale-105';
-            imageCard.onclick = () => showImageFullscreen(imageData);
-            
-            imageCard.innerHTML = `
-                <img src="${imageData.data}" alt="${imageData.name}" class="w-full h-48 object-contain bg-gray-50">
-                <div class="p-2 bg-gradient-to-t from-black/70 to-transparent absolute bottom-0 left-0 right-0">
-                    <p class="text-white text-xs font-semibold truncate">${imageData.name}</p>
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = `
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-200 mb-6">
+                    <h4 class="text-xl font-bold mb-4 flex items-center justify-end">
+                        <span class="mr-3">תשובת AI (מופעל על ידי RAG)</span>
+                        <span class="text-3xl">🤖</span>
+                    </h4>
+                    <div class="prose max-w-none whitespace-pre-wrap text-right" dir="rtl">${aiResponse}</div>
                 </div>
-                <div class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation(); deleteImage(${imageData.index})">
-                    ✕
-                </div>
-            `;
-            
-            gallery.appendChild(imageCard);
-        }
-
-        function showImageFullscreen(imageData) {
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4';
-            modal.onclick = () => modal.remove();
-            
-            modal.innerHTML = `
-                <div class="relative max-w-5xl max-h-full">
-                    <button class="absolute -top-12 right-0 text-white text-3xl font-bold hover:text-red-500" onclick="this.parentElement.parentElement.remove()">✕</button>
-                    <img src="${imageData.data}" alt="${imageData.name}" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">
-                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-lg">
-                        <p class="text-white font-bold text-lg">${imageData.name}</p>
-                        <p class="text-white/80 text-sm">${(imageData.size / 1024).toFixed(2)} KB</p>
+                
+                ${results.acupoints.length > 0 ? `
+                    <div class="bg-green-50 p-6 rounded-xl border-2 border-green-300 mb-6">
+                        <h4 class="text-xl font-bold mb-4 text-right">🎯 נקודות דיקור מתאימות (${results.acupoints.length}):</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            ${results.acupoints.map(point => `
+                                <div class="bg-white p-3 rounded-lg shadow text-right">
+                                    <div class="font-bold text-red-600">${point.code}</div>
+                                    <div class="text-sm text-gray-700">${point.english_name || 'N/A'}</div>
+                                    <div class="text-xs text-gray-500">${point.body_part} · ${point.meridian}</div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                </div>
+                ` : ''}
+                
+                ${results.images.length > 0 ? `
+                    <div class="bg-purple-50 p-6 rounded-xl border-2 border-purple-300">
+                        <h4 class="text-xl font-bold mb-4 text-right">🖼️ דיאגרמות גוף רלוונטיות (${results.images.length}):</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            ${results.images.map(img => `
+                                <div class="cursor-pointer hover:scale-105 transition" onclick="showImageFullscreen('${img.storage_url}', '${img.filename}')">
+                                    <img src="${img.storage_url}" 
+                                         alt="${img.body_part}" 
+                                         class="w-full h-48 object-contain bg-white rounded-lg shadow-md"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div style="display:none;" class="w-full h-48 flex items-center justify-center bg-gray-100 rounded-lg">
+                                        <span class="text-gray-500 text-sm">תמונה לא זמינה</span>
+                                    </div>
+                                    <p class="text-center text-sm font-semibold mt-2">${img.body_part}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
             `;
-            
-            document.body.appendChild(modal);
         }
 
-        function deleteImage(index) {
-            if (confirm('Delete this image?')) {
-                uploadedImages = uploadedImages.filter(img => img.index !== index);
-                
-                // Rebuild gallery
-                const gallery = document.getElementById('imageGallery');
-                gallery.innerHTML = '';
-                uploadedImages.forEach(img => displayImageInGallery(img));
-                
-                console.log('🗑️ Image deleted, remaining:', uploadedImages.length);
-            }
+        function buildAIContext(results, reportDetail) {
+            const queries = currentQueries.join(', ');
+            const formulaContext = results.formulas.length > 0
+                ? `Relevant formulas: ${JSON.stringify(results.formulas.slice(0, 10))}`
+                : 'No formulas found';
+            const acupointContext = results.acupoints.length > 0
+                ? `Relevant acupoints: ${results.acupoints.map(p => `${p.code} (${p.english_name})`).join(', ')}`
+                : '';
+            const detailInstruction = reportDetail === 'full'
+                ? 'Provide COMPREHENSIVE and DETAILED Hebrew report with treatment protocols.'
+                : 'Provide CONCISE Hebrew summary with key points only.';
+
+            return `You are a CM expert. Answer in HEBREW (right-to-left). Queries: "${queries}"
+
+${formulaContext}
+${acupointContext}
+
+${detailInstruction}
+
+Respond in Hebrew with CM analysis.`;
         }
 
-        function clearAllImages() {
-            if (uploadedImages.length === 0) {
-                alert('No images to clear!');
-                return;
-            }
-            
-            if (confirm(`Clear all ${uploadedImages.length} images?`)) {
-                uploadedImages = [];
-                document.getElementById('imageGallery').innerHTML = '';
-                document.getElementById('imageList').innerHTML = '';
-                document.getElementById('imageInput').value = ''; // Reset file input
-                console.log('🗑️ All images cleared');
-                
-                // Show success message
-                const imageList = document.getElementById('imageList');
-                imageList.innerHTML = '<div class="p-3 bg-green-50 border-2 border-green-300 rounded-lg text-green-800">✅ All images cleared successfully!</div>';
-                setTimeout(() => {
-                    imageList.innerHTML = '';
-                }, 2000);
-            }
-        }
+        async function triggerFallbackSearch(queries) {
+            document.getElementById('fallbackBrowser').classList.remove('hidden');
+            const resultsDiv = document.getElementById('fallbackResults');
+            resultsDiv.innerHTML = '<div class="text-center p-4"><div class="animate-spin text-2xl">🔄</div></div>';
 
-        async function checkSafety() {
-            if (selectedHerbs.size === 0) {
-                alert('Please select at least one herb to check');
-                return;
-            }
-
-            const results = document.getElementById('safetyResults');
-            results.innerHTML = '<div class="text-center p-8"><div class="animate-spin text-6xl">🔄</div><p class="mt-4">Analyzing herb interactions...</p></div>';
-
-            const herbList = Array.from(selectedHerbs).join(', ');
-            console.log('🌿 Checking safety for:', herbList);
-
-            const prompt = `As a TCM safety expert, analyze these herbs for contraindications and interactions: ${herbList}
-
-Provide:
-1. Individual herb contraindications
-2. Potential herb-herb interactions
-3. Pregnancy/breastfeeding warnings
-4. Drug interactions to be aware of
-5. Overall safety assessment (Low/Medium/High risk)
-
-Be specific and practical in your recommendations.`;
+            const prompt = `Search for Hebrew/CM medical info: ${queries.join(', ')}. Respond in HEBREW.`;
 
             try {
-                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: prompt }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 1000
-                        }
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
                     })
                 });
 
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
-                }
-
                 const data = await response.json();
-                const analysis = data.candidates[0].content.parts[0].text;
-
-                results.innerHTML = `
-                    <div class="bg-yellow-50 p-6 rounded-xl border-2 border-yellow-300">
-                        <h4 class="text-xl font-bold mb-4 flex items-center">
-                            <span class="text-3xl mr-3">⚠️</span> Safety Analysis
-                        </h4>
-                        <div class="prose max-w-none whitespace-pre-wrap">${analysis}</div>
-                        <p class="mt-4 text-sm text-gray-600 italic">⚕️ Always consult with a qualified TCM practitioner before use</p>
-                    </div>
-                `;
+                const aiResponse = data.candidates[0].content.parts[0].text;
+                resultsDiv.innerHTML = `<div class="prose max-w-none text-right" dir="rtl">${aiResponse}</div>`;
+                
+                const outputTokens = Math.ceil(aiResponse.length / 4);
+                updateMetrics(250, outputTokens);
             } catch (error) {
-                console.error('❌ Safety check error:', error);
-                results.innerHTML = `
-                    <div class="bg-red-50 p-4 rounded-xl">
-                        <h4 class="font-bold text-red-800">Error: ${error.message}</h4>
-                        <p class="text-red-600 mt-2">Unable to perform safety analysis. Please try again or consult a TCM practitioner.</p>
-                    </div>
-                `;
+                resultsDiv.innerHTML = `<div class="text-red-600 text-right">שגיאה: ${error.message}</div>`;
             }
         }
 
-        function initializeBodyPoints() {
-            const frontView = document.getElementById('bodyFront');
-            const backView = document.getElementById('bodyBack');
-
-            acupoints.front.forEach(point => {
-                const dot = createAcupoint(point);
-                frontView.appendChild(dot);
-            });
-
-            acupoints.back.forEach(point => {
-                const dot = createAcupoint(point);
-                backView.appendChild(dot);
-            });
-
-            console.log('✅ Body points initialized');
+        function toggleReportDetail() {
+            if (currentQueries.length > 0 && confirm('ליצור מחדש תוצאות עם רמת פירוט חדשה?')) {
+                performMultiQuery();
+            }
         }
 
-        function createAcupoint(point) {
-            const dot = document.createElement('div');
-            dot.className = 'acupoint';
-            dot.style.left = `${point.x}px`;
-            dot.style.top = `${point.y}px`;
-            dot.title = `${point.id} - ${point.name}`;
-            dot.onclick = () => showPointInfo(point);
-            return dot;
+        // Share Functions
+        function printReport() { window.print(); }
+        function shareWhatsApp() {
+            const text = `דוח עוזר קליני CM\n\nשאלות: ${currentQueries.join(', ')}\n\n${lastSearchResults}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        }
+        function emailReport() {
+            const subject = 'דוח עוזר קליני CM';
+            const body = `שאלות: ${currentQueries.join(', ')}\n\n${lastSearchResults}`;
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+        function downloadPDF() {
+            window.print();
+            alert('השתמש באפשרות "שמור כ-PDF" בתיבת הדו-שיח להדפסה.');
         }
 
-        function showPointInfo(point) {
-            const info = document.getElementById('pointInfo');
-            const details = document.getElementById('pointDetails');
-            
-            details.innerHTML = `
-                <div class="grid grid-cols-2 gap-4">
-                    <div><strong>Point ID:</strong> ${point.id}</div>
-                    <div><strong>Name:</strong> ${point.name}</div>
-                    <div><strong>Meridian:</strong> ${point.meridian}</div>
-                    <div><strong>Click:</strong> For detailed TCM information</div>
+        function showImageFullscreen(url, filename) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.onclick = () => modal.remove();
+            modal.innerHTML = `
+                <div class="max-w-4xl max-h-screen p-4">
+                    <img src="${url}" alt="${filename}" class="max-w-full max-h-screen object-contain">
+                    <p class="text-white text-center mt-4">${filename}</p>
                 </div>
             `;
-            
-            info.classList.remove('hidden');
-            console.log('📍 Showing point info:', point.id);
+            document.body.appendChild(modal);
         }
 
-        function switchTab(tab) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.add('hidden');
-            });
+        // Init
+        async function init() {
+            console.log('🚀 CM Clinical Assistant with 450 Questions initializing...');
+            updateStatus('מתחבר ל-Supabase...');
+            startSessionTimer();
             
-            // Remove active class from all tab buttons
-            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
-                btn.classList.remove('tab-active');
-                btn.classList.add('hover:bg-gray-100');
-            });
-            
-            // Show selected tab
-            document.getElementById(`content-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).classList.add('tab-active');
-            document.getElementById(`tab-${tab}`).classList.remove('hover:bg-gray-100');
-            
-            console.log('📑 Switched to tab:', tab);
+            try {
+                await loadRAGData();
+                createCSVIndicators();
+                createQuickQuestions();
+                
+                updateStatus('✅ המערכת מוכנה! 450 שאלות זמינות');
+                updateMetrics();
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                updateStatus('❌ שגיאת התחברות למסד נתונים');
+            }
         }
 
-        // Initialize on load
-        window.onload = init;
-        
-        console.log('🏥 TCM Clinical Assistant loaded');
+        async function loadRAGData() {
+            const { data: priorities } = await supabaseClient.from('csv_priorities').select('*');
+            if (priorities) {
+                priorities.forEach(p => csvPriorities[p.filename] = p.priority);
+            }
+            
+            const { data: acupoints } = await supabaseClient.from('tcm_acupoints').select('*');
+            if (acupoints) acupointsData = acupoints;
+            
+            const { data: images } = await supabaseClient.from('tcm_body_images').select('*');
+            if (images) imagesData = images;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
