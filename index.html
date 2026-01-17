@@ -1177,7 +1177,7 @@
                 const { data: acupoints, error: acupointError } = await supabaseClient
                     .from('tcm_acupoints')
                     .select('*')
-                    .or(`code.ilike.%${query}%,english_name.ilike.%${query}%,body_part.ilike.%${query}%,hebrew_name.ilike.%${query}%`)
+                    .or(`code.ilike.%${query}%,english_name.ilike.%${query}%,body_part.ilike.%${query}%`)
                     .limit(8);
 
                 if (acupointError) {
