@@ -161,56 +161,6 @@
         .paused-state {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
-        
-        /* General Popup Animations */
-        #generalPopup {
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        #generalPopup > div {
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { 
-                transform: translateY(50px);
-                opacity: 0;
-            }
-            to { 
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        /* Popup visibility */
-        .hidden {
-            display: none !important;
-        }
-
-        /* Badge for mixed queries */
-        .query-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
-            margin-left: 8px;
-        }
-
-        .badge-tcm {
-            background: #10b981;
-            color: white;
-        }
-
-        .badge-general {
-            background: #8b5cf6;
-            color: white;
-        }
     </style>
 </head>
 <body>
@@ -456,7 +406,7 @@
         const INPUT_TOKEN_COST = 0.0000005;   // $0.50 per 1M tokens
         const OUTPUT_TOKEN_COST = 0.000003;   // $3.00 per 1M tokens
         
-        // Claude API Configuration for Level 3 Multi-AI System
+        // Claude API Configuration - Level 3 Multi-AI System
         const CLAUDE_API_KEY = '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';
         const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
         const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
@@ -996,169 +946,6 @@
             document.getElementById('successRate').textContent = `${successRate}%`;
         }
 
-
-        // ========================================
-        // LEVEL 3: MULTI-AI SYSTEM FUNCTIONS
-        // ========================================
-        
-        // Smart Query Router - detects TCM vs General queries
-        function classifyQuery(query) {
-            const queryLower = query.toLowerCase();
-            
-            // TCM Keywords (Hebrew + English)
-            const tcmKeywords = [
-                // Hebrew
-                'כאב', 'תסמין', 'דיקור', 'צמח', 'מרפא', 'טיפול', 'אבחון', 'דופק', 'לשון',
-                'יאנג', 'יין', 'צ\'י', 'דם', 'כבד', 'טחול', 'כליות', 'לב', 'ריאות',
-                'מרידיאן', 'נקודה', 'ערוץ', 'תסמונת', 'דפוס', 'חום', 'קור', 'לחות',
-                // English
-                'pain', 'syndrome', 'acupuncture', 'herb', 'formula', 'treatment', 
-                'diagnosis', 'pulse', 'tongue', 'yang', 'yin', 'qi', 'blood',
-                'liver', 'spleen', 'kidney', 'heart', 'lung', 'meridian', 'point',
-                'channel', 'pattern', 'heat', 'cold', 'damp', 'tcm', 'chinese medicine',
-                'headache', 'migraine', 'dizziness', 'nausea', 'stiffness', 'neck'
-            ];
-            
-            // Check if query contains TCM keywords
-            const isTCM = tcmKeywords.some(keyword => queryLower.includes(keyword));
-            
-            // Additional checks
-            const hasQuestionWords = /where|when|how much|price|buy|order|time|clock|pizza|food|restaurant/i.test(query);
-            
-            if (isTCM) {
-                return { type: 'TCM', confidence: 'high' };
-            } else if (hasQuestionWords && !isTCM) {
-                return { type: 'GENERAL', confidence: 'high' };
-            } else {
-                // Default to TCM if unsure (clinical context)
-                return { type: 'TCM', confidence: 'low' };
-            }
-        }
-
-        // Call Claude API for general questions
-        async function callClaudeAPI(query, clinicalContext = null) {
-            try {
-                const systemPrompt = clinicalContext 
-                    ? `You are a helpful assistant supporting a TCM (Traditional Chinese Medicine) therapist in Tel Aviv, Israel.
-                       
-                       CLINICAL CONTEXT:
-                       ${clinicalContext}
-                       
-                       The therapist asked a non-clinical question during their work session.
-                       Provide a BRIEF, helpful answer (2-3 sentences maximum).
-                       Then add a gentle transition back to clinical work in Hebrew.
-                       
-                       Format:
-                       1. Answer the question concisely
-                       2. Add: "עכשיו, בחזרה למטופל שלך..." (Now, back to your patient...)`
-                    : `You are a helpful assistant. Provide brief, accurate answers.`;
-                
-                console.log('💬 Calling Claude API for general query...');
-                
-                const response = await fetch(CLAUDE_API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': CLAUDE_API_KEY,
-                        'anthropic-version': '2023-06-01'
-                    },
-                    body: JSON.stringify({
-                        model: CLAUDE_MODEL,
-                        max_tokens: 500,
-                        system: systemPrompt,
-                        messages: [
-                            {
-                                role: 'user',
-                                content: query
-                            }
-                        ]
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Claude API error:', response.status, errorText);
-                    throw new Error(`Claude API error: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('✅ Claude API response received');
-                return data.content[0].text;
-                
-            } catch (error) {
-                console.error('Claude API Error:', error);
-                
-                if (CLAUDE_API_KEY === 'PLACEHOLDER_GET_FROM_ANTHROPIC_CONSOLE') {
-                    return `⚠️ לא הוגדר מפתח Claude API. אנא הוסף את המפתח שלך בקובץ ה-HTML.
-                    
-                    כדי לקבל מפתח:
-                    1. לך ל-https://console.anthropic.com/
-                    2. הירשם/התחבר
-                    3. צור API Key חדש
-                    4. החלף את "PLACEHOLDER_GET_FROM_ANTHROPIC_CONSOLE" בקוד`;
-                }
-                
-                return `⚠️ לא הצלחתי לענות על השאלה הכללית. אנא נסה שוב מאוחר יותר.
-                
-                שגיאה: ${error.message}`;
-            }
-        }
-
-        // Show general question popup
-        function showGeneralPopup(question, answer) {
-            const popup = document.getElementById('generalPopup');
-            const questionEl = document.getElementById('popupQuestion');
-            const answerEl = document.getElementById('popupAnswer');
-            
-            if (!popup || !questionEl || !answerEl) {
-                console.error('Popup elements not found!');
-                return;
-            }
-            
-            questionEl.textContent = question;
-            answerEl.innerHTML = answer.replace(/\n/g, '<br>');
-            
-            popup.classList.remove('hidden');
-            
-            console.log('💬 Popup shown for general query');
-            
-            // Auto-close after 30 seconds
-            setTimeout(() => {
-                if (!popup.classList.contains('hidden')) {
-                    closeGeneralPopup();
-                }
-            }, 30000);
-        }
-
-        // Close popup
-        function closeGeneralPopup() {
-            const popup = document.getElementById('generalPopup');
-            if (popup) {
-                popup.classList.add('hidden');
-                console.log('💬 Popup closed');
-            }
-        }
-
-        // Update metrics display
-        function updateQueryMetrics(tcmCount, generalCount) {
-            const activeQueries = document.getElementById('activeQueries');
-            if (!activeQueries) return;
-            
-            const metricsDiv = document.createElement('div');
-            metricsDiv.className = 'mt-4 p-3 bg-gray-100 rounded-lg text-sm';
-            metricsDiv.innerHTML = `
-                <div class="flex justify-between text-right">
-                    <span>🏥 שאלות קליניות: <strong>${tcmCount}</strong></span>
-                    <span>💬 שאלות כלליות: <strong>${generalCount}</strong></span>
-                </div>
-            `;
-            
-            // Remove old metrics if exists
-            const oldMetrics = activeQueries.querySelector('.bg-gray-100');
-            if (oldMetrics) oldMetrics.remove();
-            
-            activeQueries.appendChild(metricsDiv);
-        }
         function resetSession() {
             if (confirm('להתחיל סשן חדש? זה ינקה את כל השאלות והתוצאות.')) {
                 sessionStartTime = Date.now();
@@ -1292,57 +1079,31 @@
             // Show live token counter during search
             document.getElementById('tokenCount').style.animation = 'pulse 1s infinite';
             
-            // Get all 3 queries
-            const query1 = document.getElementById('searchInput1').value.trim();
-            const query2 = document.getElementById('searchInput2').value.trim();
-            const query3 = document.getElementById('searchInput3').value.trim();
-            
-            if (!query1) {
+            currentQueries = [];
+            for (let i = 1; i <= 3; i++) {
+                const val = document.getElementById(`searchInput${i}`).value.trim();
+                if (val) currentQueries.push(val);
+            }
+
+            if (currentQueries.length === 0) {
                 alert('נא להזין לפחות שאלה אחת');
                 return;
             }
-            
-            const queries = [query1, query2, query3].filter(q => q);
-            currentQueries = queries;
-            
-            // LEVEL 3: Classify each query
-            const classifications = queries.map((q, idx) => ({
-                query: q,
-                index: idx + 1,
-                classification: classifyQuery(q)
-            }));
-            
-            // Separate TCM and General queries
-            const tcmQueries = classifications.filter(c => c.classification.type === 'TCM');
-            const generalQueries = classifications.filter(c => c.classification.type === 'GENERAL');
-            
-            console.log('🎯 Query Classification:');
-            classifications.forEach(c => {
-                console.log(`  Query ${c.index}: ${c.query}`);
-                console.log(`  → Type: ${c.classification.type} (${c.classification.confidence} confidence)`);
-            });
-            
-            // Show active queries with badges
-            const activeQueriesDiv = document.getElementById('activeQueries');
-            activeQueriesDiv.innerHTML = `
-                <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
-                    <h4 class="font-bold mb-2 text-right">🔍 שאלות פעילות:</h4>
-                    ${classifications.map(c => `
-                        <div class="flex justify-between items-center mb-2 p-2 bg-white rounded-lg">
-                            <span class="query-badge badge-${c.classification.type.toLowerCase()}">
-                                ${c.classification.type === 'TCM' ? '🏥 קליני' : '💬 כללי'}
-                            </span>
-                            <span class="text-right flex-1 mr-3">${c.query}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
 
             totalQueries++;
             
             // Show pause button
             document.getElementById('pauseButton').classList.remove('hidden');
             isPaused = false;
+
+            document.getElementById('activeQueries').innerHTML = `
+                <div class="p-4 bg-blue-50 border-2 border-blue-300 rounded-xl">
+                    <h4 class="font-bold text-blue-800 mb-2 text-right">🔍 שאלות פעילות:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-right">
+                        ${currentQueries.map(q => `<li class="text-blue-700">${q}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
 
             const results = document.getElementById('searchResults');
             results.innerHTML = '<div class="text-center p-8"><div class="animate-spin text-6xl">🔄</div><p class="mt-4 text-lg">מחפש במאגר RAG...</p></div>';
@@ -1351,56 +1112,23 @@
                 // Create abort controller for this search
                 searchAbortController = new AbortController();
                 
-                // Process TCM queries if any
-                if (tcmQueries.length > 0) {
-                    console.log(`\n🏥 Processing ${tcmQueries.length} TCM queries with Gemini...`);
-                    
-                    const allResults = await searchMultipleQueries(tcmQueries.map(c => c.query));
-                    
-                    // Check if paused during search
-                    if (isPaused) {
-                        results.innerHTML = '<div class="text-center p-8 text-orange-600"><h3 class="text-2xl font-bold">⏸️ חיפוש מושהה</h3><p>לחץ "המשך" כדי להמשיך</p></div>';
-                        return;
-                    }
-                    
-                    if (allResults.formulas.length > 0 || allResults.acupoints.length > 0) {
-                        successfulQueries++;
-                        await displaySearchResults(allResults);
-                        document.getElementById('shareButtons').classList.remove('hidden');
-                        document.getElementById('reportOptions').classList.remove('hidden');
-                        document.getElementById('fallbackBrowser').classList.add('hidden');
-                    } else {
-                        await triggerFallbackSearch(tcmQueries.map(c => c.query));
-                    }
+                const allResults = await searchMultipleQueries(currentQueries);
+                
+                // Check if paused during search
+                if (isPaused) {
+                    results.innerHTML = '<div class="text-center p-8 text-orange-600"><h3 class="text-2xl font-bold">⏸️ חיפוש מושהה</h3><p>לחץ "המשך" כדי להמשיך</p></div>';
+                    return;
                 }
                 
-                // Process General queries with Claude if any
-                if (generalQueries.length > 0) {
-                    console.log(`\n💬 Processing ${generalQueries.length} general queries with Claude...`);
-                    
-                    // Build clinical context from TCM queries
-                    const clinicalContext = tcmQueries.length > 0 
-                        ? `The therapist is currently working on: ${tcmQueries.map(c => c.query).join(', ')}`
-                        : null;
-                    
-                    // Process each general query
-                    for (const gq of generalQueries) {
-                        console.log(`  Processing: "${gq.query}"`);
-                        
-                        const answer = await callClaudeAPI(gq.query, clinicalContext);
-                        
-                        // Show in popup
-                        showGeneralPopup(gq.query, answer);
-                        
-                        // Small delay between popups if multiple
-                        if (generalQueries.length > 1) {
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                        }
-                    }
+                if (allResults.formulas.length > 0 || allResults.acupoints.length > 0) {
+                    successfulQueries++;
+                    await displaySearchResults(allResults);
+                    document.getElementById('shareButtons').classList.remove('hidden');
+                    document.getElementById('reportOptions').classList.remove('hidden');
+                    document.getElementById('fallbackBrowser').classList.add('hidden');
+                } else {
+                    await triggerFallbackSearch(currentQueries);
                 }
-                
-                // Update metrics
-                updateQueryMetrics(tcmQueries.length, generalQueries.length);
 
                 // Stop pulsing and hide pause button
                 document.getElementById('tokenCount').style.animation = '';
@@ -1408,18 +1136,24 @@
 
             } catch (error) {
                 console.error('Search error:', error);
-                results.innerHTML = `<div class="text-center p-8 text-red-600">
-                    <h3 class="text-2xl font-bold">❌ שגיאה בחיפוש</h3>
-                    <p class="mt-2">${error.message}</p>
-                </div>`;
                 
-                // Stop pulsing and hide pause button
+                // Check if it was aborted (paused)
+                if (error.name === 'AbortError') {
+                    results.innerHTML = '<div class="text-center p-8 text-orange-600"><h3 class="text-2xl font-bold">⏸️ חיפוש מושהה</h3></div>';
+                } else {
+                    results.innerHTML = `
+                        <div class="bg-red-50 p-6 rounded-xl border-2 border-red-200 text-right">
+                            <h4 class="text-xl font-bold text-red-800 mb-2">⚠️ שגיאת חיפוש</h4>
+                            <p class="text-red-600">${error.message}</p>
+                        </div>
+                    `;
+                }
+                
                 document.getElementById('tokenCount').style.animation = '';
                 document.getElementById('pauseButton').classList.add('hidden');
             }
-
-            updateSuccessRate();
         }
+
         async function searchMultipleQueries(queries) {
             const allFormulas = [];
             const allAcupoints = [];
@@ -1439,7 +1173,7 @@
                 const { data: formulas, error: formulaError } = await supabaseClient
                     .from('tcm_formulas')
                     .select('*')
-                    .or(`name_english.ilike.%${query}%,name_chinese.ilike.%${query}%,name_hebrew.ilike.%${query}%,indications.ilike.%${query}%,additional_data::text.ilike.%${query}%`)
+                    .or(`name_english.ilike.%${query}%,indications.ilike.%${query}%`)
                     .order('priority', { ascending: true })
                     .limit(15);
 
@@ -1457,7 +1191,7 @@
                 const { data: acupoints, error: acupointError } = await supabaseClient
                     .from('tcm_acupoints')
                     .select('*')
-                    .or(`code.ilike.%${query}%,english_name.ilike.%${query}%,body_part.ilike.%${query}%,hebrew_name.ilike.%${query}%`)
+                    .or(`code.ilike.%${query}%,english_name.ilike.%${query}%,body_part.ilike.%${query}%`)
                     .limit(8);
 
                 if (acupointError) {
@@ -1688,49 +1422,6 @@ Respond in Hebrew with CM analysis.`;
         }
 
         window.addEventListener('DOMContentLoaded', init);
-        
-        // Close popup on background click
-        document.addEventListener('click', (e) => {
-            const popup = document.getElementById('generalPopup');
-            if (popup && e.target === popup) {
-                closeGeneralPopup();
-            }
-        });
     </script>
-
-    <!-- General Question Popup Window -->
-    <div id="generalPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 flex justify-between items-center">
-                <div class="flex items-center">
-                    <span class="text-2xl mr-2">💬</span>
-                    <h3 class="font-bold text-lg">עוזר כללי</h3>
-                </div>
-                <button onclick="closeGeneralPopup()" class="text-white hover:text-gray-200 text-2xl font-bold">
-                    ✖️
-                </button>
-            </div>
-            
-            <!-- Original Question -->
-            <div class="bg-gray-50 p-3 border-b border-gray-200">
-                <p class="text-sm text-gray-600 mb-1">שאלתך:</p>
-                <p id="popupQuestion" class="text-gray-800 font-medium"></p>
-            </div>
-            
-            <!-- Answer -->
-            <div class="p-4">
-                <div id="popupAnswer" class="text-gray-700 leading-relaxed text-right"></div>
-            </div>
-            
-            <!-- Footer -->
-            <div class="bg-gray-50 p-3 flex justify-end border-t border-gray-200">
-                <button onclick="closeGeneralPopup()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition">
-                    סגור
-                </button>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>
