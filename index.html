@@ -1159,7 +1159,7 @@
                 const { data: formulas, error: formulaError } = await supabaseClient
                     .from('tcm_formulas')
                     .select('*')
-                    .or(`name_english.ilike.%${query}%,name_chinese.ilike.%${query}%,name_hebrew.ilike.%${query}%,indications.ilike.%${query}%,additional_data::text.ilike.%${query}%`)
+                    .or(`name_english.ilike.%${query}%,indications.ilike.%${query}%`)
                     .order('priority', { ascending: true })
                     .limit(15);
 
