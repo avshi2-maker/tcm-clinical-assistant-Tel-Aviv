@@ -1,0 +1,36 @@
+name: Auto Sync to GitHub
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Check for changes
+        id: check
+        run: |
+          git config user.name "Auto Sync Bot"
+          git config user.email "auto-sync@tcm-assistant.com"
+          
+          if [[ -n $(git status -s) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Commit and push if changes
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          git add .
+          git commit -m "Auto-sync: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin main
