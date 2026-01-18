@@ -108,9 +108,9 @@ async function searchDeepThinking() {
     
     try {
         // Replace with your actual Supabase URL and anon key
-        const response = await fetch('YOUR_SUPABASE_URL/rest/v1/dr_roni_bible?content_type=eq.' + category + '&content_en=ilike.*' + query + '*', {
+        const response = await fetch('https://iqfglrwjemogoycbzltt.supabase.co/rest/v1/dr_roni_bible?content_type=eq.' + category + '&content_en=ilike.*' + query + '*', {
             headers: {
-                'apikey': 'YOUR_SUPABASE_ANON_KEY',
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxZmdscndqZW1vZ295Y2J6bHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NTM4ODMsImV4cCI6MjA4NDEyOTg4M30.DTREv3efs86_HzESyWm-7480ImfEVgC6T-xBdS6A2F8',
                 'Authorization': 'Bearer YOUR_SUPABASE_ANON_KEY'
             }
         });
