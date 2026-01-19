@@ -1,0 +1,193 @@
+I'll give you the code in chunks since it's large. 
+
+**PART 1 - Paste this first:**
+
+```html
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Diagnosis Gallery - גלריית אבחון דופק</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .pulse-card { transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
+        .pulse-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .pulse-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+        .filter-btn { transition: all 0.2s ease; }
+        .filter-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .modal-overlay { backdrop-filter: blur(8px); animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .category-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-right: 8px; }
+        .excess-badge { background: #fee2e2; color: #991b1b; }
+        .deficiency-badge { background: #dbeafe; color: #1e40af; }
+        .stagnation-badge { background: #fef3c7; color: #92400e; }
+        .heat-badge { background: #fecaca; color: #7f1d1d; }
+        .cold-badge { background: #e0f2fe; color: #0c4a6e; }
+        .damp-badge { background: #e5e7eb; color: #374151; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-4xl font-bold mb-2 text-right">🫀 גלריית אבחון דופק</h1>
+            <p class="text-blue-100 text-right">מדריך מקיף לזיהוי ופרשנות 28 סוגי דופק ברפואה הסינית</p>
+            <button onclick="window.close()" class="mt-4 bg-white/20 hover:bg-white/30 px-6 py-2 rounded-lg transition">
+                ← סגור חלון
+            </button>
+        </div>
+    </div>
+```
+**PART 2 - Paste this now (continues the HTML):**
+
+```html
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">🔍 חיפוש חופשי</label>
+                    <input type="text" id="searchInput" placeholder="חפש לפי שם, תיאור, תסמינים..." class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right" oninput="filterPulses()">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">📊 סינון לפי קטגוריה</label>
+                    <select id="categoryFilter" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right" onchange="filterPulses()">
+                        <option value="all">כל הקטגוריות (28)</option>
+                        <option value="excess">עודף</option>
+                        <option value="deficiency">חוסר</option>
+                        <option value="stagnation">סטגנציה</option>
+                        <option value="heat">חום</option>
+                        <option value="cold">קור</option>
+                        <option value="damp">לחות</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 justify-end">
+                <button onclick="setFilter('all')" class="filter-btn active px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">הכל</button>
+                <button onclick="setFilter('excess')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">עודף</button>
+                <button onclick="setFilter('deficiency')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">חוסר</button>
+                <button onclick="setFilter('stagnation')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">סטגנציה</button>
+                <button onclick="setFilter('heat')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">חום</button>
+                <button onclick="setFilter('cold')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">קור</button>
+            </div>
+            <div class="mt-4 text-sm text-gray-600 text-right">מציג: <span id="resultsCount" class="font-bold text-blue-600">28</span> סוגי דופק</div>
+        </div>
+        <div id="pulseGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+    <div id="pulseModal" class="hidden fixed inset-0 bg-black/50 modal-overlay flex items-center justify-center z-50 p-4" onclick="closeModal(event)">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+            <div id="modalContent" class="p-8"></div>
+        </div>
+    </div>
+    <script>
+```
+**PART 3 - Paste the pulse data (this is long, but it's all the 28 pulse types):**
+
+```javascript
+const pulseData = [
+    {id: 1, nameEn: "Floating", nameHe: "צף (Fu)", namePinyin: "Fú", category: "excess", description: "דופק המורגש בעוצמה בלחץ קל, אך נחלש עם לחץ עמוק יותר", characteristics: ["מורגש מיד במגע קל", "נחלש או נעלם בלחץ עמוק", "כמו עץ צף על מים"], clinicalSignificance: "מעיד על מחלה חיצונית", commonConditions: ["הצטננות או שפעת", "חום עם הזעה", "כאבי ראש"], treatment: "גירוש פתוגן חיצוני", relatedPulses: ["Tight", "Rapid"], tongue: "חיפוי לבן דק"},
+    {id: 2, nameEn: "Deep", nameHe: "עמוק (Chen)", namePinyin: "Chén", category: "deficiency", description: "דופק המורגש רק בלחץ חזק", characteristics: ["אינו מורגש בלחץ קל", "נדרש לחץ עמוק", "כמו אבן בתחתית המים"], clinicalSignificance: "מצביע על מחלה פנימית", commonConditions: ["מחלות כרוניות", "חוסר יאנג", "כאב פנימי"], treatment: "חימום פנימי", relatedPulses: ["Weak", "Slow"], tongue: "חיוורת"},
+    {id: 3, nameEn: "Slow", nameHe: "איטי (Chi)", namePinyin: "Chí", category: "cold", description: "דופק במקצב איטי", characteristics: ["פחות מ-60 פעימות לדקה", "מקצב רגוע"], clinicalSignificance: "מצביע על קור", commonConditions: ["קור פנימי", "חוסר יאנג"], treatment: "חימום יאנג", relatedPulses: ["Deep"], tongue: "חיוורת"},
+    {id: 4, nameEn: "Rapid", nameHe: "מהיר (Shuo)", namePinyin: "Shuò", category: "heat", description: "דופק במקצב מהיר", characteristics: ["יותר מ-90 פעימות לדקה"], clinicalSignificance: "מעיד על חום", commonConditions: ["חום בדם", "זיהומים"], treatment: "צינון חום", relatedPulses: ["Full"], tongue: "אדומה"},
+    {id: 5, nameEn: "Empty", nameHe: "ריק (Xu)", namePinyin: "Xū", category: "deficiency", description: "דופק חלש וריק", characteristics: ["חלש בכל העומקים", "רך ודק"], clinicalSignificance: "חוסר Qi ודם", commonConditions: ["תשישות", "אנמיה"], treatment: "תמיכה והזנה", relatedPulses: ["Fine"], tongue: "חיוורת"},
+    {id: 6, nameEn: "Full", nameHe: "מלא (Shi)", namePinyin: "Shí", category: "excess", description: "דופק חזק ומלא", characteristics: ["חזק בכל העומקים"], clinicalSignificance: "עודף פתוגני", commonConditions: ["סטגנציה", "לחות-חום"], treatment: "טיהור עודף", relatedPulses: ["Slippery"], tongue: "חיפוי עבה"},
+    {id: 7, nameEn: "Slippery", nameHe: "מתגלגל (Hua)", namePinyin: "Huá", category: "damp", description: "דופק חלקלק", characteristics: ["זורם בצורה חלקה"], clinicalSignificance: "לחות, ליחה", commonConditions: ["הצטברות ליחה"], treatment: "פירוק לחות", relatedPulses: ["Full"], tongue: "חיפוי שומני"},
+    {id: 8, nameEn: "Choppy", nameHe: "מחוספס (Se)", namePinyin: "Sè", category: "stagnation", description: "דופק לא חלק", characteristics: ["זרימה לא חלקה"], clinicalSignificance: "סטגנציית דם", commonConditions: ["סטגנציה", "יובש"], treatment: "הזזת דם", relatedPulses: ["Fine"], tongue: "סגולה"},
+    {id: 9, nameEn: "Wiry", nameHe: "מיתרי (Xian)", namePinyin: "Xián", category: "stagnation", description: "דופק מתוח", characteristics: ["מתוח וקשיח"], clinicalSignificance: "סטגנציית Qi בכבד", commonConditions: ["כאבי ראש", "PMS"], treatment: "החלקת Qi", relatedPulses: ["Tight"], tongue: "אדומה בצדדים"},
+    {id: 10, nameEn: "Tight", nameHe: "מתוח (Jin)", namePinyin: "Jǐn", category: "cold", description: "דופק מהודק", characteristics: ["מהודק וחזק"], clinicalSignificance: "קור, כאב", commonConditions: ["קור פתוגני"], treatment: "חימום", relatedPulses: ["Wiry"], tongue: "חיפוי לבן"},
+    {id: 11, nameEn: "Fine", nameHe: "דק (Xi)", namePinyin: "Xì", category: "deficiency", description: "דופק דק", characteristics: ["דק כחוט"], clinicalSignificance: "חוסר דם", commonConditions: ["חוסר דם"], treatment: "הזנת דם", relatedPulses: ["Weak"], tongue: "חיוורת"},
+    {id: 12, nameEn: "Weak", nameHe: "חלש (Ruo)", namePinyin: "Ruò", category: "deficiency", description: "דופק חלש", characteristics: ["חלש ורופף"], clinicalSignificance: "חוסר Qi", commonConditions: ["תשישות"], treatment: "חיזוק Qi", relatedPulses: ["Deep"], tongue: "חיוורת"},
+    {id: 13, nameEn: "Scattered", nameHe: "מפוזר (San)", namePinyin: "Sàn", category: "deficiency", description: "דופק מפוזר", characteristics: ["חסר צורה"], clinicalSignificance: "קריסת Qi", commonConditions: ["מחלה קשה"], treatment: "ייצוב Qi", relatedPulses: ["Weak"], tongue: "חיוורת מאוד"},
+    {id: 14, nameEn: "Hidden", nameHe: "נעלם (Wei)", namePinyin: "Wēi", category: "deficiency", description: "דופק נעלם", characteristics: ["בקושי מורגש"], clinicalSignificance: "חוסר חמור", commonConditions: ["מצב קריטי"], treatment: "החייאה", relatedPulses: ["Weak"], tongue: "חיוורת מאוד"},
+    {id: 15, nameEn: "Short", nameHe: "קצר (Duan)", namePinyin: "Duǎn", category: "deficiency", description: "דופק קצר", characteristics: ["לא מורגש בכל הרמות"], clinicalSignificance: "חוסר Qi", commonConditions: ["חוסר מקומי"], treatment: "חיזוק Qi", relatedPulses: ["Weak"], tongue: "משתנה"},
+    {id: 16, nameEn: "Long", nameHe: "ארוך (Chang)", namePinyin: "Cháng", category: "excess", description: "דופק ארוך", characteristics: ["נמשך מעבר לרגיל"], clinicalSignificance: "עודף יאנג", commonConditions: ["אש בכבד"], treatment: "צינון אש", relatedPulses: ["Full"], tongue: "אדומה"},
+    {id: 17, nameEn: "Soft", nameHe: "רך (Ru)", namePinyin: "Rú", category: "damp", description: "דופק רך", characteristics: ["רך למגע"], clinicalSignificance: "לחות עם חוסר", commonConditions: ["לחות בטחול"], treatment: "פירוק לחות", relatedPulses: ["Weak"], tongue: "נפוחה"},
+    {id: 18, nameEn: "Moderate", nameHe: "מתון (Huan)", namePinyin: "Huǎn", category: "deficiency", description: "דופק מתון", characteristics: ["איטי מעט"], clinicalSignificance: "לחות בטחול", commonConditions: ["חולשת טחול"], treatment: "חיזוק טחול", relatedPulses: ["Soft"], tongue: "חיוורת"},
+    {id: 19, nameEn: "Soggy", nameHe: "שטף (Ru)", namePinyin: "Rú", category: "damp", description: "דופק צף ורך", characteristics: ["צף בשטח"], clinicalSignificance: "לחות חיצונית", commonConditions: ["הזעה ספונטנית"], treatment: "פירוק לחות", relatedPulses: ["Soft"], tongue: "נפוחה"},
+    {id: 20, nameEn: "Leather", nameHe: "עור (Ge)", namePinyin: "Gé", category: "excess", description: "דופק כעור תוף", characteristics: ["חזק בשטח, ריק במרכז"], clinicalSignificance: "דימום", commonConditions: ["אובדן דם"], treatment: "עצירת דימום", relatedPulses: ["Empty"], tongue: "חיוורת"},
+    {id: 21, nameEn: "Hollow", nameHe: "חלול (Kong)", namePinyin: "Kōng", category: "deficiency", description: "דופק חלול", characteristics: ["רחב אך חלול"], clinicalSignificance: "אובדן דם", commonConditions: ["אחרי דימום"], treatment: "בניית דם", relatedPulses: ["Leather"], tongue: "יבשה"},
+    {id: 22, nameEn: "Firm", nameHe: "מוצק (Lao)", namePinyin: "Láo", category: "excess", description: "דופק עמוק וחזק", characteristics: ["עמוק ומתוח"], clinicalSignificance: "סטגנציה עמוקה", commonConditions: ["מסה בבטן"], treatment: "פירוק סטגנציה", relatedPulses: ["Deep"], tongue: "חיפוי עבה"},
+    {id: 23, nameEn: "Confined", nameHe: "כלוא (Lao)", namePinyin: "Láo", category: "excess", description: "דופק תקוע", characteristics: ["חזק במיקום ספציפי"], clinicalSignificance: "סטגנציה מקומית", commonConditions: ["כאב מקומי"], treatment: "הזזת סטגנציה", relatedPulses: ["Wiry"], tongue: "סגולה"},
+    {id: 24, nameEn: "Moving", nameHe: "נד (Dong)", namePinyin: "Dòng", category: "excess", description: "דופק קופץ", characteristics: ["מתנועע"], clinicalSignificance: "כאב, פחד", commonConditions: ["כאב חד"], treatment: "הרגעה", relatedPulses: ["Rapid"], tongue: "אדומה או חיוורת"},
+    {id: 25, nameEn: "Hasty", nameHe: "דוהר (Cu)", namePinyin: "Cù", category: "heat", description: "דופק מהיר עם דילוגים", characteristics: ["מהיר עם דילוגים"], clinicalSignificance: "אש בלב", commonConditions: ["חרדה חמורה"], treatment: "צינון חום", relatedPulses: ["Rapid"], tongue: "אדומה"},
+    {id: 26, nameEn: "Knotted", nameHe: "קשור (Jie)", namePinyin: "Jié", category: "stagnation", description: "דופק איטי עם דילוגים", characteristics: ["איטי עם דילוגים"], clinicalSignificance: "סטגנציה עם קור", commonConditions: ["סטגנציה"], treatment: "חימום", relatedPulses: ["Slow"], tongue: "חיוורת"},
+    {id: 27, nameEn: "Intermittent", nameHe: "מופסק (Dai)", namePinyin: "Dài", category: "deficiency", description: "דופק עם הפסקות", characteristics: ["הפסקות סדירות"], clinicalSignificance: "בעיות לב", commonConditions: ["מחלת לב"], treatment: "חיזוק לב", relatedPulses: ["Weak"], tongue: "חיוורת"},
+    {id: 28, nameEn: "Frail", nameHe: "שברירי (Ruan)", namePinyin: "Ruǎn", category: "deficiency", description: "דופק שברירי", characteristics: ["חלש מאוד"], clinicalSignificance: "חוסר חמור", commonConditions: ["תשישות קיצונית"], treatment: "תמיכה עמוקה", relatedPulses: ["Weak"], tongue: "חיוורת מאוד"}
+];
+```
+**PART 4 - Final part (JavaScript functions):**
+
+```javascript
+let currentFilter = 'all';
+function setFilter(category) {
+    currentFilter = category;
+    document.getElementById('categoryFilter').value = category;
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    filterPulses();
+}
+function filterPulses() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+    const filtered = pulseData.filter(pulse => {
+        const matchesCategory = category === 'all' || pulse.category === category;
+        const matchesSearch = searchTerm === '' || pulse.nameHe.toLowerCase().includes(searchTerm) || pulse.nameEn.toLowerCase().includes(searchTerm) || pulse.description.toLowerCase().includes(searchTerm);
+        return matchesCategory && matchesSearch;
+    });
+    displayPulses(filtered);
+    document.getElementById('resultsCount').textContent = filtered.length;
+}
+function displayPulses(pulses) {
+    const grid = document.getElementById('pulseGrid');
+    if (pulses.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-xl text-gray-500">לא נמצאו תוצאות</p></div>';
+        return;
+    }
+    const categoryNames = {'excess': 'עודף', 'deficiency': 'חוסר', 'stagnation': 'סטגנציה', 'heat': 'חום', 'cold': 'קור', 'damp': 'לחות'};
+    grid.innerHTML = pulses.map(pulse => `
+        <div class="pulse-card bg-white rounded-xl p-6 shadow-md hover:shadow-xl" onclick="showPulseDetail(${pulse.id})">
+            <div class="flex justify-between items-start mb-4">
+                <span class="category-badge ${pulse.category}-badge">${categoryNames[pulse.category]}</span>
+                <div class="text-right">
+                    <h3 class="text-2xl font-bold text-gray-800">${pulse.nameHe}</h3>
+                    <p class="text-sm text-gray-500">${pulse.nameEn}</p>
+                </div>
+            </div>
+            <p class="text-gray-700 text-right mb-4">${pulse.description}</p>
+            <div class="flex items-center justify-end text-sm text-blue-600 font-semibold">לפרטים מלאים ←</div>
+        </div>
+    `).join('');
+}
+function showPulseDetail(id) {
+    const pulse = pulseData.find(p => p.id === id);
+    if (!pulse) return;
+    const categoryNames = {'excess': 'עודף', 'deficiency': 'חוסר', 'stagnation': 'סטגנציה', 'heat': 'חום', 'cold': 'קור', 'damp': 'לחות'};
+    document.getElementById('modalContent').innerHTML = `
+        <div class="text-right">
+            <button onclick="closeModal()" class="float-left text-3xl text-gray-400 hover:text-gray-600">×</button>
+            <span class="category-badge ${pulse.category}-badge">${categoryNames[pulse.category]}</span>
+            <h2 class="text-4xl font-bold text-gray-800 mt-4">${pulse.nameHe}</h2>
+            <p class="text-lg text-gray-600 mb-6">${pulse.nameEn} • ${pulse.namePinyin}</p>
+            <div class="space-y-4">
+                <div><h4 class="text-xl font-bold text-blue-800 mb-2">📝 תיאור</h4><p class="text-gray-700">${pulse.description}</p></div>
+                <div><h4 class="text-xl font-bold text-green-800 mb-2">🔍 מאפיינים</h4><ul class="list-disc list-inside space-y-1 text-gray-700">${pulse.characteristics.map(c => `<li>${c}</li>`).join('')}</ul></div>
+                <div><h4 class="text-xl font-bold text-purple-800 mb-2">🎯 משמעות קלינית</h4><p class="text-gray-700">${pulse.clinicalSignificance}</p></div>
+                <div><h4 class="text-xl font-bold text-red-800 mb-2">🏥 מצבים שכיחים</h4><ul class="list-disc list-inside space-y-1 text-gray-700">${pulse.commonConditions.map(c => `<li>${c}</li>`).join('')}</ul></div>
+                <div><h4 class="text-xl font-bold text-indigo-800 mb-2">💊 עקרון טיפול</h4><p class="text-gray-700">${pulse.treatment}</p></div>
+                <div><h4 class="text-xl font-bold text-orange-800 mb-2">👅 לשון</h4><p class="text-gray-700">${pulse.tongue}</p></div>
+            </div>
+            <button onclick="closeModal()" class="mt-8 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-bold">סגור</button>
+        </div>
+    `;
+    document.getElementById('pulseModal').classList.remove('hidden');
+}
+function closeModal(event) {
+    if (!event || event.target.id === 'pulseModal') {
+        document.getElementById('pulseModal').classList.add('hidden');
+    }
+}
+filterPulses();
+    </script>
+</body>
+</html>
+```

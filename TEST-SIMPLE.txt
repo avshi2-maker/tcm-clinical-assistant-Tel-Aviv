@@ -1,0 +1,7 @@
+hellllo wrold thiss is a testt
+
+mistak recieve occured seperate
+
+If you see wavy lines under these words, spell checker is WORKING!
+
+If you see NO lines, press Ctrl+Shift+P and type: cSpell Enable
