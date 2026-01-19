@@ -1,8 +1,3 @@
-I'll give you the code in chunks since it's large. 
-
-**PART 1 - Paste this first:**
-
-```html
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -38,10 +33,7 @@ I'll give you the code in chunks since it's large.
             </button>
         </div>
     </div>
-```
-**PART 2 - Paste this now (continues the HTML):**
 
-```html
     <div class="max-w-7xl mx-auto p-6">
         <div class="bg-white rounded-xl shadow-md p-6 mb-6">
             <div class="grid md:grid-cols-2 gap-4 mb-4">
@@ -79,11 +71,8 @@ I'll give you the code in chunks since it's large.
             <div id="modalContent" class="p-8"></div>
         </div>
     </div>
-    <script>
-```
-**PART 3 - Paste the pulse data (this is long, but it's all the 28 pulse types):**
 
-```javascript
+    <script>
 const pulseData = [
     {id: 1, nameEn: "Floating", nameHe: "צף (Fu)", namePinyin: "Fú", category: "excess", description: "דופק המורגש בעוצמה בלחץ קל, אך נחלש עם לחץ עמוק יותר", characteristics: ["מורגש מיד במגע קל", "נחלש או נעלם בלחץ עמוק", "כמו עץ צף על מים"], clinicalSignificance: "מעיד על מחלה חיצונית", commonConditions: ["הצטננות או שפעת", "חום עם הזעה", "כאבי ראש"], treatment: "גירוש פתוגן חיצוני", relatedPulses: ["Tight", "Rapid"], tongue: "חיפוי לבן דק"},
     {id: 2, nameEn: "Deep", nameHe: "עמוק (Chen)", namePinyin: "Chén", category: "deficiency", description: "דופק המורגש רק בלחץ חזק", characteristics: ["אינו מורגש בלחץ קל", "נדרש לחץ עמוק", "כמו אבן בתחתית המים"], clinicalSignificance: "מצביע על מחלה פנימית", commonConditions: ["מחלות כרוניות", "חוסר יאנג", "כאב פנימי"], treatment: "חימום פנימי", relatedPulses: ["Weak", "Slow"], tongue: "חיוורת"},
@@ -114,11 +103,9 @@ const pulseData = [
     {id: 27, nameEn: "Intermittent", nameHe: "מופסק (Dai)", namePinyin: "Dài", category: "deficiency", description: "דופק עם הפסקות", characteristics: ["הפסקות סדירות"], clinicalSignificance: "בעיות לב", commonConditions: ["מחלת לב"], treatment: "חיזוק לב", relatedPulses: ["Weak"], tongue: "חיוורת"},
     {id: 28, nameEn: "Frail", nameHe: "שברירי (Ruan)", namePinyin: "Ruǎn", category: "deficiency", description: "דופק שברירי", characteristics: ["חלש מאוד"], clinicalSignificance: "חוסר חמור", commonConditions: ["תשישות קיצונית"], treatment: "תמיכה עמוקה", relatedPulses: ["Weak"], tongue: "חיוורת מאוד"}
 ];
-```
-**PART 4 - Final part (JavaScript functions):**
 
-```javascript
 let currentFilter = 'all';
+
 function setFilter(category) {
     currentFilter = category;
     document.getElementById('categoryFilter').value = category;
@@ -126,6 +113,7 @@ function setFilter(category) {
     event.target.classList.add('active');
     filterPulses();
 }
+
 function filterPulses() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const category = document.getElementById('categoryFilter').value;
@@ -137,6 +125,7 @@ function filterPulses() {
     displayPulses(filtered);
     document.getElementById('resultsCount').textContent = filtered.length;
 }
+
 function displayPulses(pulses) {
     const grid = document.getElementById('pulseGrid');
     if (pulses.length === 0) {
@@ -158,6 +147,7 @@ function displayPulses(pulses) {
         </div>
     `).join('');
 }
+
 function showPulseDetail(id) {
     const pulse = pulseData.find(p => p.id === id);
     if (!pulse) return;
@@ -181,13 +171,15 @@ function showPulseDetail(id) {
     `;
     document.getElementById('pulseModal').classList.remove('hidden');
 }
+
 function closeModal(event) {
     if (!event || event.target.id === 'pulseModal') {
         document.getElementById('pulseModal').classList.add('hidden');
     }
 }
+
+// Initialize on page load
 filterPulses();
     </script>
 </body>
 </html>
-```
