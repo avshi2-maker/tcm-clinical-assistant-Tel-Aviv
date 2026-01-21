@@ -6,6 +6,7 @@
     <title>Yin-Yang Assessment - הערכת יין-יאנג</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Heebo', sans-serif; 
@@ -1485,10 +1486,8 @@
             }
         }
 
-        // ==================== SUPABASE CONFIGURATION ====================
-        const SUPABASE_URL = 'https://iqfglrwjemogoycbzltt.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxZmdscndqZW1vZ295Y2J6bHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3Nzc2NzQsImV4cCI6MjA1MjM1MzY3NH0.wR5r4yuPUfGjx3TBOIIoGhyHrD7pBqc_a4bAhSJHY3o';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // ==================== USE CENTRALIZED SUPABASE CONFIG ====================
+        const supabaseClient = window.TCM_SUPABASE.client;
 
         // ==================== ACUPOINT POPUP FUNCTIONS ====================
         

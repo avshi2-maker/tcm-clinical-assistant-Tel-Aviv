@@ -6,6 +6,7 @@
     <title>CM Clinical Assistant - Complete Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <style>
         body { margin: 0; padding: 0; height: 100vh; overflow: hidden; }
         
@@ -477,9 +478,10 @@
             }
         }
 
-        // Configuration
-        const SUPABASE_URL = 'https://iqfglrwjemogoycbzltt.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxZmdscndqZW1vZ295Y2J6bHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NTM4ODMsImV4cCI6MjA4NDEyOTg4M30.DTREv3efs86_HzESyWm-7480ImfEVgC6T-xBdS6A2F8';
+        // ==================== USE CENTRALIZED SUPABASE CONFIG ====================
+        const supabaseClient = window.TCM_SUPABASE.client;
+        
+        // Configuration - API Keys
         const GEMINI_API_KEY = 'AIzaSyBMULiu2FBFIExlGHyAgKjqIq2ebyV2xcs';
         const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
         
@@ -491,8 +493,6 @@
         const CLAUDE_API_KEY = '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';
         const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
         const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
-        
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         // Global state
         let formulasData = [];
