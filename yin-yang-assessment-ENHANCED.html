@@ -357,6 +357,63 @@
             height: auto;
             display: block;
         }
+        
+        /* Question Number and Status Indicators */
+        .question-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .question-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-left: 12px;
+        }
+        .question-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .status-answered {
+            color: #10b981;
+        }
+        .status-unanswered {
+            color: #ef4444;
+        }
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .status-icon.answered {
+            background: #10b981;
+            color: white;
+        }
+        .status-icon.unanswered {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+        .missing-questions-alert {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -379,7 +436,20 @@
             <div class="w-full bg-gray-200 rounded-full h-4">
                 <div class="progress-bar h-4 rounded-full" id="progress-bar" style="width: 0%"></div>
             </div>
-            <p class="text-xs text-gray-500 mt-2 text-right" id="questions-answered">0 מתוך 15 שאלות נענו</p>
+            <p class="text-xs text-gray-500 mt-2 text-right" id="questions-answered">0 מתוך 11 שאלות נענו</p>
+            
+            <!-- Missing Questions Alert -->
+            <div id="missing-questions-alert" class="missing-questions-alert" style="display: none;">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <div>
+                        <p class="font-bold text-gray-800 text-right mb-1">שאלות שטרם נענו:</p>
+                        <p id="missing-questions-list" class="text-gray-700 text-right text-sm"></p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Real-time Scores Display -->
@@ -496,9 +566,18 @@
                 
                 <!-- Question 1: Energy Level -->
                 <div class="mb-8">
-                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
-                        כיצד האנרגיה הכללית שלך במהלך היום?
-                    </label>
+                    <div class="question-header">
+                        <div class="question-status" id="status-energy_level">
+                            <span class="status-icon unanswered" id="icon-energy_level">✗</span>
+                            <span class="status-unanswered" id="text-energy_level">לא נענתה</span>
+                        </div>
+                        <div>
+                            <span class="question-number">שאלה 1/11</span>
+                            <label class="text-lg font-semibold text-gray-700 text-right">
+                                כיצד האנרגיה הכללית שלך במהלך היום?
+                            </label>
+                        </div>
+                    </div>
                     <div class="space-y-3">
                         <div class="option-card p-4 rounded-lg" data-question="energy_level" data-option="very_low">
                             <div class="flex items-center justify-between">
@@ -600,9 +679,18 @@
                 
                 <!-- Question 3: Cold Sensitivity -->
                 <div class="mb-8">
-                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
-                        האם יש לך ידיים/רגליים קרות או הרגשת קור בגב התחתון/בטן?
-                    </label>
+                    <div class="question-header">
+                        <div class="question-status" id="status-cold_sensitivity">
+                            <span class="status-icon unanswered" id="icon-cold_sensitivity">✗</span>
+                            <span class="status-unanswered" id="text-cold_sensitivity">לא נענתה</span>
+                        </div>
+                        <div>
+                            <span class="question-number">שאלה 3/11</span>
+                            <label class="text-lg font-semibold text-gray-700 text-right">
+                                האם יש לך ידיים/רגליים קרות או הרגשת קור בגב התחתון/בטן?
+                            </label>
+                        </div>
+                    </div>
                     <div class="space-y-3">
                         <div class="option-card p-4 rounded-lg" data-question="cold_sensitivity" data-option="none">
                             <div class="flex items-center justify-between">
@@ -679,9 +767,18 @@
 
                 <!-- Question 5: Sweating -->
                 <div class="mb-6">
-                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
-                        איך ההזעה שלך?
-                    </label>
+                    <div class="question-header">
+                        <div class="question-status" id="status-sweating">
+                            <span class="status-icon unanswered" id="icon-sweating">✗</span>
+                            <span class="status-unanswered" id="text-sweating">לא נענתה</span>
+                        </div>
+                        <div>
+                            <span class="question-number">שאלה 5/11</span>
+                            <label class="text-lg font-semibold text-gray-700 text-right">
+                                איך ההזעה שלך?
+                            </label>
+                        </div>
+                    </div>
                     <div class="space-y-3">
                         <div class="option-card p-4 rounded-lg" data-question="sweating" data-option="normal">
                             <div class="flex items-center justify-between">
@@ -774,9 +871,18 @@
 
                 <!-- Question 7: Sleep -->
                 <div class="mb-6">
-                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
-                        איך השינה שלך?
-                    </label>
+                    <div class="question-header">
+                        <div class="question-status" id="status-sleep">
+                            <span class="status-icon unanswered" id="icon-sleep">✗</span>
+                            <span class="status-unanswered" id="text-sleep">לא נענתה</span>
+                        </div>
+                        <div>
+                            <span class="question-number">שאלה 7/11</span>
+                            <label class="text-lg font-semibold text-gray-700 text-right">
+                                איך השינה שלך?
+                            </label>
+                        </div>
+                    </div>
                     <div class="space-y-3">
                         <div class="option-card p-4 rounded-lg" data-question="sleep" data-option="good">
                             <div class="flex items-center justify-between">
@@ -1348,7 +1454,7 @@
             heat: 0
         };
 
-        const totalQuestions = 15;
+        const totalQuestions = 11;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -1392,6 +1498,9 @@
             
             // Store answer
             answers[question] = option;
+            
+            // Mark question as answered
+            markQuestionAnswered(question);
         }
 
         function handleMultiChoice(question, option, element) {
@@ -1487,10 +1596,40 @@
             document.getElementById('progress-text').textContent = percentage + '%';
             document.getElementById('questions-answered').textContent = `${answeredCount} מתוך ${totalQuestions} שאלות נענו`;
             
+            // Show missing questions
+            const allQuestions = [
+                'energy_level', 'temperature_preference', 'cold_sensitivity', 'heat_sensation',
+                'sweating', 'thirst', 'sleep', 'stool', 'urine', 'body_build', 'pain'
+            ];
+            const questionNames = {
+                'energy_level': 'שאלה 1: רמת אנרגיה',
+                'temperature_preference': 'שאלה 2: העדפת טמפרטורה',
+                'cold_sensitivity': 'שאלה 3: רגישות לקור',
+                'heat_sensation': 'שאלה 4: תחושת חום',
+                'sweating': 'שאלה 5: הזעה',
+                'thirst': 'שאלה 6: צמא',
+                'sleep': 'שאלה 7: שינה',
+                'stool': 'שאלה 8: צואה',
+                'urine': 'שאלה 9: השתנה',
+                'body_build': 'שאלה 10: מבנה גוף',
+                'pain': 'שאלה 11: כאב'
+            };
+            
+            const missingQuestions = allQuestions.filter(q => !answers[q]);
+            
+            if (missingQuestions.length > 0 && answeredCount > 0) {
+                document.getElementById('missing-questions-alert').style.display = 'block';
+                const missingText = missingQuestions.map(q => questionNames[q]).join(', ');
+                document.getElementById('missing-questions-list').textContent = missingText;
+            } else {
+                document.getElementById('missing-questions-alert').style.display = 'none';
+            }
+            
             // Show submit button when all questions answered
             if (answeredCount === totalQuestions) {
                 document.getElementById('submit-button').style.display = 'inline-block';
                 document.getElementById('completion-message').style.display = 'block';
+                document.getElementById('missing-questions-alert').style.display = 'none';
                 
                 // Scroll to submit button
                 setTimeout(() => {
@@ -1499,6 +1638,21 @@
             } else {
                 document.getElementById('submit-button').style.display = 'none';
                 document.getElementById('completion-message').style.display = 'none';
+            }
+        }
+        
+        function markQuestionAnswered(questionId) {
+            const icon = document.getElementById(`icon-${questionId}`);
+            const text = document.getElementById(`text-${questionId}`);
+            const status = document.getElementById(`status-${questionId}`);
+            
+            if (icon && text && status) {
+                icon.textContent = '✓';
+                icon.classList.remove('unanswered');
+                icon.classList.add('answered');
+                text.textContent = 'נענתה';
+                text.classList.remove('status-unanswered');
+                text.classList.add('status-answered');
             }
         }
 
