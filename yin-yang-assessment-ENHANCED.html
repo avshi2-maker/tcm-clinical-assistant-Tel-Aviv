@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yin-Yang Assessment - הערכת יין-יאנג</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Heebo', sans-serif; 
+        }
+        .section-card { 
+            transition: all 0.3s ease; 
+            border-right: 4px solid transparent; 
+        }
+        .section-card.active { 
+            border-color: #667eea; 
+            background: #f0f4ff; 
+        }
+        .section-card.completed {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .option-card { 
+            transition: all 0.2s ease; 
+            cursor: pointer; 
+            border: 2px solid #e5e7eb; 
+        }
+        .option-card:hover { 
+            border-color: #667eea; 
+            background: #f9fafb; 
+            transform: translateX(-2px);
+        }
+        .option-card.selected { 
+            border-color: #667eea; 
+            background: #eff6ff; 
+            box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.1);
+        }
+        .progress-bar { 
+            transition: width 0.5s ease; 
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        .pattern-badge { 
+            padding: 10px 20px; 
+            border-radius: 25px; 
+            font-weight: 600; 
+            display: inline-block; 
+            margin: 6px; 
+            font-size: 1rem;
+        }
+        .yin-def { background: #fecaca; color: #991b1b; }
+        .yang-def { background: #dbeafe; color: #1e40af; }
+        .balanced { background: #d1fae5; color: #065f46; }
+        .yin-yang-excess { background: #fed7aa; color: #9a3412; }
+        .yang-yin-excess { background: #e0e7ff; color: #3730a3; }
+        .result-card { 
+            animation: fadeIn 0.6s ease; 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .yin-yang-symbol {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: #1e3a8a;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        }
+        .yin-yang-symbol::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: #dc2626;
+            border-radius: 100% 0 0 100%;
+        }
+        .yin-yang-symbol::after {
+            content: '';
+            position: absolute;
+            top: 25%;
+            left: 25%;
+            width: 50%;
+            height: 50%;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 20px #1e3a8a, 0 50px 0 0 #dc2626;
+        }
+        .dimension-bar {
+            height: 28px;
+            border-radius: 14px;
+            background: #e5e7eb;
+            overflow: hidden;
+            position: relative;
+        }
+        .dimension-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .yin-color { background: linear-gradient(90deg, #1e40af, #3b82f6); }
+        .yang-color { background: linear-gradient(90deg, #dc2626, #ef4444); }
+        .qi-color { background: linear-gradient(90deg, #059669, #10b981); }
+        .heat-color { background: linear-gradient(90deg, #ea580c, #f97316); }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+        .print-only { display: none; }
+        .safety-flag {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 4px;
+        }
+        /* Acupoint Popup Styles */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+        .info-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+        }
+        .popup-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .popup-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .popup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px 16px 0 0;
+            position: relative;
+        }
+        .popup-close {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .popup-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+        .popup-body {
+            padding: 24px;
+        }
+        .acupoint-badge {
+            display: inline-block;
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 4px;
+        }
+        .body-part-tag {
+            display: inline-block;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin: 3px;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 shadow-lg no-print">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-4xl font-bold mb-2 text-right">☯️ הערכת איזון יין-יאנג</h1>
+            <p class="text-purple-100 text-right text-lg">שאלון מקיף לזיהוי דפוסי יין-יאנג ברפואה הסינית</p>
+            <p class="text-sm text-purple-200 text-right mt-2">TCM Clinical Assistant - Tel Aviv | גרסה 1.0.0</p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto p-6">
+        <!-- Progress Bar -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6 no-print">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-semibold text-gray-600">התקדמות השאלון</span>
+                <span class="text-sm font-semibold text-purple-600" id="progress-text">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4">
+                <div class="progress-bar h-4 rounded-full" id="progress-bar" style="width: 0%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2 text-right" id="questions-answered">0 מתוך 15 שאלות נענו</p>
+        </div>
+
+        <!-- Real-time Scores Display -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="live-scores" style="display: none;">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-right flex items-center justify-end gap-2">
+                <span>ניקוד בזמן אמת</span>
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-700">חסר יין (Yin Deficiency)</span>
+                        <span class="text-lg font-bold text-blue-900" id="score-yin-def">0</span>
+                    </div>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill yin-color" id="bar-yin-def" style="width: 0%">
+                            <span id="bar-text-yin-def"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-700">חסר יאנג (Yang Deficiency)</span>
+                        <span class="text-lg font-bold text-red-700" id="score-yang-def">0</span>
+                    </div>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill yang-color" id="bar-yang-def" style="width: 0%">
+                            <span id="bar-text-yang-def"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-700">איזון יין (Yin Balance)</span>
+                        <span class="text-lg font-bold text-green-700" id="score-yin-bal">0</span>
+                    </div>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill qi-color" id="bar-yin-bal" style="width: 0%">
+                            <span id="bar-text-yin-bal"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-700">איזון יאנג (Yang Balance)</span>
+                        <span class="text-lg font-bold text-green-700" id="score-yang-bal">0</span>
+                    </div>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill qi-color" id="bar-yang-bal" style="width: 0%">
+                            <span id="bar-text-yang-bal"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-700">עודף יאנג (Yang Excess)</span>
+                        <span class="text-lg font-bold text-orange-600" id="score-yang-excess">0</span>
+                    </div>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill heat-color" id="bar-yang-excess" style="width: 0%">
+                            <span id="bar-text-yang-excess"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-700">חסר צ'י (Qi Deficiency)</span>
+                        <span class="text-lg font-bold text-emerald-700" id="score-qi-def">0</span>
+                    </div>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill qi-color" id="bar-qi-def" style="width: 0%">
+                            <span id="bar-text-qi-def"></span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-700">חום (Heat)</span>
+                        <span class="text-lg font-bold text-orange-700" id="score-heat">0</span>
+                    </div>
+                    <div class="dimension-bar">
+                        <div class="dimension-fill heat-color" id="bar-heat" style="width: 0%">
+                            <span id="bar-text-heat"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questionnaire Sections -->
+        <div id="questionnaire">
+            <!-- Section 1: General State -->
+            <div class="section-card bg-white rounded-lg shadow-md p-6 mb-6 active" data-section="general">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-right border-b-2 border-purple-200 pb-3">
+                    מצב כללי
+                </h2>
+                
+                <!-- Question 1: Energy Level -->
+                <div class="mb-8">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        כיצד האנרגיה הכללית שלך במהלך היום?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="energy_level" data-option="very_low">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('energy_level', 'very_low', 'נמוכה מאוד, מותש/ת')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">נמוכה מאוד, מותש/ת</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="energy_level" data-option="low">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('energy_level', 'low', 'נמוכה למדי')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">נמוכה למדי</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="energy_level" data-option="balanced">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">יציבה, מאוזנת</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="energy_level" data-option="high_agitated">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('energy_level', 'high_agitated', 'גבוהה עם חוסר מנוחה או תסיסה')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">גבוהה עם חוסר מנוחה או תסיסה</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 2: Temperature Preference -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        האם את/ה בדרך כלל מרגיש/ה יותר קר או חם בהשוואה לאנשים אחרים?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="temperature_preference" data-option="very_cold">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('temperature_preference', 'very_cold', 'לעתים קרובות מרגיש/ה קר, לא אוהב/ת קור')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">לעתים קרובות מרגיש/ה קר, לא אוהב/ת קור</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="temperature_preference" data-option="slightly_cold">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('temperature_preference', 'slightly_cold', 'מעט יותר קר מאחרים')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">מעט יותר קר מאחרים</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="temperature_preference" data-option="neutral">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">בערך כמו אחרים</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="temperature_preference" data-option="hot">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('temperature_preference', 'hot', 'לעתים קרובות מרגיש/ה חם, לא אוהב/ת חום')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">לעתים קרובות מרגיש/ה חם, לא אוהב/ת חום</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="temperature_preference" data-option="evening_hot">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('temperature_preference', 'evening_hot', 'יותר חום בערב או בלילה')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">יותר חום בערב או בלילה</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Heat, Cold & Sweat -->
+            <div class="section-card bg-white rounded-lg shadow-md p-6 mb-6" data-section="heat_cold_sweat">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-right border-b-2 border-purple-200 pb-3">
+                    חום, קור והזעה
+                </h2>
+                
+                <!-- Question 3: Cold Sensitivity -->
+                <div class="mb-8">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        האם יש לך ידיים/רגליים קרות או הרגשת קור בגב התחתון/בטן?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="cold_sensitivity" data-option="none">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">לא</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="cold_sensitivity" data-option="mild">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('cold_sensitivity', 'mild', 'לפעמים')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">לפעמים</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="cold_sensitivity" data-option="marked">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('cold_sensitivity', 'marked', 'לעתים קרובות ובאופן ברור')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">לעתים קרובות ובאופן ברור</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 4: Heat Sensation -->
+                <div class="mb-8">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        האם את/ה חווה תחושות של חום (כפות ידיים, כפות רגליים, חזה, פנים)?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="heat_sensation" data-option="none">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">לא</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="heat_sensation" data-option="pm_heat">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('heat_sensation', 'pm_heat', 'יותר אחר הצהריים/ערב')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">יותר אחר הצהריים/ערב</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="heat_sensation" data-option="all_day_heat">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('heat_sensation', 'all_day_heat', 'כל היום או מתחמם/ת בקלות')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">כל היום או מתחמם/ת בקלות</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="heat_sensation" data-option="night_sweats">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('heat_sensation', 'night_sweats', 'הזעות לילה עם חום')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">הזעות לילה עם חום</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 5: Sweating -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        איך ההזעה שלך?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="sweating" data-option="normal">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">רגילה</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="sweating" data-option="spontaneous">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('sweating', 'spontaneous', 'הזעה ספונטנית עם מעט מאמץ')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">הזעה ספונטנית עם מעט מאמץ</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="sweating" data-option="night">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('sweating', 'night', 'הזעות לילה')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">הזעות לילה</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="sweating" data-option="no_sweat_cold">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('sweating', 'no_sweat_cold', 'ללא הזעה, גוף קר')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">ללא הזעה, גוף קר</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Thirst, Fluids, Sleep -->
+            <div class="section-card bg-white rounded-lg shadow-md p-6 mb-6" data-section="fluids_sleep">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-right border-b-2 border-purple-200 pb-3">
+                    צמא, נוזלים ושינה
+                </h2>
+                
+                <!-- Question 6: Thirst -->
+                <div class="mb-8">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        תאר/י את הצמא וצריכת הנוזלים שלך
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="thirst" data-option="low_thirst">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('thirst', 'low_thirst', 'מעט צמא, מעדיף/ה משקאות חמים')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">מעט צמא, מעדיף/ה משקאות חמים</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="thirst" data-option="normal">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">צמא רגיל</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="thirst" data-option="high_cold">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('thirst', 'high_cold', 'צמא חזק, מעדיף/ה משקאות קרים')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">צמא חזק, מעדיף/ה משקאות קרים</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="thirst" data-option="dry_mouth_little_drink">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('thirst', 'dry_mouth_little_drink', 'פה יבש אך רק לגימות קטנות')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">פה יבש אך רק לגימות קטנות</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 7: Sleep -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        איך השינה שלך?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="sleep" data-option="good">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">ישן/ה טוב לאורך הלילה</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="sleep" data-option="difficulty_falling">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('sleep', 'difficulty_falling', 'קשה להירדם, מוח עסוק')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">קשה להירדם, מוח עסוק</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="sleep" data-option="waking_night">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('sleep', 'waking_night', 'מתעורר/ת לעתים קרובות, חום, הזעות לילה')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">מתעורר/ת לעתים קרובות, חום, הזעות לילה</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="sleep" data-option="excessive_sleep">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('sleep', 'excessive_sleep', 'צריך/ה הרבה שינה, עדיין עייף/ה')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">צריך/ה הרבה שינה, עדיין עייף/ה</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Stool & Urine -->
+            <div class="section-card bg-white rounded-lg shadow-md p-6 mb-6" data-section="bowel_urine">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-right border-b-2 border-purple-200 pb-3">
+                    צואה ושתן
+                </h2>
+                
+                <!-- Question 8: Stool -->
+                <div class="mb-8">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        איך תנועות המעיים שלך?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="stool" data-option="normal">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">רגילות, מעוצבות</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="stool" data-option="loose_cold">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('stool', 'loose_cold', 'רופפות, במיוחד עם קור או בבוקר')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">רופפות, במיוחד עם קור או בבוקר</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="stool" data-option="dry_constipation">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('stool', 'dry_constipation', 'צואה יבשה, קשה או עצירות')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">צואה יבשה, קשה או עצירות</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 9: Urine -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        איך ההטלה שלך?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="urine" data-option="normal">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">רגילה</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="urine" data-option="frequent_clear">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('urine', 'frequent_clear', 'תכופה, בהירה, במיוחד בלילה')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">תכופה, בהירה, במיוחד בלילה</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="urine" data-option="dark_scanty">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('urine', 'dark_scanty', 'כהה, מועטה')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">כהה, מועטה</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Body Form & Sensations -->
+            <div class="section-card bg-white rounded-lg shadow-md p-6 mb-6" data-section="body_form">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-right border-b-2 border-purple-200 pb-3">
+                    מבנה גוף ותחושות
+                </h2>
+                
+                <!-- Question 10: Body Build -->
+                <div class="mb-8">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        איך היית מתאר/ת את מבנה הגוף והתחושה שלך?
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="body_build" data-option="thin_dry">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('body_build', 'thin_dry', 'רזה, יבש, נטייה ליובש')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">רזה, יבש, נטייה ליובש</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="body_build" data-option="puffy_cold">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('body_build', 'puffy_cold', 'נפוח, מרגיש/ה קר, כבד')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">נפוח, מרגיש/ה קר, כבד</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="body_build" data-option="robust_red_face">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('body_build', 'robust_red_face', 'חסון עם נטייה לפנים אדומות או קול חזק')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">חסון עם נטייה לפנים אדומות או קול חזק</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="body_build" data-option="balanced">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">פרופורציונלי, מאוזן</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 11: Pain (Multi-choice) -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold text-gray-700 mb-4 text-right">
+                        כאבים קבועים כלשהם (מפרקים, גב, גפיים)? <span class="text-sm text-gray-500">(ניתן לבחור יותר מאחד)</span>
+                    </label>
+                    <div class="space-y-3">
+                        <div class="option-card p-4 rounded-lg" data-question="pain" data-option="cold_pain_better_warm" data-multi="true">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('pain', 'cold_pain_better_warm', 'כאב קר, טוב יותר עם חום/לחץ')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">כאב קר, טוב יותר עם חום/לחץ</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="pain" data-option="burning_pain" data-multi="true">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded border-2 border-gray-300"></div>
+                                    <span class="info-icon" onclick="event.stopPropagation(); showAcupointInfo('pain', 'burning_pain', 'תחושת שריפה או כאב חום')" title="הצג מידע על נקודות דיקור">ℹ️</span>
+                                </div>
+                                <span class="text-gray-700">תחושת שריפה או כאב חום</span>
+                            </div>
+                        </div>
+                        <div class="option-card p-4 rounded-lg" data-question="pain" data-option="none" data-multi="true">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded border-2 border-gray-300"></div>
+                                </div>
+                                <span class="text-gray-700">אין כאב משמעותי</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" style="display: none;">
+            <div class="result-card bg-white rounded-lg shadow-lg p-8 mb-6">
+                <div class="text-center mb-8">
+                    <div class="yin-yang-symbol mb-6"></div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">תוצאות ההערכה</h2>
+                    <p class="text-gray-600">ניתוח מקיף של איזון היין-יאנג שלך</p>
+                </div>
+
+                <!-- Primary Pattern -->
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4 text-right">דפוס ראשי:</h3>
+                    <div class="text-center mb-4">
+                        <span id="primary-pattern-badge" class="pattern-badge text-xl"></span>
+                    </div>
+                    <div class="bg-blue-50 border-r-4 border-blue-500 p-6 rounded-lg">
+                        <h4 class="font-bold text-lg text-gray-800 mb-3 text-right">הסבר למטופל:</h4>
+                        <p id="patient-explanation" class="text-gray-700 text-right leading-relaxed text-lg"></p>
+                    </div>
+                </div>
+
+                <!-- Typical Signs -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-right">סימנים אופייניים:</h3>
+                    <ul id="typical-signs" class="space-y-2 text-right"></ul>
+                </div>
+
+                <!-- TCM Notes -->
+                <div class="mb-8 bg-purple-50 border-r-4 border-purple-500 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 text-right">הערות TCM למטפל:</h3>
+                    <p id="tcm-notes" class="text-gray-700 text-right leading-relaxed"></p>
+                </div>
+
+                <!-- Safety Flags -->
+                <div id="safety-flags-section" style="display: none;" class="mb-8">
+                    <h3 class="text-xl font-bold text-red-700 mb-4 text-right flex items-center justify-end gap-2">
+                        <span>דגלי בטיחות - נדרש תשומת לב:</span>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </h3>
+                    <ul id="safety-flags" class="space-y-2 text-right"></ul>
+                </div>
+
+                <!-- Follow-up Questions -->
+                <div id="followup-section" class="mb-8 bg-green-50 border-r-4 border-green-500 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-right">שאלות המשך מומלצות:</h3>
+                    <ul id="followup-questions" class="space-y-2 text-right"></ul>
+                </div>
+
+                <!-- Lifestyle Prompts -->
+                <div id="lifestyle-section" class="mb-8 bg-yellow-50 border-r-4 border-yellow-500 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-right">שאלות אורח חיים:</h3>
+                    <ul id="lifestyle-prompts" class="space-y-2 text-right"></ul>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-4 justify-center mt-8 no-print">
+                    <button onclick="window.print()" class="print-button text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        🖨️ הדפס תוצאות
+                    </button>
+                    <button onclick="resetAssessment()" class="bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-700 transition">
+                        🔄 התחל מחדש
+                    </button>
+                </div>
+
+                <!-- Print-only Timestamp -->
+                <div class="print-only mt-8 text-center text-sm text-gray-600">
+                    <p>תאריך ההערכה: <span id="assessment-date"></span></p>
+                    <p>TCM Clinical Assistant - Tel Aviv</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Structure from the document
+        const questionData = {
+            energy_level: {
+                very_low: { yang_def: 2 },
+                low: { yang_def: 1 },
+                balanced: { yin_bal: 1, yang_bal: 1 },
+                high_agitated: { yang_excess: 2 }
+            },
+            temperature_preference: {
+                very_cold: { yang_def: 2 },
+                slightly_cold: { yang_def: 1 },
+                neutral: { yin_bal: 1, yang_bal: 1 },
+                hot: { yin_def: 2, yang_excess: 1 },
+                evening_hot: { yin_def: 2 }
+            },
+            cold_sensitivity: {
+                none: {},
+                mild: { yang_def: 1 },
+                marked: { yang_def: 2 }
+            },
+            heat_sensation: {
+                none: {},
+                pm_heat: { yin_def: 2 },
+                all_day_heat: { yang_excess: 2 },
+                night_sweats: { yin_def: 3 }
+            },
+            sweating: {
+                normal: {},
+                spontaneous: { qi_def: 1, yang_def: 1 },
+                night: { yin_def: 2 },
+                no_sweat_cold: { yang_def: 2 }
+            },
+            thirst: {
+                low_thirst: { yang_def: 1 },
+                normal: {},
+                high_cold: { yang_excess: 1, heat: 1 },
+                dry_mouth_little_drink: { yin_def: 2 }
+            },
+            sleep: {
+                good: { yin_bal: 1, yang_bal: 1 },
+                difficulty_falling: { yang_excess: 1, yin_def: 1 },
+                waking_night: { yin_def: 2 },
+                excessive_sleep: { yang_def: 2 }
+            },
+            stool: {
+                normal: {},
+                loose_cold: { yang_def: 2 },
+                dry_constipation: { yin_def: 2, heat: 1 }
+            },
+            urine: {
+                normal: {},
+                frequent_clear: { yang_def: 2 },
+                dark_scanty: { yin_def: 1, heat: 1 }
+            },
+            body_build: {
+                thin_dry: { yin_def: 2 },
+                puffy_cold: { yang_def: 2 },
+                robust_red_face: { yang_excess: 2 },
+                balanced: { yin_bal: 1, yang_bal: 1 }
+            },
+            pain: {
+                cold_pain_better_warm: { yang_def: 1 },
+                burning_pain: { yin_def: 1, yang_excess: 1 },
+                none: {}
+            }
+        };
+
+        const patternDefinitions = {
+            yin_deficiency: {
+                name: "חסר יין (Yin Deficiency)",
+                name_en: "Yin Deficiency",
+                badge_class: "yin-def",
+                patient_friendly: "הגוף שלך מראה סימנים של שימוש במשאבי נוזלים וקירור מהר יותר ממה שהוא יכול לבנות אותם מחדש. זה יכול ליצור חום פנימי וחוסר מנוחה.",
+                typical_signs: [
+                    "חום אחר הצהריים או בערב",
+                    "הזעות לילה",
+                    "פה או גרון יבשים, במיוחד בלילה",
+                    "גוף רזה, נטייה ליובש בעור או בצואה",
+                    "שינה קלה, מופרעת"
+                ],
+                tcm_notes: "היין אינו מזין ומקרר את האיברים מספיק, מה שמוביל להיפראקטיביות יאנג יחסית. לעתים קרובות נראה עם סימני חום מחסור.",
+                safety_flags: [
+                    "ירידה בלתי מוסברת במשקל",
+                    "נדודי שינה או חרדה חמורים",
+                    "הזעות לילה מתמשכות"
+                ]
+            },
+            yang_deficiency: {
+                name: "חסר יאנג (Yang Deficiency)",
+                name_en: "Yang Deficiency",
+                badge_class: "yang-def",
+                patient_friendly: "האנרגיה המחממת והמפעילה של הגוף שלך חלשה יותר, כך שאתה עלול להרגיש קר ועייף ביתר קלות.",
+                typical_signs: [
+                    "הרגשת קור, במיוחד ברגליים, ידיים, גב תחתון",
+                    "השתנה תכופה ובהירה, במיוחד בלילה",
+                    "צואה רופפה או בבוקר מוקדם",
+                    "אנרגיה נמוכה, צורך בשינה ארוכה אך עדיין עייף"
+                ],
+                tcm_notes: "היאנג אינו מספיק כדי לחמם ולהפוך נוזלים ומזון. לעתים קרובות קשור ליאנג של הטחול-כליות.",
+                safety_flags: [
+                    "עייפות חמורה עם סחרחורת או קוצר נשימה",
+                    "בצקת, במיוחד ברגליים",
+                    "השתנה תכופה מאוד או בריחת שתן"
+                ]
+            },
+            yin_yang_balance: {
+                name: "איזון יחסי יין-יאנג",
+                name_en: "Relative Yin-Yang Balance",
+                badge_class: "balanced",
+                patient_friendly: "התשובות שלך מראות אינטראקציה מאוזנת יחסית בין היין המקרר-מזין והיאנג המחמם-מפעיל.",
+                typical_signs: [
+                    "אנרגיה יציבה",
+                    "העדפת טמפרטורה נורמלית",
+                    "שינה ועיכול טובים"
+                ],
+                tcm_notes: "אין דפוס יין או יאנג דומיננטי. המשך להתמקד בהרגלי אורח חיים ששומרים על איזון.",
+                safety_flags: []
+            },
+            yin_def_yang_excess: {
+                name: "חסר יין עם עודף יאנג יחסי",
+                name_en: "Yin Deficiency with Relative Yang Excess",
+                badge_class: "yin-yang-excess",
+                patient_friendly: "יש מעט חוסר ביין המקרר/מזין, כך שצד היאנג נראה פעיל יותר מדי באופן יחסי. זה יכול להופיע כחום, תסיסה או בעיות שינה.",
+                typical_signs: [
+                    "עצבנות, חוסר מנוחה",
+                    "פנים אדומות או תחושות חום עם יובש",
+                    "הזעות לילה, צואה יבשה"
+                ],
+                tcm_notes: "חסר יין נכשל לעגן את היאנג; עודף יאנג יחסי מופיע כחום מחסור.",
+                safety_flags: [
+                    "דפיקות לב עם נדודי שינה",
+                    "שינוי משקל לא מוסבר",
+                    "לחץ דם גבוה מתמשך (הפנה אם יש חשד)"
+                ]
+            },
+            yang_def_yin_excess: {
+                name: "חסר יאנג עם דומיננטיות יין (נטייה לקור-לחות)",
+                name_en: "Yang Deficiency with Yin Predominance",
+                badge_class: "yang-yin-excess",
+                patient_friendly: "הפונקציה המחממת חלשה יותר, כך שתחושות קור ולחות יכולות לשלוט, עם כבדות או איטיות.",
+                typical_signs: [
+                    "הרגשת קור, מעדיף חום",
+                    "כבדות באיברים, עייפות",
+                    "צואה רופפה, בצקת אפשרית"
+                ],
+                tcm_notes: "יאנג לא מספיק נכשל להפוך ולהזיז נוזלים, מה שמוביל לדומיננטיות קור-לחות.",
+                safety_flags: [
+                    "בצקת או נפיחות בולטת",
+                    "אנרגיה נמוכה מאוד המפריעה לחיי היומיום"
+                ]
+            },
+            mixed_or_undefined: {
+                name: "דפוס מעורב או לא מוגדר",
+                name_en: "Mixed or Undefined Pattern",
+                badge_class: "balanced",
+                patient_friendly: "התשובות שלך מראות תבנית מורכבת שעשויה לדרוש הערכה נוספת על ידי מטפל.",
+                typical_signs: [
+                    "מגוון סימנים ללא דפוס ברור",
+                    "ייתכן שישנם מספר חוסרי איזון"
+                ],
+                tcm_notes: "לא התאים לקריטריונים של דפוסים מוגדרים. דורש הערכה מפורטת יותר במהלך הטיפול.",
+                safety_flags: []
+            }
+        };
+
+        const followUpQuestions = {
+            yin_deficiency: [
+                "מאז מתי את/ה מרגיש/ה הזעות לילה או חום בערב?",
+                "האם את/ה מרגיש/ה יותר יובש בעור, בעיניים, בגרון או בצואה?",
+                "איך המצב הרגשי שלך כשיש לך קושי להירדם?"
+            ],
+            yang_deficiency: [
+                "באילו שעות ביום את/ה הכי קר/ה או עייף/ה?",
+                "האם יש שינויים בתדירות או בנפח ההשתנה?",
+                "האם את/ה מרגיש/ה כבדות באיברים או נפיחות?"
+            ],
+            yin_yang_balance: [
+                "מה עוזר לך לשמור על האיזון הנוכחי?",
+                "האם יש תחומים ספציפיים שתרצה לשפר?"
+            ],
+            yin_def_yang_excess: [
+                "מה מחמיר את תחושות החום והתסיסה?",
+                "איך השינה שלך מושפעת מהסטרס?",
+                "האם יש דפוסים של יובש בגוף?"
+            ],
+            yang_def_yin_excess: [
+                "האם את/ה חש/ה כבדות או נפיחות במהלך היום?",
+                "מה הקשר בין קור למזון שאת/ה אוכל/ת?",
+                "איך העיכול שלך בבוקר?"
+            ],
+            mixed_or_undefined: [
+                "אילו סימפטומים הכי מטרידים אותך?",
+                "האם יש דפוסים של שינוי במהלך היום?"
+            ]
+        };
+
+        const lifestylePrompts = {
+            yin_deficiency: [
+                "שאל על לילות מאוחרים, עבודת יתר כרונית ולחץ ארוך טווח",
+                "שאל על מזונות חריפים, מטוגנים, אלכוהול או מאוד חמים באופיים"
+            ],
+            yang_deficiency: [
+                "שאל על חשיפה לקור, מזונות גולמיים או חולשה עיכולית כרונית",
+                "שאל על מאמץ פיזי או רגשי ארוך טווח"
+            ],
+            yin_yang_balance: [
+                "המשך עם הרגלי אורח חיים נוכחיים",
+                "שקול תזונה מאוזנת ופעילות גופנית סדירה"
+            ],
+            yin_def_yang_excess: [
+                "שאל על לחץ, גירויים יתר ודפוסי שינה",
+                "בדוק צריכת קפאין, אלכוהול ומזונות מחממים"
+            ],
+            yang_def_yin_excess: [
+                "שאל על צריכת מזונות קרים או גולמיים",
+                "בדוק חשיפה לסביבות קרות ולחות"
+            ],
+            mixed_or_undefined: [
+                "בצע הערכה מקיפה של אורח חיים",
+                "שקול להתייעץ עם מטפל TCM מנוסה"
+            ]
+        };
+
+        // State management
+        let answers = {};
+        let scores = {
+            yin_def: 0,
+            yang_def: 0,
+            yin_bal: 0,
+            yang_bal: 0,
+            yang_excess: 0,
+            qi_def: 0,
+            heat: 0
+        };
+
+        const totalQuestions = 15;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const options = document.querySelectorAll('.option-card');
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    const question = this.dataset.question;
+                    const selectedOption = this.dataset.option;
+                    const isMulti = this.dataset.multi === 'true';
+                    
+                    if (isMulti) {
+                        handleMultiChoice(question, selectedOption, this);
+                    } else {
+                        handleSingleChoice(question, selectedOption, this);
+                    }
+                    
+                    updateScores();
+                    updateProgress();
+                    updateSectionStatus();
+                });
+            });
+        }
+
+        function handleSingleChoice(question, option, element) {
+            // Remove selection from all options in this question
+            const allOptions = document.querySelectorAll(`[data-question="${question}"]`);
+            allOptions.forEach(opt => {
+                opt.classList.remove('selected');
+                const circle = opt.querySelector('.w-5');
+                circle.style.background = 'white';
+            });
+            
+            // Select this option
+            element.classList.add('selected');
+            const circle = element.querySelector('.w-5');
+            circle.style.background = '#667eea';
+            
+            // Store answer
+            answers[question] = option;
+        }
+
+        function handleMultiChoice(question, option, element) {
+            if (!answers[question]) {
+                answers[question] = [];
+            }
+            
+            const index = answers[question].indexOf(option);
+            const checkbox = element.querySelector('.w-5');
+            
+            if (index > -1) {
+                // Deselect
+                answers[question].splice(index, 1);
+                element.classList.remove('selected');
+                checkbox.style.background = 'white';
+            } else {
+                // Select
+                answers[question].push(option);
+                element.classList.add('selected');
+                checkbox.style.background = '#667eea';
+            }
+            
+            if (answers[question].length === 0) {
+                delete answers[question];
+            }
+        }
+
+        function updateScores() {
+            // Reset scores
+            scores = {
+                yin_def: 0,
+                yang_def: 0,
+                yin_bal: 0,
+                yang_bal: 0,
+                yang_excess: 0,
+                qi_def: 0,
+                heat: 0
+            };
+            
+            // Calculate scores
+            for (const [question, answer] of Object.entries(answers)) {
+                if (Array.isArray(answer)) {
+                    // Multi-choice
+                    answer.forEach(opt => {
+                        const weights = questionData[question][opt];
+                        for (const [dimension, weight] of Object.entries(weights)) {
+                            scores[dimension] += weight;
+                        }
+                    });
+                } else {
+                    // Single choice
+                    const weights = questionData[question][answer];
+                    for (const [dimension, weight] of Object.entries(weights)) {
+                        scores[dimension] += weight;
+                    }
+                }
+            }
+            
+            // Update UI
+            updateScoreDisplay();
+        }
+
+        function updateScoreDisplay() {
+            const answeredCount = Object.keys(answers).length;
+            
+            if (answeredCount >= 6) {
+                document.getElementById('live-scores').style.display = 'block';
+            }
+            
+            const maxScore = Math.max(...Object.values(scores));
+            
+            for (const [dimension, score] of Object.entries(scores)) {
+                const scoreEl = document.getElementById(`score-${dimension.replace('_', '-')}`);
+                const barEl = document.getElementById(`bar-${dimension.replace('_', '-')}`);
+                const textEl = document.getElementById(`bar-text-${dimension.replace('_', '-')}`);
+                
+                if (scoreEl && barEl) {
+                    scoreEl.textContent = score;
+                    const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
+                    barEl.style.width = percentage + '%';
+                    if (textEl && score > 0) {
+                        textEl.textContent = score;
+                    }
+                }
+            }
+        }
+
+        function updateProgress() {
+            const answeredCount = Object.keys(answers).length;
+            const percentage = Math.round((answeredCount / totalQuestions) * 100);
+            
+            document.getElementById('progress-bar').style.width = percentage + '%';
+            document.getElementById('progress-text').textContent = percentage + '%';
+            document.getElementById('questions-answered').textContent = `${answeredCount} מתוך ${totalQuestions} שאלות נענו`;
+            
+            if (answeredCount === totalQuestions) {
+                setTimeout(showResults, 500);
+            }
+        }
+
+        function updateSectionStatus() {
+            const sections = ['general', 'heat_cold_sweat', 'fluids_sleep', 'bowel_urine', 'body_form'];
+            const questionsPerSection = {
+                general: ['energy_level', 'temperature_preference'],
+                heat_cold_sweat: ['cold_sensitivity', 'heat_sensation', 'sweating'],
+                fluids_sleep: ['thirst', 'sleep'],
+                bowel_urine: ['stool', 'urine'],
+                body_form: ['body_build', 'pain']
+            };
+            
+            sections.forEach(section => {
+                const sectionEl = document.querySelector(`[data-section="${section}"]`);
+                const questions = questionsPerSection[section];
+                const allAnswered = questions.every(q => answers[q]);
+                
+                if (allAnswered) {
+                    sectionEl.classList.remove('active');
+                    sectionEl.classList.add('completed');
+                } else {
+                    sectionEl.classList.add('active');
+                }
+            });
+        }
+
+        function classifyPattern() {
+            const s = scores;
+            
+            // Apply pattern mapping logic from document
+            if (s.yin_def >= 4 && s.yin_def >= s.yang_def) {
+                return 'yin_deficiency';
+            } else if (s.yang_def >= 4 && s.yang_def > s.yin_def) {
+                return 'yang_deficiency';
+            } else if (s.yin_bal >= 2 && s.yang_bal >= 2 && s.yin_def <= 2 && s.yang_def <= 2 && s.yang_excess <= 2) {
+                return 'yin_yang_balance';
+            } else if (s.yin_def >= 4 && s.yang_excess >= 2) {
+                return 'yin_def_yang_excess';
+            } else if (s.yang_def >= 4 && s.yin_def <= 2) {
+                return 'yang_def_yin_excess';
+            } else {
+                return 'mixed_or_undefined';
+            }
+        }
+
+        function showResults() {
+            document.getElementById('questionnaire').style.display = 'none';
+            document.getElementById('live-scores').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            const pattern = classifyPattern();
+            const patternInfo = patternDefinitions[pattern];
+            
+            // Primary pattern badge
+            const badge = document.getElementById('primary-pattern-badge');
+            badge.textContent = patternInfo.name;
+            badge.className = 'pattern-badge text-xl ' + patternInfo.badge_class;
+            
+            // Patient explanation
+            document.getElementById('patient-explanation').textContent = patternInfo.patient_friendly;
+            
+            // Typical signs
+            const signsList = document.getElementById('typical-signs');
+            signsList.innerHTML = '';
+            patternInfo.typical_signs.forEach(sign => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center gap-3 text-gray-700';
+                li.innerHTML = `
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>${sign}</span>
+                `;
+                signsList.appendChild(li);
+            });
+            
+            // TCM notes
+            document.getElementById('tcm-notes').textContent = patternInfo.tcm_notes;
+            
+            // Safety flags
+            if (patternInfo.safety_flags && patternInfo.safety_flags.length > 0) {
+                document.getElementById('safety-flags-section').style.display = 'block';
+                const flagsList = document.getElementById('safety-flags');
+                flagsList.innerHTML = '';
+                patternInfo.safety_flags.forEach(flag => {
+                    const li = document.createElement('li');
+                    li.className = 'safety-flag';
+                    li.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span class="font-semibold text-gray-800">${flag}</span>
+                        </div>
+                    `;
+                    flagsList.appendChild(li);
+                });
+            } else {
+                document.getElementById('safety-flags-section').style.display = 'none';
+            }
+            
+            // Follow-up questions
+            const followups = followUpQuestions[pattern] || [];
+            const followupList = document.getElementById('followup-questions');
+            followupList.innerHTML = '';
+            followups.forEach(q => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start gap-3 text-gray-700';
+                li.innerHTML = `
+                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>${q}</span>
+                `;
+                followupList.appendChild(li);
+            });
+            
+            // Lifestyle prompts
+            const lifestyles = lifestylePrompts[pattern] || [];
+            const lifestyleList = document.getElementById('lifestyle-prompts');
+            lifestyleList.innerHTML = '';
+            lifestyles.forEach(prompt => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start gap-3 text-gray-700';
+                li.innerHTML = `
+                    <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <span>${prompt}</span>
+                `;
+                lifestyleList.appendChild(li);
+            });
+            
+            // Set timestamp
+            document.getElementById('assessment-date').textContent = new Date().toLocaleString('he-IL');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetAssessment() {
+            if (confirm('האם אתה בטוח שברצונך להתחיל מחדש? כל התשובות יאבדו.')) {
+                answers = {};
+                scores = {
+                    yin_def: 0,
+                    yang_def: 0,
+                    yin_bal: 0,
+                    yang_bal: 0,
+                    yang_excess: 0,
+                    qi_def: 0,
+                    heat: 0
+                };
+                
+                // Reset UI
+                document.querySelectorAll('.option-card').forEach(card => {
+                    card.classList.remove('selected');
+                    const marker = card.querySelector('.w-5');
+                    marker.style.background = 'white';
+                });
+                
+                document.querySelectorAll('.section-card').forEach(section => {
+                    section.classList.remove('completed', 'active');
+                });
+                
+                document.querySelector('[data-section="general"]').classList.add('active');
+                
+                document.getElementById('questionnaire').style.display = 'block';
+                document.getElementById('results').style.display = 'none';
+                document.getElementById('live-scores').style.display = 'none';
+                
+                updateProgress();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // ==================== SUPABASE CONFIGURATION ====================
+        const SUPABASE_URL = 'https://iqfglrwjemogoycbzltt.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxZmdscndqZW1vZ295Y2J6bHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3Nzc2NzQsImV4cCI6MjA1MjM1MzY3NH0.wR5r4yuPUfGjx3TBOIIoGhyHrD7pBqc_a4bAhSJHY3o';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ==================== ACUPOINT POPUP FUNCTIONS ====================
+        
+        async function showAcupointInfo(questionId, symptomOption, optionText) {
+            const popup = document.getElementById('acupoint-popup');
+            const titleEl = document.getElementById('popup-title');
+            const patternEl = document.getElementById('popup-pattern');
+            const bodyEl = document.getElementById('popup-body-content');
+            
+            // Show popup with loading state
+            popup.classList.add('active');
+            titleEl.textContent = optionText;
+            patternEl.textContent = 'טוען מידע...';
+            bodyEl.innerHTML = '<div class="loading-spinner"></div>';
+            
+            try {
+                // Query Supabase for symptom data
+                const { data: symptomData, error: symptomError } = await supabaseClient
+                    .from('yin_yang_symptoms')
+                    .select('*')
+                    .eq('question_id', questionId)
+                    .eq('symptom_option', symptomOption)
+                    .single();
+                
+                if (symptomError) {
+                    console.error('Error fetching symptom data:', symptomError);
+                    bodyEl.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-red-600 text-lg">⚠️ שגיאה בטעינת המידע</p>
+                            <p class="text-gray-600 text-sm mt-2">אנא נסה שוב מאוחר יותר</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (!symptomData) {
+                    bodyEl.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-gray-600 text-lg">ℹ️ אין מידע זמין לתסמין זה</p>
+                            <p class="text-gray-500 text-sm mt-2">תסמין זה מציין מצב תקין ולא דורש טיפול</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Update pattern info
+                const patternNames = {
+                    'yin_def': 'חסר יין (Yin Deficiency)',
+                    'yang_def': 'חסר יאנג (Yang Deficiency)',
+                    'qi_def': 'חסר צ\'י (Qi Deficiency)',
+                    'yang_excess': 'עודף יאנג (Yang Excess)',
+                    'balanced': 'מאוזן (Balanced)'
+                };
+                patternEl.textContent = patternNames[symptomData.pattern_indication] || symptomData.pattern_indication;
+                
+                // Build popup content
+                let content = '';
+                
+                // Hebrew Explanation
+                if (symptomData.symptom_explanation_he) {
+                    content += `
+                        <div class="mb-6 bg-blue-50 border-r-4 border-blue-500 p-4 rounded-lg">
+                            <h3 class="text-lg font-bold text-gray-800 mb-2 text-right">💡 הסבר:</h3>
+                            <p class="text-gray-700 text-right leading-relaxed">${symptomData.symptom_explanation_he}</p>
+                        </div>
+                    `;
+                }
+                
+                // Primary Acupoints
+                if (symptomData.primary_acupoints && symptomData.primary_acupoints.length > 0) {
+                    content += `
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-3 text-right">🎯 נקודות דיקור עיקריות:</h3>
+                            <div class="flex flex-wrap justify-end gap-2">
+                                ${symptomData.primary_acupoints.map(point => 
+                                    `<span class="acupoint-badge">${point}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Secondary Acupoints
+                if (symptomData.secondary_acupoints && symptomData.secondary_acupoints.length > 0) {
+                    content += `
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-3 text-right">➕ נקודות תמיכה:</h3>
+                            <div class="flex flex-wrap justify-end gap-2">
+                                ${symptomData.secondary_acupoints.map(point => 
+                                    `<span class="acupoint-badge" style="background: #fef3c7; border-color: #f59e0b; color: #92400e;">${point}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Body Parts & Organs
+                if (symptomData.affected_body_parts && symptomData.affected_body_parts.length > 0) {
+                    content += `
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-3 text-right">🫀 אזורי גוף מושפעים:</h3>
+                            <div class="flex flex-wrap justify-end gap-2">
+                                ${symptomData.affected_body_parts.map(part => 
+                                    `<span class="body-part-tag">${translateBodyPart(part)}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (symptomData.organ_systems && symptomData.organ_systems.length > 0) {
+                    content += `
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-3 text-right">🏥 מערכות איברים (זאנג-פו):</h3>
+                            <div class="flex flex-wrap justify-end gap-2">
+                                ${symptomData.organ_systems.map(organ => 
+                                    `<span class="body-part-tag" style="background: #fef2f2; border-color: #fca5a5; color: #991b1b;">${translateOrgan(organ)}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // TCM Mechanism
+                if (symptomData.tcm_mechanism) {
+                    content += `
+                        <div class="mb-6 bg-purple-50 border-r-4 border-purple-500 p-4 rounded-lg">
+                            <h3 class="text-lg font-bold text-gray-800 mb-2 text-right">📚 מנגנון TCM:</h3>
+                            <p class="text-gray-700 text-right text-sm leading-relaxed">${symptomData.tcm_mechanism}</p>
+                        </div>
+                    `;
+                }
+                
+                // Treatment Principle
+                if (symptomData.treatment_principle) {
+                    content += `
+                        <div class="mb-4 bg-green-50 border-r-4 border-green-500 p-4 rounded-lg">
+                            <h3 class="text-lg font-bold text-gray-800 mb-2 text-right">💊 עקרון הטיפול:</h3>
+                            <p class="text-gray-700 text-right leading-relaxed">${symptomData.treatment_principle}</p>
+                        </div>
+                    `;
+                }
+                
+                bodyEl.innerHTML = content;
+                
+            } catch (error) {
+                console.error('Error in showAcupointInfo:', error);
+                bodyEl.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-600 text-lg">⚠️ שגיאה בטעינת המידע</p>
+                        <p class="text-gray-600 text-sm mt-2">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function closeAcupointPopup(event) {
+            if (!event || event.target.id === 'acupoint-popup') {
+                document.getElementById('acupoint-popup').classList.remove('active');
+            }
+        }
+        
+        // Helper functions for translations
+        function translateBodyPart(part) {
+            const translations = {
+                'hands': 'ידיים',
+                'feet': 'רגליים',
+                'lower_back': 'גב תחתון',
+                'lower_abdomen': 'בטן תחתונה',
+                'abdomen': 'בטן',
+                'chest': 'חזה',
+                'face': 'פנים',
+                'head': 'ראש',
+                'legs': 'רגליים',
+                'back': 'גב',
+                'whole_body': 'כל הגוף',
+                'upper_body': 'חלק עליון',
+                'palms': 'כפות ידיים',
+                'soles': 'כפות רגליים',
+                'mouth': 'פה',
+                'throat': 'גרון',
+                'digestive_system': 'מערכת עיכול',
+                'intestines': 'מעיים',
+                'bladder': 'שלפוחית שתן',
+                'joints': 'מפרקים',
+                'muscles': 'שרירים',
+                'skin': 'עור',
+                'affected_area': 'אזור מושפע',
+                'mind': 'נפש/מוח',
+                'liver': 'כבד',
+                'spleen': 'טחול',
+                'stomach': 'קיבה',
+                'kidney': 'כליות',
+                'heart': 'לב',
+                'lung': 'ריאות',
+                'large_intestine': 'מעי גס',
+                'small_intestine': 'מעי דק',
+                'gallbladder': 'כיס מרה',
+                'urinary_bladder': 'שלפוחית שתן'
+            };
+            return translations[part] || part;
+        }
+        
+        function translateOrgan(organ) {
+            const translations = {
+                'kidney': 'כליות',
+                'spleen': 'טחול',
+                'stomach': 'קיבה',
+                'liver': 'כבד',
+                'heart': 'לב',
+                'lung': 'ריאות',
+                'large_intestine': 'מעי גס',
+                'small_intestine': 'מעי דק',
+                'gallbladder': 'כיס מרה',
+                'bladder': 'שלפוחית שתן',
+                'pericardium': 'פריקרד',
+                'triple_burner': 'משולש המחמם',
+                'blood': 'דם'
+            };
+            return translations[organ] || organ;
+        }
+    </script>
+
+    <!-- Acupoint Popup Modal -->
+    <div class="popup-overlay" id="acupoint-popup" onclick="closeAcupointPopup(event)">
+        <div class="popup-content" onclick="event.stopPropagation()">
+            <div class="popup-header">
+                <button class="popup-close" onclick="closeAcupointPopup()">×</button>
+                <h2 class="text-2xl font-bold text-right" id="popup-title">טוען...</h2>
+                <p class="text-purple-100 text-sm text-right mt-1" id="popup-pattern"></p>
+            </div>
+            <div class="popup-body" id="popup-body-content">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
