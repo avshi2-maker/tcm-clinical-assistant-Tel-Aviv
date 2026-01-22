@@ -606,7 +606,7 @@
                     const response = await supabaseClient
                         .from('acupuncture_points')
                         .select('*')
-                        .or(`point_name.ilike.%${query}%,hebrew_name.ilike.%${query}%,indication.ilike.%${query}%,category.ilike.%${query}%`)
+                        .or(`point_code.ilike.%${query}%,name_en.ilike.%${query}%,name_he.ilike.%${query}%,indications_he.ilike.%${query}%`)
                         .limit(10);
                     data = response.data;
                     error = response.error;
@@ -636,9 +636,9 @@
                     if (category === 'acupoints') {
                         resultsDiv.innerHTML = data.map(item => `
                             <div class="mb-2 pb-2 border-b border-gray-200 text-right">
-                                <strong class="text-sm text-blue-800">${item.hebrew_name || item.point_name}</strong>
-                                <br><span class="text-xs text-gray-600">${item.point_name}</span>
-                                ${item.indication ? `<br><small class="text-xs text-gray-500">${item.indication.substring(0, 100)}...</small>` : ''}
+                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
+                                <br><span class="text-xs text-gray-600">${item.point_code}</span>
+                                ${item.indications_he ? `<br><small class="text-xs text-gray-500">${item.indications_he.substring(0, 100)}...</small>` : ''}
                             </div>
                         `).join('');
                     } else if (category === 'syndromes') {
