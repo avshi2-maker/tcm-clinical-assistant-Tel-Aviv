@@ -608,7 +608,7 @@
                         supabaseClient
                             .from('acupuncture_points')
                             .select('*')
-                            .or(`point_code.ilike.%${query}%,name_en.ilike.%${query}%,name_he.ilike.%${query}%,indications_he.ilike.%${query}%`)
+                            .or(`point_code.ilike.%${query}%,indications_he.ilike.%${query}%,meridian.ilike.%${query}%`)
                             .limit(5),
                         supabaseClient
                             .from('zangfu_syndromes')
@@ -636,8 +636,8 @@
                         html += '<div class="mb-3"><div class="text-xs font-bold text-purple-600 mb-1">📍 נקודות דיקור:</div>';
                         html += acupoints.map(item => `
                             <div class="mb-2 pb-2 border-b border-gray-200 text-right">
-                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
-                                <br><span class="text-xs text-gray-600">${item.point_code}</span>
+                                <strong class="text-sm text-blue-800">${item.point_code}</strong>
+                                <br><span class="text-xs text-gray-600">${item.meridian || ''}</span>
                                 ${item.indications_he ? `<br><small class="text-xs text-gray-500">${item.indications_he.substring(0, 80)}...</small>` : ''}
                             </div>
                         `).join('');
@@ -660,11 +660,11 @@
                     return;
                     
                 } else if (category === 'acupoints') {
-                    // Search acupuncture points
+                    // Search acupuncture points - using columns with actual data
                     const response = await supabaseClient
                         .from('acupuncture_points')
                         .select('*')
-                        .or(`point_code.ilike.%${query}%,name_en.ilike.%${query}%,name_he.ilike.%${query}%,indications_he.ilike.%${query}%`)
+                        .or(`point_code.ilike.%${query}%,indications_he.ilike.%${query}%,meridian.ilike.%${query}%`)
                         .limit(10);
                     data = response.data;
                     error = response.error;
@@ -694,8 +694,8 @@
                     if (category === 'acupoints') {
                         resultsDiv.innerHTML = data.map(item => `
                             <div class="mb-2 pb-2 border-b border-gray-200 text-right">
-                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
-                                <br><span class="text-xs text-gray-600">${item.point_code}</span>
+                                <strong class="text-sm text-blue-800">${item.point_code}</strong>
+                                <br><span class="text-xs text-gray-600">${item.meridian || ''}</span>
                                 ${item.indications_he ? `<br><small class="text-xs text-gray-500">${item.indications_he.substring(0, 100)}...</small>` : ''}
                             </div>
                         `).join('');
