@@ -598,27 +598,61 @@
             resultsDiv.innerHTML = '<p class="text-center text-gray-500">מחפש...</p>';
             
             try {
-                const { data, error } = await supabaseClient
-                    .from('dr_roni_bible')
-                    .select('*')
-                    .eq('content_type', category)
-                    .ilike('content_en', `%${query}%`)
-                    .limit(10);
+                let data, error;
+                
+                // Search based on category
+                if (category === 'acupoints') {
+                    // Search acupuncture points
+                    const response = await supabaseClient
+                        .from('acupuncture_points')
+                        .select('*')
+                        .or(`point_name.ilike.%${query}%,hebrew_name.ilike.%${query}%,indication.ilike.%${query}%,category.ilike.%${query}%`)
+                        .limit(10);
+                    data = response.data;
+                    error = response.error;
+                    
+                } else if (category === 'syndromes') {
+                    // Search zangfu syndromes
+                    const response = await supabaseClient
+                        .from('zangfu_syndromes')
+                        .select('*')
+                        .or(`syndrome_name.ilike.%${query}%,syndrome_name_hebrew.ilike.%${query}%,symptoms.ilike.%${query}%,treatment.ilike.%${query}%`)
+                        .limit(10);
+                    data = response.data;
+                    error = response.error;
+                    
+                } else {
+                    // For herbs, treatments, theory - show "coming soon"
+                    resultsDiv.innerHTML = '<p class="text-center text-blue-600 text-sm font-bold">🚧 בבניה - Coming Soon</p>';
+                    return;
+                }
                 
                 if (error) throw error;
                 
                 if (!data || data.length === 0) {
                     resultsDiv.innerHTML = '<p class="text-center text-gray-500 text-sm">לא נמצאו תוצאות</p>';
                 } else {
-                    resultsDiv.innerHTML = data.map(item => `
-                        <div class="mb-2 pb-2 border-b border-gray-200 text-right">
-                            <strong class="text-sm text-blue-800">${item.content_he || item.content_en}</strong>
-                            ${item.source ? `<br><small class="text-xs text-gray-500">${item.source}</small>` : ''}
-                        </div>
-                    `).join('');
+                    // Format results based on category
+                    if (category === 'acupoints') {
+                        resultsDiv.innerHTML = data.map(item => `
+                            <div class="mb-2 pb-2 border-b border-gray-200 text-right">
+                                <strong class="text-sm text-blue-800">${item.hebrew_name || item.point_name}</strong>
+                                <br><span class="text-xs text-gray-600">${item.point_name}</span>
+                                ${item.indication ? `<br><small class="text-xs text-gray-500">${item.indication.substring(0, 100)}...</small>` : ''}
+                            </div>
+                        `).join('');
+                    } else if (category === 'syndromes') {
+                        resultsDiv.innerHTML = data.map(item => `
+                            <div class="mb-2 pb-2 border-b border-gray-200 text-right">
+                                <strong class="text-sm text-blue-800">${item.syndrome_name_hebrew || item.syndrome_name}</strong>
+                                <br><span class="text-xs text-gray-600">${item.syndrome_name}</span>
+                                ${item.symptoms ? `<br><small class="text-xs text-gray-500">${item.symptoms.substring(0, 100)}...</small>` : ''}
+                            </div>
+                        `).join('');
+                    }
                 }
             } catch (error) {
-                resultsDiv.innerHTML = '<p class="text-center text-red-500 text-sm">שגיאה בחיפוש</p>';
+                resultsDiv.innerHTML = '<p class="text-center text-red-500 text-sm">שגיאה בחיפוש: ' + error.message + '</p>';
                 console.error('Deep thinking search error:', error);
             }
         }
