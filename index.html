@@ -543,9 +543,10 @@
                 <h4 class="text-white font-bold text-center mb-3 text-lg">🧠 חשיבה עמוקה</h4>
                 <select class="w-full p-2 rounded-lg border-2 border-blue-300 mb-2 text-sm" id="deepCategorySelect">
                     <option value="">בחר קטגוריה</option>
+                    <option value="all">🔍 חיפוש כללי (הכל)</option>
                     <option value="acupoints">נקודות דיקור</option>
-                    <option value="herbs">צמחי מרפא</option>
                     <option value="syndromes">תסמונות</option>
+                    <option value="herbs">צמחי מרפא</option>
                     <option value="treatments">טיפולים</option>
                     <option value="theory">תיאוריה</option>
                 </select>
@@ -601,7 +602,64 @@
                 let data, error;
                 
                 // Search based on category
-                if (category === 'acupoints') {
+                if (category === 'all') {
+                    // Search BOTH tables simultaneously
+                    const [acupointsResponse, syndromesResponse] = await Promise.all([
+                        supabaseClient
+                            .from('acupuncture_points')
+                            .select('*')
+                            .or(`point_code.ilike.%${query}%,name_en.ilike.%${query}%,name_he.ilike.%${query}%,indications_he.ilike.%${query}%`)
+                            .limit(5),
+                        supabaseClient
+                            .from('zangfu_syndromes')
+                            .select('*')
+                            .or(`name_en.ilike.%${query}%,name_he.ilike.%${query}%,symptoms_he.ilike.%${query}%,treatment_he.ilike.%${query}%`)
+                            .limit(5)
+                    ]);
+                    
+                    if (acupointsResponse.error || syndromesResponse.error) {
+                        throw acupointsResponse.error || syndromesResponse.error;
+                    }
+                    
+                    const acupoints = acupointsResponse.data || [];
+                    const syndromes = syndromesResponse.data || [];
+                    
+                    if (acupoints.length === 0 && syndromes.length === 0) {
+                        resultsDiv.innerHTML = '<p class="text-center text-gray-500 text-sm">לא נמצאו תוצאות</p>';
+                        return;
+                    }
+                    
+                    // Display combined results with labels
+                    let html = '';
+                    
+                    if (acupoints.length > 0) {
+                        html += '<div class="mb-3"><div class="text-xs font-bold text-purple-600 mb-1">📍 נקודות דיקור:</div>';
+                        html += acupoints.map(item => `
+                            <div class="mb-2 pb-2 border-b border-gray-200 text-right">
+                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
+                                <br><span class="text-xs text-gray-600">${item.point_code}</span>
+                                ${item.indications_he ? `<br><small class="text-xs text-gray-500">${item.indications_he.substring(0, 80)}...</small>` : ''}
+                            </div>
+                        `).join('');
+                        html += '</div>';
+                    }
+                    
+                    if (syndromes.length > 0) {
+                        html += '<div class="mb-3"><div class="text-xs font-bold text-purple-600 mb-1">🩺 תסמונות:</div>';
+                        html += syndromes.map(item => `
+                            <div class="mb-2 pb-2 border-b border-gray-200 text-right">
+                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
+                                <br><span class="text-xs text-gray-600">${item.name_en}</span>
+                                ${item.symptoms_he ? `<br><small class="text-xs text-gray-500">${item.symptoms_he.substring(0, 80)}...</small>` : ''}
+                            </div>
+                        `).join('');
+                        html += '</div>';
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                    return;
+                    
+                } else if (category === 'acupoints') {
                     // Search acupuncture points
                     const response = await supabaseClient
                         .from('acupuncture_points')
