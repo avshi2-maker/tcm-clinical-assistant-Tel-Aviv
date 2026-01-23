@@ -90,9 +90,9 @@
         
         .query-box {
             border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
             background: white;
             direction: rtl;
         }
@@ -102,9 +102,9 @@
         }
         
         .quick-question {
-            padding: 12px;
+            padding: 8px;
             border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            border-radius: 6px;
             background: white;
             cursor: pointer;
             transition: all 0.2s;
@@ -570,27 +570,27 @@
         .therapist-box {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
             border: 2px solid #0ea5e9;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 1rem;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
         }
         
         .therapist-box-header {
             font-weight: bold;
             color: #0c4a6e;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
             text-align: center;
-            font-size: 1rem;
+            font-size: 0.85rem;
         }
         
         .therapist-textarea {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.5rem;
             border: 2px solid #bae6fd;
-            border-radius: 8px;
-            font-size: 0.95rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
             direction: rtl;
-            min-height: 100px;
+            min-height: 60px;
             resize: vertical;
             background: white;
         }
@@ -602,27 +602,28 @@
         }
         
         .therapist-voice-btn {
-            width: 100%;
-            padding: 0.75rem;
+            width: 50px;
+            height: 50px;
+            padding: 0;
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 50%;
+            font-size: 0.9rem;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
             transition: all 0.2s;
-            margin-top: 0.75rem;
+            margin: 0.5rem auto 0;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
         }
         
         .therapist-voice-btn:hover {
             background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
         }
         
         .therapist-voice-btn.listening {
@@ -632,7 +633,160 @@
         
         @keyframes pulse-therapist {
             0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* ============================================
+           CONTROL BUTTONS (Top Bar)
+           ============================================ */
+        .reset-button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.4);
+            animation: pulse-reset 2s infinite;
+            transition: all 0.3s;
+        }
+        
+        .reset-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.6);
+        }
+        
+        @keyframes pulse-reset {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 4px 6px rgba(16, 185, 129, 0.4);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 6px 12px rgba(16, 185, 129, 0.6);
+            }
+        }
+        
+        .control-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+        
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.5);
+        }
+        
+        .control-button.pause {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .control-button.resume {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .status-indicator {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        
+        /* ============================================
+           INLINE MIC BUTTON & ACTION BUTTONS
+           ============================================ */
+        .mic-button-inline {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .mic-button-inline:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: scale(1.05);
+        }
+        
+        .mic-button-inline.listening {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            animation: pulse-mic 1s infinite;
+        }
+        
+        @keyframes pulse-mic {
+            0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
+        }
+        
+        .action-mini-btn {
+            width: 40px;
+            height: 40px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-mini-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* ============================================
+           SCROLLBAR STYLING
+           ============================================ */
+        #reportContent::-webkit-scrollbar,
+        #bodyPartsContent::-webkit-scrollbar,
+        #reportPreview::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #reportContent::-webkit-scrollbar-track,
+        #bodyPartsContent::-webkit-scrollbar-track,
+        #reportPreview::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        #reportContent::-webkit-scrollbar-thumb,
+        #bodyPartsContent::-webkit-scrollbar-thumb,
+        #reportPreview::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        
+        #reportContent::-webkit-scrollbar-thumb:hover,
+        #bodyPartsContent::-webkit-scrollbar-thumb:hover,
+        #reportPreview::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
         
         /* ============================================
@@ -717,7 +871,7 @@
         <!-- LEFT PANEL: Phase 1 - Quick Questions Browser -->
         <div class="left-panel bg-gray-50 border-r">
             <!-- Header -->
-            <div class="quick-questions-header sticky top-0 z-10">
+            <div class="quick-questions-header">
                 <h3>🎯 מאגר שאלות מוכן</h3>
                 <div class="quick-questions-count">1,499 שאלות מוכנות</div>
             </div>
@@ -813,70 +967,75 @@
                         <span id="successRate">0%</span>
                     </div>
                 </div>
-                <button onclick="resetSession()" class="bg-white/20 hover:bg-white/30 px-4 py-1 rounded-lg transition text-sm">
-                    🔄 התחל מחדש
-                </button>
+                
+                <!-- Control Buttons Section -->
+                <div class="flex items-center gap-2">
+                    <div class="status-indicator" id="topStatusIndicator">
+                        <span id="topStatusText">✅ המערכת מוכנה</span>
+                    </div>
+                    <button onclick="pauseCheck()" class="control-button pause" id="pauseBtn">
+                        ⏸️ השהה בדיקה
+                    </button>
+                    <button onclick="resumeCheck()" class="control-button resume hidden" id="resumeBtn">
+                        ▶️ המשך בדיקה
+                    </button>
+                    <button onclick="resetSession()" class="reset-button" title="התחל מחדש">
+                        🔄
+                    </button>
+                </div>
             </div>
 
             <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
-                <h1 class="text-3xl font-bold mb-2 text-right">🏥 עוזר קליני - רפואה סינית</h1>
-                <p class="text-blue-100 text-right">מערכת RAG מבוססת בינה מלאכותית • 450 שאלות מוכנות</p>
-                
-                <!-- Dr. Roni Sapir Credentials -->
-                <div class="mt-3 p-3 bg-white/10 rounded-lg backdrop-blur">
-                    <p class="text-sm text-white text-right leading-relaxed">
-                        ⭐ <strong>המידע מבוסס על תוכן שנכתב ונבדק ע"י ד"ר רוני ספיר</strong><br>
-                        <span class="text-blue-100">מומחה לרפואה סינית משלימה עם 30 שנות ניסיון</span>
-                    </p>
-                </div>
-                
-                <div id="apiStatus" class="mt-3 p-3 bg-white/10 rounded-lg backdrop-blur text-right">
-                    <span id="statusText">מאתחל מערכת...</span>
-                </div>
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4">
+                <h1 class="text-xl font-bold text-right">🏥 עוזר קליני - רפואה סינית</h1>
+                <p class="text-xs text-blue-100 text-right mt-1">
+                    המידע מבוסס על תוכן שנכתב ונבדק ע"י ד"ר רוני ספיר • מומחה לרפואה סינית משלימה עם 30 שנות ניסיון
+                </p>
             </div>
 
             <!-- Main Content Area -->
-            <div class="flex-1 overflow-y-auto p-6">
-                <!-- Multi-Query System -->
-                <div class="mb-6">
+            <div class="flex-1 overflow-y-auto">
+                <!-- Query Section -->
+                <div class="query-section p-6">
+                    <!-- Multi-Query System -->
+                    <div class="mb-4">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-sm text-gray-600">עד 3 שאלות בבת אחת</span>
                         <label class="block text-lg font-bold">🔍 חיפוש רב-שאלות</label>
                     </div>
 
-                    <div class="space-y-3">
+                    <div class="space-y-2">
                         <div class="query-box" id="queryBox1">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 1 (חובה)</label>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1 text-right">שאלה 1 (חובה)</label>
                             <input 
                                 type="text" 
                                 id="searchInput1" 
                                 placeholder="תסמין או מצב עיקרי..." 
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
+                                class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none text-right text-sm"
                                 dir="rtl"
                                 oninput="updateQueryBox(1)"
                             >
                         </div>
 
                         <div class="query-box" id="queryBox2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 2 (אופציונלי)</label>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1 text-right">שאלה 2 (אופציונלי)</label>
                             <input 
                                 type="text" 
                                 id="searchInput2" 
                                 placeholder="תסמין נוסף או מצב קשור..." 
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
+                                class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none text-right text-sm"
                                 dir="rtl"
                                 oninput="updateQueryBox(2)"
                             >
                         </div>
 
                         <div class="query-box" id="queryBox3">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 3 (אופציונלי)</label>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1 text-right">שאלה 3 (אופציונלי)</label>
                             <input 
                                 type="text" 
                                 id="searchInput3" 
                                 placeholder="תסמין שלישי או נקודת דיקור..." 
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
+                                class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none text-right text-sm"
                                 dir="rtl"
                                 oninput="updateQueryBox(3)"
                             >
@@ -884,50 +1043,110 @@
                     </div>
 
                     <!-- Therapist Free Text Box with Voice -->
-                    <div class="therapist-box">
-                        <div class="therapist-box-header">
-                            💬 שדה חופשי למטפל + פקודה קולית 🎤
+                    <div class="query-box" id="queryBox4">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1 text-right">💬 שדה חופשי למטפל</label>
+                        <div class="flex gap-2">
+                            <textarea 
+                                id="therapistFreeText" 
+                                class="flex-1 p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none text-right text-sm"
+                                placeholder="הקלד כאן שאלה או הערה חופשית..."
+                                dir="rtl"
+                                style="min-height: 38px; max-height: 38px; resize: none;"
+                            ></textarea>
+                            <button 
+                                id="therapistVoiceBtn" 
+                                class="mic-button-inline" 
+                                onclick="toggleTherapistVoice()"
+                                title="לחץ והתחל לדבר">
+                                🎤
+                            </button>
                         </div>
-                        <textarea 
-                            id="therapistFreeText" 
-                            class="therapist-textarea"
-                            placeholder="הקלד כאן שאלה או הערה חופשית..."
-                            dir="rtl"
-                        ></textarea>
-                        <button 
-                            id="therapistVoiceBtn" 
-                            class="therapist-voice-btn" 
-                            onclick="toggleTherapistVoice()">
-                            <span style="font-size: 1.5rem;">🎤</span>
-                            <span id="therapistVoiceText">לחץ והתחל לדבר</span>
-                        </button>
                     </div>
 
-                    <div class="flex gap-3 mt-4">
+                    <div class="flex gap-2 mt-2">
                         <button 
                             onclick="clearAllQueries()" 
-                            class="px-6 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold transition">
+                            class="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md font-semibold transition text-xs">
                             נקה הכל
                         </button>
                         <button 
                             onclick="performMultiQuery()" 
-                            class="run-query-button flex-1 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-black hover:from-blue-700 hover:to-indigo-700 transition text-xl shadow-lg">
+                            class="run-query-button flex-1 px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-sm text-sm">
                             🔍 הרץ חיפוש
                         </button>
                         <button 
                             id="pauseButton"
                             onclick="togglePause()" 
-                            class="pause-button hidden px-6 py-4 rounded-xl transition">
+                            class="pause-button hidden px-2 py-1 rounded-md transition text-xs">
                             ⏸️ השהה
                         </button>
                     </div>
+                    
+                    <!-- Report Display Section -->
+                    <div class="mt-4">
+                        <h3 class="text-sm font-bold text-gray-700 mb-2 text-right">📋 דו"ח ותמונות לנקודות דיקור</h3>
+                        
+                        <div class="flex gap-3">
+                            <!-- Action Buttons Panel (Left) -->
+                            <div class="flex flex-col gap-2">
+                                <button onclick="printReport()" class="action-mini-btn bg-blue-500 hover:bg-blue-600" title="הדפס">
+                                    🖨️
+                                </button>
+                                <button onclick="emailReport()" class="action-mini-btn bg-green-500 hover:bg-green-600" title="שלח בדוא"ל">
+                                    ✉️
+                                </button>
+                                <button onclick="whatsappReport()" class="action-mini-btn bg-emerald-500 hover:bg-emerald-600" title="שלח בוואטסאפ">
+                                    💬
+                                </button>
+                            </div>
+                            
+                            <!-- Report Display Box -->
+                            <div class="flex-1 border-2 border-gray-300 rounded-lg p-3 bg-white overflow-y-auto" style="max-height: 200px; min-height: 120px;">
+                                <div id="reportPreview" class="text-right text-sm text-gray-500">
+                                    הדוח יוצג כאן לאחר הרצת החיפוש...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>
                 </div>
 
-                <!-- Active Queries Display -->
-                <div id="activeQueries" class="mb-6"></div>
+                <!-- Results Section -->
+                <div class="results-section p-6 bg-gray-50" id="resultsMainSection">
+                    <div id="resultsDisplayArea" class="space-y-4">
+                    <!-- Report/Answers Section -->
+                    <div id="reportSection" class="hidden">
+                        <div class="bg-white rounded-lg shadow-lg p-4 border-2 border-blue-200">
+                            <h3 class="text-lg font-bold text-right mb-3 text-blue-600 flex items-center justify-between">
+                                <span class="text-xs text-gray-500">↕️ גלול למטה לראות עוד</span>
+                                <span>📋 תוצאות החיפוש המלאות</span>
+                            </h3>
+                            <div id="reportContent" class="overflow-y-auto border border-gray-200 rounded p-3 bg-gray-50" style="max-height: 500px;">
+                                <!-- Report content will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Body Parts Display Section -->
+                    <div id="bodyPartsSection" class="hidden">
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-lg p-4 border-2 border-purple-200">
+                            <h3 class="text-lg font-bold text-right mb-3 text-purple-600 flex items-center justify-between">
+                                <span class="text-xs text-gray-500">↕️ גלול למטה לראות עוד</span>
+                                <span>🫀 תצוגת איברים ונקודות דיקור</span>
+                            </h3>
+                            <div id="bodyPartsContent" class="overflow-y-auto border border-purple-200 rounded p-3 bg-white" style="max-height: 500px;">
+                                <!-- Body parts visualization will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- Report Options -->
-                <div id="reportOptions" class="mb-6 hidden">
+                    <!-- Active Queries Display -->
+                    <div id="activeQueries" class="mb-4"></div>
+
+                    <!-- Report Options -->
+                    <div id="reportOptions" class="mb-4 hidden">
                     <div class="p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
                         <h4 class="font-bold mb-3 text-right">📊 רמת פירוט הדוח:</h4>
                         <div class="flex gap-4 justify-end">
@@ -976,6 +1195,7 @@
                         </div>
                     </div>
                     <div id="fallbackResults" class="bg-white p-4 rounded-lg border border-orange-300 mt-3 text-right"></div>
+                </div>
                 </div>
             </div>
         </div>
@@ -2166,10 +2386,10 @@ Respond in Hebrew with CM analysis.`;
             
             try {
                 await loadRAGData();
-                updateStatus('✅ המערכת מוכנה! 450 שאלות זמינות');
+                updateStatus('✅ המערכת מוכנה');
             } catch (error) {
                 console.error('Database connection error:', error);
-                updateStatus('⚠️ עובד במצב לא מקוון - שאלון יין-יאנג זמין');
+                updateStatus('⚠️ עובד במצב לא מקוון');
             }
             
             // These should work even without database
@@ -2196,7 +2416,34 @@ Respond in Hebrew with CM analysis.`;
         }
 
         function updateStatus(message) {
-            document.getElementById('statusText').textContent = message;
+            const topStatus = document.getElementById('topStatusText');
+            if (topStatus) {
+                topStatus.textContent = message;
+            }
+            // Keep old one for compatibility
+            const oldStatus = document.getElementById('statusText');
+            if (oldStatus) {
+                oldStatus.textContent = message;
+            }
+        }
+        
+        // Pause/Resume Check Functions
+        let isPaused = false;
+        
+        function pauseCheck() {
+            isPaused = true;
+            document.getElementById('pauseBtn').classList.add('hidden');
+            document.getElementById('resumeBtn').classList.remove('hidden');
+            updateStatus('⏸️ הבדיקה מושהית');
+            console.log('Check paused');
+        }
+        
+        function resumeCheck() {
+            isPaused = false;
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            document.getElementById('resumeBtn').classList.add('hidden');
+            updateStatus('✅ הבדיקה ממשיכה');
+            console.log('Check resumed');
         }
 
         window.addEventListener('DOMContentLoaded', init);
@@ -3984,10 +4231,9 @@ function toggleTherapistVoice() {
 function startTherapistVoice() {
     therapistVoiceListening = true;
     const button = document.getElementById('therapistVoiceBtn');
-    const buttonText = document.getElementById('therapistVoiceText');
     
     button.classList.add('listening');
-    buttonText.textContent = '🎤 מקשיב...';
+    button.title = '🎤 מקשיב...';
     
     try {
         therapistRecognition.start();
@@ -4001,10 +4247,9 @@ function startTherapistVoice() {
 function stopTherapistVoice() {
     therapistVoiceListening = false;
     const button = document.getElementById('therapistVoiceBtn');
-    const buttonText = document.getElementById('therapistVoiceText');
     
     button.classList.remove('listening');
-    buttonText.textContent = 'לחץ והתחל לדבר';
+    button.title = 'לחץ והתחל לדבר';
     
     if (therapistRecognition) {
         try {
@@ -4017,6 +4262,40 @@ function stopTherapistVoice() {
 }
 
 console.log('✅ Therapist voice recognition initialized');
+
+// Report Action Functions
+function printReport() {
+    const reportContent = document.getElementById('reportPreview').innerHTML;
+    if (reportContent && reportContent !== 'הדוח יוצג כאן לאחר הרצת החיפוש...') {
+        window.print();
+        console.log('🖨️ Printing report');
+    } else {
+        alert('אין דוח להדפסה. אנא הרץ חיפוש תחילה.');
+    }
+}
+
+function emailReport() {
+    const reportContent = document.getElementById('reportPreview').innerText;
+    if (reportContent && reportContent !== 'הדוח יוצג כאן לאחר הרצת החיפוש...') {
+        const subject = 'דו"ח נקודות דיקור';
+        const body = encodeURIComponent(reportContent);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        console.log('✉️ Opening email client');
+    } else {
+        alert('אין דוח לשליחה. אנא הרץ חיפוש תחילה.');
+    }
+}
+
+function whatsappReport() {
+    const reportContent = document.getElementById('reportPreview').innerText;
+    if (reportContent && reportContent !== 'הדוח יוצג כאן לאחר הרצת החיפוש...') {
+        const text = encodeURIComponent(reportContent);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+        console.log('💬 Opening WhatsApp');
+    } else {
+        alert('אין דוח לשליחה. אנא הרץ חיפוש תחילה.');
+    }
+}
 </script>
 
 </body>
