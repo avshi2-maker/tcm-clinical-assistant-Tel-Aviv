@@ -6,7 +6,6 @@
     <title>CM Clinical Assistant - Complete Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="tcm-assistant.css">
     <style>
         body { margin: 0; padding: 0; height: 100vh; overflow: hidden; }
         
@@ -90,9 +89,9 @@
         
         .query-box {
             border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 8px;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
             background: white;
             direction: rtl;
         }
@@ -102,9 +101,9 @@
         }
         
         .quick-question {
-            padding: 8px;
+            padding: 12px;
             border: 2px solid #e5e7eb;
-            border-radius: 6px;
+            border-radius: 8px;
             background: white;
             cursor: pointer;
             transition: all 0.2s;
@@ -308,637 +307,60 @@
             margin-top: 8px;
             border-radius: 4px;
         }
-        
-        /* ============================================
-           PHASE 1: QUICK QUESTIONS BROWSER CSS
-           ============================================ */
-        .quick-questions-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem;
-            text-align: center;
-        }
-        
-        .quick-questions-header h3 {
-            margin: 0;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-        
-        .quick-questions-count {
-            font-size: 0.85rem;
-            opacity: 0.9;
-            margin-top: 0.25rem;
-        }
-        
-        .questions-search {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            direction: rtl;
-        }
-        
-        .questions-search:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .category-item {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            overflow: hidden;
-            transition: all 0.2s;
-        }
-        
-        .category-item:hover {
-            border-color: #667eea;
-            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
-        }
-        
-        .category-header {
-            background: #f8fafc;
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            direction: rtl;
-        }
-        
-        .category-header:hover {
-            background: #f1f5f9;
-        }
-        
-        .category-name {
-            font-weight: 600;
-            color: #1e293b;
-            font-size: 0.9rem;
-        }
-        
-        .category-count {
-            background: #667eea;
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-        
-        .category-arrow {
-            transition: transform 0.2s;
-            color: #64748b;
-        }
-        
-        .category-item.expanded .category-arrow {
-            transform: rotate(180deg);
-        }
-        
-        .questions-list {
-            display: none;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        
-        .category-item.expanded .questions-list {
-            display: block;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .question-item {
-            padding: 0.6rem 1rem;
-            border-top: 1px solid #e5e7eb;
-            cursor: pointer;
-            direction: rtl;
-            transition: all 0.2s;
-            background: white;
-        }
-        
-        .question-item:hover {
-            background: #eff6ff;
-            padding-right: 1.25rem;
-        }
-        
-        .question-item.selected {
-            background: #dbeafe;
-            border-right: 3px solid #3b82f6;
-        }
-        
-        .question-text {
-            color: #334155;
-            font-size: 0.85rem;
-            line-height: 1.3;
-        }
-        
-        .question-points {
-            color: #64748b;
-            font-size: 0.7rem;
-            margin-top: 0.25rem;
-        }
-        
-        .questions-loading {
-            text-align: center;
-            padding: 1.5rem;
-            color: #64748b;
-        }
-        
-        .questions-loading .spinner {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 3px solid #e5e7eb;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin-qb 0.8s linear infinite;
-        }
-        
-        @keyframes spin-qb {
-            to { transform: rotate(360deg); }
-        }
-        
-        .voice-command-section {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-radius: 8px;
-            border: 2px solid #f59e0b;
-        }
-        
-        .voice-command-header {
-            font-weight: 600;
-            color: #92400e;
-            margin-bottom: 0.5rem;
-            text-align: center;
-            font-size: 0.85rem;
-        }
-        
-        .voice-button {
-            width: 100%;
-            padding: 0.75rem;
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.2s;
-        }
-        
-        .voice-button:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
-        }
-        
-        .voice-button.listening {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            animation: pulse-vc 1s infinite;
-        }
-        
-        @keyframes pulse-vc {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
-        .voice-icon {
-            font-size: 1.2rem;
-        }
-        
-        .free-text-section {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            background: #f0f9ff;
-            border-radius: 8px;
-            border: 2px solid #0ea5e9;
-        }
-        
-        .free-text-label {
-            font-weight: 600;
-            color: #0c4a6e;
-            margin-bottom: 0.5rem;
-            text-align: center;
-            font-size: 0.85rem;
-        }
-        
-        .free-text-input {
-            width: 100%;
-            padding: 0.6rem;
-            border: 2px solid #e0f2fe;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            direction: rtl;
-            min-height: 70px;
-            resize: vertical;
-        }
-        
-        .free-text-input:focus {
-            outline: none;
-            border-color: #0ea5e9;
-        }
-        
-        .add-free-text-btn {
-            width: 100%;
-            padding: 0.6rem;
-            background: #0ea5e9;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 0.5rem;
-            transition: all 0.2s;
-            font-size: 0.85rem;
-        }
-        
-        .add-free-text-btn:hover {
-            background: #0284c7;
-        }
-        
-        /* ============================================
-           THERAPIST FREE TEXT BOX CSS
-           ============================================ */
-        .therapist-box {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border: 2px solid #0ea5e9;
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin-top: 0.75rem;
-        }
-        
-        .therapist-box-header {
-            font-weight: bold;
-            color: #0c4a6e;
-            margin-bottom: 0.5rem;
-            text-align: center;
-            font-size: 0.85rem;
-        }
-        
-        .therapist-textarea {
-            width: 100%;
-            padding: 0.5rem;
-            border: 2px solid #bae6fd;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            direction: rtl;
-            min-height: 60px;
-            resize: vertical;
-            background: white;
-        }
-        
-        .therapist-textarea:focus {
-            outline: none;
-            border-color: #0ea5e9;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-        }
-        
-        .therapist-voice-btn {
-            width: 50px;
-            height: 50px;
-            padding: 0;
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            font-size: 0.9rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            margin: 0.5rem auto 0;
-            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-        }
-        
-        .therapist-voice-btn:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
-        }
-        
-        .therapist-voice-btn.listening {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            animation: pulse-therapist 1s infinite;
-        }
-        
-        @keyframes pulse-therapist {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        /* ============================================
-           CONTROL BUTTONS (Top Bar)
-           ============================================ */
-        .reset-button {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.4);
-            animation: pulse-reset 2s infinite;
-            transition: all 0.3s;
-        }
-        
-        .reset-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.6);
-        }
-        
-        @keyframes pulse-reset {
-            0%, 100% { 
-                transform: scale(1);
-                box-shadow: 0 4px 6px rgba(16, 185, 129, 0.4);
-            }
-            50% { 
-                transform: scale(1.05);
-                box-shadow: 0 6px 12px rgba(16, 185, 129, 0.6);
-            }
-        }
-        
-        .control-button {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: bold;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-        }
-        
-        .control-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.5);
-        }
-        
-        .control-button.pause {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
-        
-        .control-button.resume {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-        
-        .status-indicator {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
-        
-        /* ============================================
-           INLINE MIC BUTTON & ACTION BUTTONS
-           ============================================ */
-        .mic-button-inline {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        
-        .mic-button-inline:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            transform: scale(1.05);
-        }
-        
-        .mic-button-inline.listening {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            animation: pulse-mic 1s infinite;
-        }
-        
-        @keyframes pulse-mic {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
-        .action-mini-btn {
-            width: 40px;
-            height: 40px;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .action-mini-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-        
-        /* ============================================
-           SCROLLBAR STYLING
-           ============================================ */
-        #reportContent::-webkit-scrollbar,
-        #bodyPartsContent::-webkit-scrollbar,
-        #reportPreview::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        #reportContent::-webkit-scrollbar-track,
-        #bodyPartsContent::-webkit-scrollbar-track,
-        #reportPreview::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-        }
-        
-        #reportContent::-webkit-scrollbar-thumb,
-        #bodyPartsContent::-webkit-scrollbar-thumb,
-        #reportPreview::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 4px;
-        }
-        
-        #reportContent::-webkit-scrollbar-thumb:hover,
-        #bodyPartsContent::-webkit-scrollbar-thumb:hover,
-        #reportPreview::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-        
-        /* ============================================
-           BOX #2: CSV KNOWLEDGE BASE
-           ============================================ */
-        .csv-box {
-            margin: 1rem;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .csv-box-header {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 1rem;
-            text-align: center;
-        }
-        
-        .csv-box-header h4 {
-            margin: 0;
-            font-size: 1rem;
-            font-weight: bold;
-        }
-        
-        .csv-box-count {
-            font-size: 0.8rem;
-            opacity: 0.9;
-            margin-top: 0.25rem;
-        }
-        
-        .csv-box-content {
-            background: white;
-            padding: 1rem;
-            text-align: center;
-            color: #059669;
-            font-size: 0.9rem;
-        }
-        
-        /* ============================================
-           BOX #3: EXTERNAL AI CHAT
-           ============================================ */
-        .ai-chat-box {
-            margin: 1rem;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .ai-chat-box-header {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            padding: 1rem;
-            text-align: center;
-        }
-        
-        .ai-chat-box-header h4 {
-            margin: 0;
-            font-size: 1rem;
-            font-weight: bold;
-        }
-        
-        .ai-chat-box-subtitle {
-            font-size: 0.8rem;
-            opacity: 0.9;
-            margin-top: 0.25rem;
-        }
-        
-        .ai-chat-box-content {
-            background: white;
-            padding: 1rem;
-            text-align: center;
-            color: #d97706;
-            font-size: 0.9rem;
-        }
     
 </style>
+<!-- Supabase JS Library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
 </head>
 <body>
     <!-- 3-PANEL LAYOUT -->
     <div class="flex h-screen">
-        <!-- LEFT PANEL: Phase 1 - Quick Questions Browser -->
+        <!-- LEFT PANEL: 450 Questions (appears on LEFT side of screen) -->
         <div class="left-panel bg-gray-50 border-r">
-            <!-- Header -->
-            <div class="quick-questions-header">
-                <h3>🎯 מאגר שאלות מוכן</h3>
-                <div class="quick-questions-count">1,499 שאלות מוכנות</div>
+            <div class="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white sticky top-0 z-10">
+                <h3 class="font-bold text-sm">📚 450 שאלות מוכנות</h3>
             </div>
-
+            
+            <!-- Category Filter -->
             <div class="p-3">
-                <!-- Search Filter -->
-                <input 
-                    type="text" 
-                    class="questions-search" 
-                    id="questionsSearch"
-                    placeholder="חפש שאלה או קטגוריה..."
-                >
-
-                <!-- Categories Container -->
-                <div id="categoriesContainer" style="max-height: calc(100vh - 450px); overflow-y: auto;">
-                    <div class="questions-loading">
-                        <div class="spinner"></div>
-                        <p style="font-size: 0.85rem;">טוען שאלות...</p>
-                    </div>
-                </div>
-
-                <!-- Free Text Section -->
-                <div class="free-text-section">
-                    <div class="free-text-label">💬 הקלד שאלה חופשית</div>
-                    <textarea 
-                        class="free-text-input" 
-                        id="freeTextInput"
-                        placeholder="הקלד כאן את השאלה שלך..."
-                    ></textarea>
-                    <button class="add-free-text-btn" onclick="addFreeTextToSearch()">
-                        הוסף לחיפוש
-                    </button>
-                </div>
-
-                <!-- Voice Command Section -->
-                <div class="voice-command-section">
-                    <div class="voice-command-header">🎤 פקודה קולית</div>
-                    <button class="voice-button" id="voiceButton" onclick="toggleVoiceCommand()">
-                        <span class="voice-icon">🎤</span>
-                        <span id="voiceButtonText">לחץ והתחל לדבר</span>
-                    </button>
-                </div>
+                <select id="categoryFilter" onchange="filterQuestions()" class="w-full p-2 border-2 border-gray-300 rounded-lg text-right text-sm">
+    <option value="all">כל הקטגוריות (450 שאלות)</option>
+    <option value="אבחון דופק ולשון">אבחון דופק ולשון (15)</option>
+    <option value="אריכות ימים ואיכות חיים">אריכות ימים ואיכות חיים (15)</option>
+    <option value="איזון וחיזוק (מבוגרים)">איזון וחיזוק (מבוגרים) (15)</option>
+    <option value="שיקום וטיפול בכאב">שיקום וטיפול בכאב (15)</option>
+    <option value="בהירות וחוסן מנטלי">בהירות וחוסן מנטלי (15)</option>
+    <option value="בקרת אקלים פנימית">בקרת אקלים פנימית (15)</option>
+    <option value="חיוניות ואריכות ימים">חיוניות ואריכות ימים (15)</option>
+    <option value="חוסן חיסוני והתאוששות">חוסן חיסוני והתאוששות (15)</option>
+    <option value="הזנת החיים (תזונה)">הזנת החיים (תזונה) (15)</option>
+    <option value="תסמונות זאנג-פו">תסמונות זאנג-פו (15)</option>
+    <option value="נקודות דיקור">נקודות דיקור (15)</option>
+    <option value="ארבע הבדיקות">ארבע הבדיקות (15)</option>
+    <option value="בריאות האישה">בריאות האישה (15)</option>
+    <option value="רפואה סינית לילדים">רפואה סינית לילדים (15)</option>
+    <option value="רפואה סינית לקשישים">רפואה סינית לקשישים (15)</option>
+    <option value="בריאות רגשית">בריאות רגשית (15)</option>
+    <option value="הפרעות שינה">הפרעות שינה (15)</option>
+    <option value="בריאות מערכת העיכול">בריאות מערכת העיכול (15)</option>
+    <option value="בריאות מערכת הנשימה">בריאות מערכת הנשימה (15)</option>
+    <option value="מערכת השלד והשרירים">מערכת השלד והשרירים (15)</option>
+    <option value="כאבי ראש ומיגרנות">כאבי ראש ומיגרנות (15)</option>
+    <option value="מחלות עור">מחלות עור (15)</option>
+    <option value="מערכת הלב וכלי הדם">מערכת הלב וכלי הדם (15)</option>
+    <option value="נוסחאות צמחים">נוסחאות צמחים (15)</option>
+    <option value="מוקסה וכוסות רוח">מוקסה וכוסות רוח (15)</option>
+    <option value="כלי הדם המיוחדים">כלי הדם המיוחדים (15)</option>
+    <option value="דיקור אוזן">דיקור אוזן (15)</option>
+    <option value="טיפול לפי עונות">טיפול לפי עונות (15)</option>
+    <option value="חמשת היסודות">חמשת היסודות (15)</option>
+    <option value="יין ויאנג">יין ויאנג (15)</option>
+                </select>
             </div>
             
-            <!-- BOX #2: CSV Knowledge Base -->
-            <div class="csv-box">
-                <div class="csv-box-header">
-                    <h4>📚 מאגר שאלות ותשובות למאמרים</h4>
-                    <div class="csv-box-count">מאגר מאמרים CSV</div>
-                </div>
-                <div class="csv-box-content">
-                    <p>🔍 חיפוש במאגר המאמרים</p>
-                    <p style="font-size: 0.75rem; margin-top: 0.5rem; color: #6b7280;">תוכן יתווסף בהמשך</p>
-                </div>
-            </div>
-            
-            <!-- BOX #3: External AI Chat -->
-            <div class="ai-chat-box">
-                <div class="ai-chat-box-header">
-                    <h4>🤖 שאילתה לצ'אט בינה מלאכותית</h4>
-                    <div class="ai-chat-box-subtitle">צ'אט חיצוני AI</div>
-                </div>
-                <div class="ai-chat-box-content">
-                    <p>💬 חיבור לצ'אט בינה מלאכותית</p>
-                    <p style="font-size: 0.75rem; margin-top: 0.5rem; color: #6b7280;">תוכן יתווסף בהמשך</p>
-                </div>
-            </div>
+            <div id="quickQuestions" class="p-3 space-y-2"></div>
         </div>
 
         <!-- CENTER PANEL: Main Dashboard -->
@@ -967,186 +389,101 @@
                         <span id="successRate">0%</span>
                     </div>
                 </div>
-                
-                <!-- Control Buttons Section -->
-                <div class="flex items-center gap-2">
-                    <div class="status-indicator" id="topStatusIndicator">
-                        <span id="topStatusText">✅ המערכת מוכנה</span>
-                    </div>
-                    <button onclick="pauseCheck()" class="control-button pause" id="pauseBtn">
-                        ⏸️ השהה בדיקה
-                    </button>
-                    <button onclick="resumeCheck()" class="control-button resume hidden" id="resumeBtn">
-                        ▶️ המשך בדיקה
-                    </button>
-                    <button onclick="resetSession()" class="reset-button" title="התחל מחדש">
-                        🔄
-                    </button>
-                </div>
+                <button onclick="resetSession()" class="bg-white/20 hover:bg-white/30 px-4 py-1 rounded-lg transition text-sm">
+                    🔄 התחל מחדש
+                </button>
             </div>
 
             <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4">
-                <h1 class="text-xl font-bold text-right">🏥 עוזר קליני - רפואה סינית</h1>
-                <p class="text-xs text-blue-100 text-right mt-1">
-                    המידע מבוסס על תוכן שנכתב ונבדק ע"י ד"ר רוני ספיר • מומחה לרפואה סינית משלימה עם 30 שנות ניסיון
-                </p>
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+                <h1 class="text-3xl font-bold mb-2 text-right">🏥 עוזר קליני - רפואה סינית</h1>
+                <p class="text-blue-100 text-right">מערכת RAG מבוססת בינה מלאכותית • 450 שאלות מוכנות</p>
+                
+                <!-- Dr. Roni Sapir Credentials -->
+                <div class="mt-3 p-3 bg-white/10 rounded-lg backdrop-blur">
+                    <p class="text-sm text-white text-right leading-relaxed">
+                        ⭐ <strong>המידע מבוסס על תוכן שנכתב ונבדק ע"י ד"ר רוני ספיר</strong><br>
+                        <span class="text-blue-100">מומחה לרפואה סינית משלימה עם 30 שנות ניסיון</span>
+                    </p>
+                </div>
+                
+                <div id="apiStatus" class="mt-3 p-3 bg-white/10 rounded-lg backdrop-blur text-right">
+                    <span id="statusText">מאתחל מערכת...</span>
+                </div>
             </div>
 
             <!-- Main Content Area -->
-            <div class="flex-1 overflow-y-auto">
-                <!-- Query Section -->
-                <div class="query-section p-6">
-                    <!-- Multi-Query System -->
-                    <div class="mb-4">
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- Multi-Query System -->
+                <div class="mb-6">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-sm text-gray-600">עד 3 שאלות בבת אחת</span>
                         <label class="block text-lg font-bold">🔍 חיפוש רב-שאלות</label>
                     </div>
 
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         <div class="query-box" id="queryBox1">
-                            <label class="block text-xs font-semibold text-gray-700 mb-1 text-right">שאלה 1 (חובה)</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 1 (חובה)</label>
                             <input 
                                 type="text" 
                                 id="searchInput1" 
                                 placeholder="תסמין או מצב עיקרי..." 
-                                class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none text-right text-sm"
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
                                 dir="rtl"
                                 oninput="updateQueryBox(1)"
                             >
                         </div>
 
                         <div class="query-box" id="queryBox2">
-                            <label class="block text-xs font-semibold text-gray-700 mb-1 text-right">שאלה 2 (אופציונלי)</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 2 (אופציונלי)</label>
                             <input 
                                 type="text" 
                                 id="searchInput2" 
                                 placeholder="תסמין נוסף או מצב קשור..." 
-                                class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none text-right text-sm"
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
                                 dir="rtl"
                                 oninput="updateQueryBox(2)"
                             >
                         </div>
 
                         <div class="query-box" id="queryBox3">
-                            <label class="block text-xs font-semibold text-gray-700 mb-1 text-right">שאלה 3 (אופציונלי)</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">שאלה 3 (אופציונלי)</label>
                             <input 
                                 type="text" 
                                 id="searchInput3" 
                                 placeholder="תסמין שלישי או נקודת דיקור..." 
-                                class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none text-right text-sm"
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
                                 dir="rtl"
                                 oninput="updateQueryBox(3)"
                             >
                         </div>
                     </div>
 
-                    <!-- Therapist Free Text Box with Voice -->
-                    <div class="query-box" id="queryBox4">
-                        <label class="block text-xs font-semibold text-gray-700 mb-1 text-right">💬 שדה חופשי למטפל</label>
-                        <div class="flex gap-2">
-                            <textarea 
-                                id="therapistFreeText" 
-                                class="flex-1 p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none text-right text-sm"
-                                placeholder="הקלד כאן שאלה או הערה חופשית..."
-                                dir="rtl"
-                                style="min-height: 38px; max-height: 38px; resize: none;"
-                            ></textarea>
-                            <button 
-                                id="therapistVoiceBtn" 
-                                class="mic-button-inline" 
-                                onclick="toggleTherapistVoice()"
-                                title="לחץ והתחל לדבר">
-                                🎤
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2 mt-2">
+                    <div class="flex gap-3 mt-4">
                         <button 
                             onclick="clearAllQueries()" 
-                            class="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md font-semibold transition text-xs">
+                            class="px-6 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold transition">
                             נקה הכל
                         </button>
                         <button 
                             onclick="performMultiQuery()" 
-                            class="run-query-button flex-1 px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-sm text-sm">
+                            class="run-query-button flex-1 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-black hover:from-blue-700 hover:to-indigo-700 transition text-xl shadow-lg">
                             🔍 הרץ חיפוש
                         </button>
                         <button 
                             id="pauseButton"
                             onclick="togglePause()" 
-                            class="pause-button hidden px-2 py-1 rounded-md transition text-xs">
+                            class="pause-button hidden px-6 py-4 rounded-xl transition">
                             ⏸️ השהה
                         </button>
                     </div>
-                    
-                    <!-- Report Display Section -->
-                    <div class="mt-4">
-                        <h3 class="text-sm font-bold text-gray-700 mb-2 text-right">📋 דו"ח ותמונות לנקודות דיקור</h3>
-                        
-                        <div class="flex gap-3">
-                            <!-- Action Buttons Panel (Left) -->
-                            <div class="flex flex-col gap-2">
-                                <button onclick="printReport()" class="action-mini-btn bg-blue-500 hover:bg-blue-600" title="הדפס">
-                                    🖨️
-                                </button>
-                                <button onclick="emailReport()" class="action-mini-btn bg-green-500 hover:bg-green-600" title="שלח בדוא"ל">
-                                    ✉️
-                                </button>
-                                <button onclick="whatsappReport()" class="action-mini-btn bg-emerald-500 hover:bg-emerald-600" title="שלח בוואטסאפ">
-                                    💬
-                                </button>
-                            </div>
-                            
-                            <!-- Report Display Box -->
-                            <div class="flex-1 border-2 border-gray-300 rounded-lg p-3 bg-white overflow-y-auto" style="max-height: 200px; min-height: 120px;">
-                                <div id="reportPreview" class="text-right text-sm text-gray-500">
-                                    הדוח יוצג כאן לאחר הרצת החיפוש...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    </div>
                 </div>
 
-                <!-- Results Section -->
-                <div class="results-section p-6 bg-gray-50" id="resultsMainSection">
-                    <div id="resultsDisplayArea" class="space-y-4">
-                    <!-- Report/Answers Section -->
-                    <div id="reportSection" class="hidden">
-                        <div class="bg-white rounded-lg shadow-lg p-4 border-2 border-blue-200">
-                            <h3 class="text-lg font-bold text-right mb-3 text-blue-600 flex items-center justify-between">
-                                <span class="text-xs text-gray-500">↕️ גלול למטה לראות עוד</span>
-                                <span>📋 תוצאות החיפוש המלאות</span>
-                            </h3>
-                            <div id="reportContent" class="overflow-y-auto border border-gray-200 rounded p-3 bg-gray-50" style="max-height: 500px;">
-                                <!-- Report content will appear here -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Body Parts Display Section -->
-                    <div id="bodyPartsSection" class="hidden">
-                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-lg p-4 border-2 border-purple-200">
-                            <h3 class="text-lg font-bold text-right mb-3 text-purple-600 flex items-center justify-between">
-                                <span class="text-xs text-gray-500">↕️ גלול למטה לראות עוד</span>
-                                <span>🫀 תצוגת איברים ונקודות דיקור</span>
-                            </h3>
-                            <div id="bodyPartsContent" class="overflow-y-auto border border-purple-200 rounded p-3 bg-white" style="max-height: 500px;">
-                                <!-- Body parts visualization will appear here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Active Queries Display -->
+                <div id="activeQueries" class="mb-6"></div>
 
-                    <!-- Active Queries Display -->
-                    <div id="activeQueries" class="mb-4"></div>
-
-                    <!-- Report Options -->
-                    <div id="reportOptions" class="mb-4 hidden">
+                <!-- Report Options -->
+                <div id="reportOptions" class="mb-6 hidden">
                     <div class="p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
                         <h4 class="font-bold mb-3 text-right">📊 רמת פירוט הדוח:</h4>
                         <div class="flex gap-4 justify-end">
@@ -1196,7 +533,6 @@
                     </div>
                     <div id="fallbackResults" class="bg-white p-4 rounded-lg border border-orange-300 mt-3 text-right"></div>
                 </div>
-                </div>
             </div>
         </div>
 
@@ -1211,10 +547,9 @@
                 <h4 class="text-white font-bold text-center mb-3 text-lg">🧠 חשיבה עמוקה</h4>
                 <select class="w-full p-2 rounded-lg border-2 border-blue-300 mb-2 text-sm" id="deepCategorySelect">
                     <option value="">בחר קטגוריה</option>
-                    <option value="all">🔍 חיפוש כללי (הכל)</option>
                     <option value="acupoints">נקודות דיקור</option>
-                    <option value="syndromes">תסמונות</option>
                     <option value="herbs">צמחי מרפא</option>
+                    <option value="syndromes">תסמונות</option>
                     <option value="treatments">טיפולים</option>
                     <option value="theory">תיאוריה</option>
                 </select>
@@ -1267,118 +602,27 @@
             resultsDiv.innerHTML = '<p class="text-center text-gray-500">מחפש...</p>';
             
             try {
-                let data, error;
-                
-                // Search based on category
-                if (category === 'all') {
-                    // Search BOTH tables simultaneously
-                    const [acupointsResponse, syndromesResponse] = await Promise.all([
-                        supabaseClient
-                            .from('acupuncture_points')
-                            .select('*')
-                            .or(`point_code.ilike.%${query}%,name_en.ilike.%${query}%,name_he.ilike.%${query}%,indications_he.ilike.%${query}%`)
-                            .limit(5),
-                        supabaseClient
-                            .from('zangfu_syndromes')
-                            .select('*')
-                            .or(`name_en.ilike.%${query}%,name_he.ilike.%${query}%,symptoms_he.ilike.%${query}%,treatment_he.ilike.%${query}%`)
-                            .limit(5)
-                    ]);
-                    
-                    if (acupointsResponse.error || syndromesResponse.error) {
-                        throw acupointsResponse.error || syndromesResponse.error;
-                    }
-                    
-                    const acupoints = acupointsResponse.data || [];
-                    const syndromes = syndromesResponse.data || [];
-                    
-                    if (acupoints.length === 0 && syndromes.length === 0) {
-                        resultsDiv.innerHTML = '<p class="text-center text-gray-500 text-sm">לא נמצאו תוצאות</p>';
-                        return;
-                    }
-                    
-                    // Display combined results with labels
-                    let html = '';
-                    
-                    if (acupoints.length > 0) {
-                        html += '<div class="mb-3"><div class="text-xs font-bold text-purple-600 mb-1">📍 נקודות דיקור:</div>';
-                        html += acupoints.map(item => `
-                            <div class="mb-2 pb-2 border-b border-gray-200 text-right">
-                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
-                                <br><span class="text-xs text-gray-600">${item.point_code}</span>
-                                ${item.indications_he ? `<br><small class="text-xs text-gray-500">${item.indications_he.substring(0, 80)}...</small>` : ''}
-                            </div>
-                        `).join('');
-                        html += '</div>';
-                    }
-                    
-                    if (syndromes.length > 0) {
-                        html += '<div class="mb-3"><div class="text-xs font-bold text-purple-600 mb-1">🩺 תסמונות:</div>';
-                        html += syndromes.map(item => `
-                            <div class="mb-2 pb-2 border-b border-gray-200 text-right">
-                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
-                                <br><span class="text-xs text-gray-600">${item.name_en}</span>
-                                ${item.symptoms_he ? `<br><small class="text-xs text-gray-500">${item.symptoms_he.substring(0, 80)}...</small>` : ''}
-                            </div>
-                        `).join('');
-                        html += '</div>';
-                    }
-                    
-                    resultsDiv.innerHTML = html;
-                    return;
-                    
-                } else if (category === 'acupoints') {
-                    // Search acupuncture points
-                    const response = await supabaseClient
-                        .from('acupuncture_points')
-                        .select('*')
-                        .or(`point_code.ilike.%${query}%,name_en.ilike.%${query}%,name_he.ilike.%${query}%,indications_he.ilike.%${query}%`)
-                        .limit(10);
-                    data = response.data;
-                    error = response.error;
-                    
-                } else if (category === 'syndromes') {
-                    // Search zangfu syndromes
-                    const response = await supabaseClient
-                        .from('zangfu_syndromes')
-                        .select('*')
-                        .or(`name_en.ilike.%${query}%,name_he.ilike.%${query}%,symptoms_he.ilike.%${query}%,treatment_he.ilike.%${query}%`)
-                        .limit(10);
-                    data = response.data;
-                    error = response.error;
-                    
-                } else {
-                    // For herbs, treatments, theory - show "coming soon"
-                    resultsDiv.innerHTML = '<p class="text-center text-blue-600 text-sm font-bold">🚧 בבניה - Coming Soon</p>';
-                    return;
-                }
+                const { data, error } = await supabaseClient
+                    .from('dr_roni_bible')
+                    .select('*')
+                    .eq('content_type', category)
+                    .ilike('content_en', `%${query}%`)
+                    .limit(10);
                 
                 if (error) throw error;
                 
                 if (!data || data.length === 0) {
                     resultsDiv.innerHTML = '<p class="text-center text-gray-500 text-sm">לא נמצאו תוצאות</p>';
                 } else {
-                    // Format results based on category
-                    if (category === 'acupoints') {
-                        resultsDiv.innerHTML = data.map(item => `
-                            <div class="mb-2 pb-2 border-b border-gray-200 text-right">
-                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
-                                <br><span class="text-xs text-gray-600">${item.point_code}</span>
-                                ${item.indications_he ? `<br><small class="text-xs text-gray-500">${item.indications_he.substring(0, 100)}...</small>` : ''}
-                            </div>
-                        `).join('');
-                    } else if (category === 'syndromes') {
-                        resultsDiv.innerHTML = data.map(item => `
-                            <div class="mb-2 pb-2 border-b border-gray-200 text-right">
-                                <strong class="text-sm text-blue-800">${item.name_he || item.name_en}</strong>
-                                <br><span class="text-xs text-gray-600">${item.name_en}</span>
-                                ${item.symptoms_he ? `<br><small class="text-xs text-gray-500">${item.symptoms_he.substring(0, 100)}...</small>` : ''}
-                            </div>
-                        `).join('');
-                    }
+                    resultsDiv.innerHTML = data.map(item => `
+                        <div class="mb-2 pb-2 border-b border-gray-200 text-right">
+                            <strong class="text-sm text-blue-800">${item.content_he || item.content_en}</strong>
+                            ${item.source ? `<br><small class="text-xs text-gray-500">${item.source}</small>` : ''}
+                        </div>
+                    `).join('');
                 }
             } catch (error) {
-                resultsDiv.innerHTML = '<p class="text-center text-red-500 text-sm">שגיאה בחיפוש: ' + error.message + '</p>';
+                resultsDiv.innerHTML = '<p class="text-center text-red-500 text-sm">שגיאה בחיפוש</p>';
                 console.error('Deep thinking search error:', error);
             }
         }
@@ -2386,10 +1630,10 @@ Respond in Hebrew with CM analysis.`;
             
             try {
                 await loadRAGData();
-                updateStatus('✅ המערכת מוכנה');
+                updateStatus('✅ המערכת מוכנה! 450 שאלות זמינות');
             } catch (error) {
                 console.error('Database connection error:', error);
-                updateStatus('⚠️ עובד במצב לא מקוון');
+                updateStatus('⚠️ עובד במצב לא מקוון - שאלון יין-יאנג זמין');
             }
             
             // These should work even without database
@@ -2416,34 +1660,7 @@ Respond in Hebrew with CM analysis.`;
         }
 
         function updateStatus(message) {
-            const topStatus = document.getElementById('topStatusText');
-            if (topStatus) {
-                topStatus.textContent = message;
-            }
-            // Keep old one for compatibility
-            const oldStatus = document.getElementById('statusText');
-            if (oldStatus) {
-                oldStatus.textContent = message;
-            }
-        }
-        
-        // Pause/Resume Check Functions
-        let isPaused = false;
-        
-        function pauseCheck() {
-            isPaused = true;
-            document.getElementById('pauseBtn').classList.add('hidden');
-            document.getElementById('resumeBtn').classList.remove('hidden');
-            updateStatus('⏸️ הבדיקה מושהית');
-            console.log('Check paused');
-        }
-        
-        function resumeCheck() {
-            isPaused = false;
-            document.getElementById('pauseBtn').classList.remove('hidden');
-            document.getElementById('resumeBtn').classList.add('hidden');
-            updateStatus('✅ הבדיקה ממשיכה');
-            console.log('Check resumed');
+            document.getElementById('statusText').textContent = message;
         }
 
         window.addEventListener('DOMContentLoaded', init);
@@ -3266,110 +2483,100 @@ Respond in Hebrew with CM analysis.`;
             }
         };
 
-        const patternDefinitions = {
-            yin_deficiency: {
-                name: "חסר יין (Yin Deficiency)",
-                name_en: "Yin Deficiency",
-                name_cn: "陰虛",
-                badge_class: "yin-def",
-                patient_friendly: "הגוף שלך מראה סימנים של שימוש במשאבי נוזלים וקירור מהר יותר ממה שהוא יכול לבנות אותם מחדש. זה יכול ליצור חום פנימי וחוסר מנוחה.",
-                typical_signs: [
-                    "חום אחר הצהריים או בערב",
-                    "הזעות לילה",
-                    "פה או גרון יבשים, במיוחד בלילה",
-                    "גוף רזה, נטייה ליובש בעור או בצואה",
-                    "שינה קלה, מופרעת"
-                ],
-                tcm_notes: "היין אינו מזין ומקרר את האיברים מספיק, מה שמוביל להיפראקטיביות יאנג יחסית. לעתים קרובות נראה עם סימני חום מחסור.",
-                safety_flags: [
-                    "ירידה בלתי מוסברת במשקל",
-                    "נדודי שינה או חרדה חמורים",
-                    "הזעות לילה מתמשכות"
-                ]
-            },
-            yang_deficiency: {
-                name: "חסר יאנג (Yang Deficiency)",
-                name_en: "Yang Deficiency",
-                name_cn: "陽虛",
-                name_cn: "陽虛",
-                badge_class: "yang-def",
-                patient_friendly: "האנרגיה המחממת והמפעילה של הגוף שלך חלשה יותר, כך שאתה עלול להרגיש קר ועייף ביתר קלות.",
-                typical_signs: [
-                    "הרגשת קור, במיוחד ברגליים, ידיים, גב תחתון",
-                    "השתנה תכופה ובהירה, במיוחד בלילה",
-                    "צואה רופפה או בבוקר מוקדם",
-                    "אנרגיה נמוכה, צורך בשינה ארוכה אך עדיין עייף"
-                ],
-                tcm_notes: "היאנג אינו מספיק כדי לחמם ולהפוך נוזלים ומזון. לעתים קרובות קשור ליאנג של הטחול-כליות.",
-                safety_flags: [
-                    "עייפות חמורה עם סחרחורת או קוצר נשימה",
-                    "בצקת, במיוחד ברגליים",
-                    "השתנה תכופה מאוד או בריחת שתן"
-                ]
-            },
-            yin_yang_balance: {
-                name: "איזון יחסי יין-יאנג",
-                name_en: "Relative Yin-Yang Balance",
-                name_cn: "陰陽平衡",
-                badge_class: "balanced",
-                patient_friendly: "התשובות שלך מראות אינטראקציה מאוזנת יחסית בין היין המקרר-מזין והיאנג המחמם-מפעיל.",
-                typical_signs: [
-                    "אנרגיה יציבה",
-                    "העדפת טמפרטורה נורמלית",
-                    "שינה ועיכול טובים"
-                ],
-                tcm_notes: "אין דפוס יין או יאנג דומיננטי. המשך להתמקד בהרגלי אורח חיים ששומרים על איזון.",
-                safety_flags: []
-            },
-            yin_def_yang_excess: {
-                name: "חסר יין עם עודף יאנג יחסי",
-                name_en: "Yin Deficiency with Relative Yang Excess",
-                name_cn: "陰虛陽亢",
-                badge_class: "yin-yang-excess",
-                patient_friendly: "יש מעט חוסר ביין המקרר/מזין, כך שצד היאנג נראה פעיל יותר מדי באופן יחסי. זה יכול להופיע כחום, תסיסה או בעיות שינה.",
-                typical_signs: [
-                    "עצבנות, חוסר מנוחה",
-                    "פנים אדומות או תחושות חום עם יובש",
-                    "הזעות לילה, צואה יבשה"
-                ],
-                tcm_notes: "חסר יין נכשל לעגן את היאנג; עודף יאנג יחסי מופיע כחום מחסור.",
-                safety_flags: [
-                    "דפיקות לב עם נדודי שינה",
-                    "שינוי משקל לא מוסבר",
-                    "לחץ דם גבוה מתמשך (הפנה אם יש חשד)"
-                ]
-            },
-            yang_def_yin_excess: {
-                name: "חסר יאנג עם דומיננטיות יין (נטייה לקור-לחות)",
-                name_en: "Yang Deficiency with Yin Predominance",
-                name_cn: "陽虛陰盛",
-                badge_class: "yang-yin-excess",
-                patient_friendly: "הפונקציה המחממת חלשה יותר, כך שתחושות קור ולחות יכולות לשלוט, עם כבדות או איטיות.",
-                typical_signs: [
-                    "הרגשת קור, מעדיף חום",
-                    "כבדות באיברים, עייפות",
-                    "צואה רופפה, בצקת אפשרית"
-                ],
-                tcm_notes: "יאנג לא מספיק נכשל להפוך ולהזיז נוזלים, מה שמוביל לדומיננטיות קור-לחות.",
-                safety_flags: [
-                    "בצקת או נפיחות בולטת",
-                    "אנרגיה נמוכה מאוד המפריעה לחיי היומיום"
-                ]
-            },
-            mixed_or_undefined: {
-                name: "דפוס מעורב או לא מוגדר",
-                name_en: "Mixed or Undefined Pattern",
-                name_cn: "混合型",
-                badge_class: "balanced",
-                patient_friendly: "התשובות שלך מראות תבנית מורכבת שעשויה לדרוש הערכה נוספת על ידי מטפל.",
-                typical_signs: [
-                    "מגוון סימנים ללא דפוס ברור",
-                    "ייתכן שישנם מספר חוסרי איזון"
-                ],
-                tcm_notes: "לא התאים לקריטריונים של דפוסים מוגדרים. דורש הערכה מפורטת יותר במהלך הטיפול.",
-                safety_flags: []
-            }
-        };
+     // ================================================================
+// UPDATED YIN-YANG MODULE - LOADS FROM SUPABASE
+// Replace the hardcoded patternDefinitions with this code
+// ================================================================
+
+// Global variable to store patterns loaded from database
+let patternDefinitions = {};
+
+// FUNCTION: Load patterns from Supabase
+async function loadYinYangPatterns() {
+    try {
+        console.log('🔄 Loading yin-yang patterns from Supabase...');
+        
+        const { data, error } = await supabaseClient
+            .from('yin_yang_pattern_definitions')
+            .select('*');
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            console.error('❌ No yin-yang patterns found in database!');
+            alert('שגיאה: לא נמצאו דפוסי יין-יאנג במאגר');
+            return false;
+        }
+        
+        // Convert database rows to the format the module expects
+        patternDefinitions = {};
+        
+        data.forEach(pattern => {
+            patternDefinitions[pattern.pattern_id] = {
+                name: pattern.name_he,
+                name_en: pattern.name_en,
+                name_cn: pattern.name_cn,
+                badge_class: pattern.badge_class,
+                patient_friendly: pattern.patient_friendly_he,
+                typical_signs: pattern.typical_signs || [],
+                tcm_notes: pattern.tcm_notes,
+                safety_flags: pattern.safety_flags || []
+            };
+        });
+        
+        console.log(`✅ Loaded ${data.length} yin-yang patterns from database`);
+        console.log('Patterns:', Object.keys(patternDefinitions));
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Error loading yin-yang patterns:', error);
+        alert('שגיאה בטעינת דפוסי יין-יאנג: ' + error.message);
+        return false;
+    }
+}
+
+// FUNCTION: Initialize yin-yang module
+async function initYinYangModule() {
+    // Load patterns from database BEFORE using the module
+    const loaded = await loadYinYangPatterns();
+    
+    if (!loaded) {
+        console.error('❌ Yin-yang module cannot function without pattern data');
+        return;
+    }
+    
+    console.log('✅ Yin-yang module initialized with database patterns');
+    
+    // Now the rest of your yin-yang module code can use patternDefinitions
+    // as it did before - no other changes needed!
+}
+
+// ================================================================
+// CALL THIS ON PAGE LOAD
+// ================================================================
+// Add this to your main initialization function:
+// await initYinYangModule();
+
+// ================================================================
+// EXAMPLE USAGE IN YOUR EXISTING CODE
+// ================================================================
+// Your existing code that uses patternDefinitions will work as-is!
+// For example:
+//
+// function displayYinYangResult(pattern) {
+//     const patternInfo = patternDefinitions[pattern];  // ← Still works!
+//     console.log(patternInfo.name);
+//     console.log(patternInfo.typical_signs);
+//     // ... rest of your code unchanged
+// }
+
+// ================================================================
+// NOTE: The only change needed is to call initYinYangModule()
+// BEFORE any code that uses patternDefinitions
+// ================================================================
+   
+
 
         const followUpQuestions = {
             yin_deficiency: [
@@ -3444,7 +2651,9 @@ Respond in Hebrew with CM analysis.`;
         const totalQuestions = 11;
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load yin-yang patterns from database first
+            await initYinYangModule();
             setupEventListeners();
         });
 
@@ -3829,472 +3038,6 @@ function showYinYang() {
 function hideYinYang() {
     document.getElementById('yinyang-module').style.display = 'none';
     document.body.style.overflow = 'auto';
-}
-</script>
-
-<!-- TCM Assistant - Body Images Container -->
-<div id="bodyImagesContainer"></div>
-
-<!-- TCM Assistant - Q&A Knowledge Base Container -->
-<div id="qaResultsContainer"></div>
-
-<!-- TCM Assistant - Image Modal -->
-<div id="imageModal" class="tcm-image-modal">
-    <div class="tcm-modal-content">
-        <button class="tcm-modal-close" onclick="TCMAssistant.closeImageModal()">×</button>
-        <img id="modalImage" src="" alt="">
-        <div class="tcm-modal-info">
-            <h4 id="modalRegion"></h4>
-            <p id="modalCodes"></p>
-        </div>
-    </div>
-</div>
-
-<!-- TCM Assistant - JavaScript Library -->
-<script src="tcm-assistant.js"></script>
-<script>
-    // Initialize TCM Assistant
-    TCMAssistant.init();
-    console.log('✅ TCM Assistant initialized and ready!');
-</script>
-
-<!-- ============================================
-     PHASE 1: QUICK QUESTIONS BROWSER JAVASCRIPT
-     ============================================ -->
-<script>
-let categoriesData = {};
-let isVoiceListening = false;
-let recognition = null;
-
-// Initialize Voice Recognition for Phase 1
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'he-IL';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    
-    recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        document.getElementById('freeTextInput').value = transcript;
-        stopVoiceCommand();
-    };
-    
-    recognition.onerror = function(event) {
-        console.error('Voice recognition error:', event.error);
-        stopVoiceCommand();
-    };
-    
-    recognition.onend = function() {
-        stopVoiceCommand();
-    };
-}
-
-// Load Questions from Supabase
-async function loadQuickQuestions() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('tcm_hebrew_qa')
-            .select('id, category, question_hebrew, acupoint_codes')
-            .order('category', { ascending: true })
-            .order('id', { ascending: true });
-        
-        if (error) {
-            console.error('Error loading questions:', error);
-            document.getElementById('categoriesContainer').innerHTML = 
-                '<p style="color: red; text-align: center; font-size: 0.85rem;">שגיאה בטעינת שאלות</p>';
-            return;
-        }
-        
-        // Group by category
-        categoriesData = {};
-        data.forEach(item => {
-            if (!categoriesData[item.category]) {
-                categoriesData[item.category] = [];
-            }
-            categoriesData[item.category].push(item);
-        });
-        
-        renderCategories();
-        console.log('✅ Phase 1: Loaded', data.length, 'questions from', Object.keys(categoriesData).length, 'categories');
-        
-    } catch (err) {
-        console.error('Error:', err);
-        document.getElementById('categoriesContainer').innerHTML = 
-            '<p style="color: red; text-align: center; font-size: 0.85rem;">שגיאה</p>';
-    }
-}
-
-// Render Categories
-function renderCategories(searchTerm = '') {
-    const container = document.getElementById('categoriesContainer');
-    const categories = Object.keys(categoriesData).sort();
-    
-    if (categories.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 0.85rem;">אין שאלות</p>';
-        return;
-    }
-    
-    let html = '';
-    
-    categories.forEach(category => {
-        const questions = categoriesData[category];
-        
-        const filteredQuestions = searchTerm 
-            ? questions.filter(q => 
-                q.question_hebrew.includes(searchTerm) || 
-                category.includes(searchTerm)
-              )
-            : questions;
-        
-        if (filteredQuestions.length === 0 && searchTerm) return;
-        
-        const categoryDisplayName = getCategoryDisplayName(category);
-        
-        html += `
-            <div class="category-item" id="category-${category}">
-                <div class="category-header" onclick="toggleCategory('${category}')">
-                    <div>
-                        <div class="category-name">${categoryDisplayName}</div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span class="category-count">${filteredQuestions.length}</span>
-                        <span class="category-arrow">▼</span>
-                    </div>
-                </div>
-                <div class="questions-list" id="questions-${category}">
-                    ${filteredQuestions.map(q => `
-                        <div class="question-item" onclick="selectQuestion(${q.id}, '${category}')">
-                            <div class="question-text">${q.question_hebrew}</div>
-                            ${q.acupoint_codes && q.acupoint_codes.length > 0 ? `
-                                <div class="question-points">📍 ${q.acupoint_codes.join(', ')}</div>
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-}
-
-// Category Display Names
-function getCategoryDisplayName(category) {
-    const names = {
-        'adolescent': '👦 מתבגרים (13-18)',
-        'adult': '👨 מבוגרים (18-70)',
-        'allergies': '🤧 אלרגיות',
-        'anxiety': '😰 חרדה ודיכאון',
-        'astrology': '⭐ אסטרולוגיה',
-        'breastfeeding': '🤱 הנקה',
-        'cardiology': '❤️ קרדיולוגיה',
-        'eastern': '🎋 טיפולים מזרחיים',
-        'elderly': '👴 קשישים (70-120)',
-        'extreme': '🌡️ מזג אוויר קיצוני',
-        'first': '🚑 עזרה ראשונה',
-        'general': '⚕️ בריאות כללית',
-        'herbs': '🌿 צמחי מרפא',
-        'natural': '🍃 ריפוי טבעי',
-        'nutrition': '🥗 תזונה',
-        'oncology': '🎗️ תמיכה אונקולוגית',
-        'pediatrics': '👶 ילדים',
-        'pregnancy': '🤰 הריון',
-        'skin': '🧴 מחלות עור',
-        'sports': '⚽ התאוששות ספורט',
-        'state': '🧠 ניהול מצב',
-        'tcm': '☯️ ריפוי טבעי TCM',
-        'university': '🎓 סילבוס אוניברסיטה'
-    };
-    
-    return names[category] || category;
-}
-
-// Toggle Category
-function toggleCategory(category) {
-    const categoryEl = document.getElementById(`category-${category}`);
-    categoryEl.classList.toggle('expanded');
-}
-
-// Select Question
-async function selectQuestion(questionId, category) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('tcm_hebrew_qa')
-            .select('*')
-            .eq('id', questionId)
-            .single();
-        
-        if (error) {
-            console.error('Error:', error);
-            return;
-        }
-        
-        // Highlight
-        document.querySelectorAll('.question-item').forEach(el => {
-            el.classList.remove('selected');
-        });
-        event.target.closest('.question-item').classList.add('selected');
-        
-        // Find search boxes
-        const searchBoxes = document.querySelectorAll('.query-box input[type="text"]');
-        
-        if (searchBoxes.length === 0) {
-            console.error('Could not find search boxes');
-            return;
-        }
-        
-        // Find first empty box
-        let targetBox = searchBoxes[0];
-        for (let box of searchBoxes) {
-            if (!box.value.trim()) {
-                targetBox = box;
-                break;
-            }
-        }
-        
-        // Populate
-        if (targetBox) {
-            targetBox.value = data.question_hebrew;
-            targetBox.closest('.query-box').classList.add('filled');
-            
-            targetBox.style.borderColor = '#10b981';
-            setTimeout(() => {
-                targetBox.style.borderColor = '';
-            }, 1000);
-            
-            console.log('✅ Question added:', data.question_hebrew.substring(0, 50));
-        }
-        
-    } catch (err) {
-        console.error('Error:', err);
-    }
-}
-
-// Search Questions
-const questionsSearchInput = document.getElementById('questionsSearch');
-if (questionsSearchInput) {
-    questionsSearchInput.addEventListener('input', function(e) {
-        const searchTerm = e.target.value.trim();
-        renderCategories(searchTerm);
-        
-        if (searchTerm) {
-            document.querySelectorAll('.category-item').forEach(el => {
-                el.classList.add('expanded');
-            });
-        }
-    });
-}
-
-// Add Free Text
-function addFreeTextToSearch() {
-    const freeText = document.getElementById('freeTextInput').value.trim();
-    
-    if (!freeText) {
-        alert('אנא הקלד טקסט תחילה');
-        return;
-    }
-    
-    const searchBoxes = document.querySelectorAll('.query-box input[type="text"]');
-    
-    if (searchBoxes.length === 0) {
-        console.error('Could not find search boxes');
-        return;
-    }
-    
-    let targetBox = searchBoxes[0];
-    for (let box of searchBoxes) {
-        if (!box.value.trim()) {
-            targetBox = box;
-            break;
-        }
-    }
-    
-    if (targetBox) {
-        targetBox.value = freeText;
-        targetBox.closest('.query-box').classList.add('filled');
-        
-        document.getElementById('freeTextInput').value = '';
-        
-        targetBox.style.borderColor = '#0ea5e9';
-        setTimeout(() => {
-            targetBox.style.borderColor = '';
-        }, 1000);
-        
-        console.log('✅ Free text added');
-    }
-}
-
-// Voice Command for Phase 1
-function toggleVoiceCommand() {
-    if (!recognition) {
-        alert('הדפדפן שלך לא תומך בזיהוי קולי');
-        return;
-    }
-    
-    if (isVoiceListening) {
-        stopVoiceCommand();
-    } else {
-        startVoiceCommand();
-    }
-}
-
-function startVoiceCommand() {
-    isVoiceListening = true;
-    const button = document.getElementById('voiceButton');
-    const buttonText = document.getElementById('voiceButtonText');
-    
-    button.classList.add('listening');
-    buttonText.textContent = '🎤 מקשיב...';
-    
-    recognition.start();
-    console.log('🎤 Voice started');
-}
-
-function stopVoiceCommand() {
-    isVoiceListening = false;
-    const button = document.getElementById('voiceButton');
-    const buttonText = document.getElementById('voiceButtonText');
-    
-    button.classList.remove('listening');
-    buttonText.textContent = 'לחץ והתחל לדבר';
-    
-    if (recognition) {
-        recognition.stop();
-    }
-    console.log('🎤 Voice stopped');
-}
-
-// Initialize Phase 1
-window.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Phase 1: Initializing...');
-    setTimeout(loadQuickQuestions, 500);
-});
-</script>
-
-<!-- ============================================
-     THERAPIST VOICE RECOGNITION JAVASCRIPT
-     ============================================ -->
-<script>
-let therapistVoiceListening = false;
-let therapistRecognition = null;
-
-// Initialize Voice Recognition for Therapist
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    therapistRecognition = new SpeechRecognition();
-    therapistRecognition.lang = 'he-IL';
-    therapistRecognition.continuous = false;
-    therapistRecognition.interimResults = false;
-    
-    therapistRecognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        const textarea = document.getElementById('therapistFreeText');
-        
-        // Append to existing text
-        if (textarea.value.trim()) {
-            textarea.value += ' ' + transcript;
-        } else {
-            textarea.value = transcript;
-        }
-        
-        stopTherapistVoice();
-        console.log('🎤 Therapist voice transcribed:', transcript);
-    };
-    
-    therapistRecognition.onerror = function(event) {
-        console.error('Therapist voice error:', event.error);
-        stopTherapistVoice();
-        if (event.error === 'not-allowed') {
-            alert('אנא אפשר גישה למיקרופון בהגדרות הדפדפן');
-        }
-    };
-    
-    therapistRecognition.onend = function() {
-        stopTherapistVoice();
-    };
-}
-
-function toggleTherapistVoice() {
-    if (!therapistRecognition) {
-        alert('הדפדפן שלך לא תומך בזיהוי קולי. אנא השתמש ב-Chrome או Edge.');
-        return;
-    }
-    
-    if (therapistVoiceListening) {
-        stopTherapistVoice();
-    } else {
-        startTherapistVoice();
-    }
-}
-
-function startTherapistVoice() {
-    therapistVoiceListening = true;
-    const button = document.getElementById('therapistVoiceBtn');
-    
-    button.classList.add('listening');
-    button.title = '🎤 מקשיב...';
-    
-    try {
-        therapistRecognition.start();
-        console.log('🎤 Therapist voice started');
-    } catch (error) {
-        console.error('Error starting therapist voice:', error);
-        stopTherapistVoice();
-    }
-}
-
-function stopTherapistVoice() {
-    therapistVoiceListening = false;
-    const button = document.getElementById('therapistVoiceBtn');
-    
-    button.classList.remove('listening');
-    button.title = 'לחץ והתחל לדבר';
-    
-    if (therapistRecognition) {
-        try {
-            therapistRecognition.stop();
-        } catch (error) {
-            // Ignore errors when stopping
-        }
-    }
-    console.log('🎤 Therapist voice stopped');
-}
-
-console.log('✅ Therapist voice recognition initialized');
-
-// Report Action Functions
-function printReport() {
-    const reportContent = document.getElementById('reportPreview').innerHTML;
-    if (reportContent && reportContent !== 'הדוח יוצג כאן לאחר הרצת החיפוש...') {
-        window.print();
-        console.log('🖨️ Printing report');
-    } else {
-        alert('אין דוח להדפסה. אנא הרץ חיפוש תחילה.');
-    }
-}
-
-function emailReport() {
-    const reportContent = document.getElementById('reportPreview').innerText;
-    if (reportContent && reportContent !== 'הדוח יוצג כאן לאחר הרצת החיפוש...') {
-        const subject = 'דו"ח נקודות דיקור';
-        const body = encodeURIComponent(reportContent);
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        console.log('✉️ Opening email client');
-    } else {
-        alert('אין דוח לשליחה. אנא הרץ חיפוש תחילה.');
-    }
-}
-
-function whatsappReport() {
-    const reportContent = document.getElementById('reportPreview').innerText;
-    if (reportContent && reportContent !== 'הדוח יוצג כאן לאחר הרצת החיפוש...') {
-        const text = encodeURIComponent(reportContent);
-        window.open(`https://wa.me/?text=${text}`, '_blank');
-        console.log('💬 Opening WhatsApp');
-    } else {
-        alert('אין דוח לשליחה. אנא הרץ חיפוש תחילה.');
-    }
 }
 </script>
 
