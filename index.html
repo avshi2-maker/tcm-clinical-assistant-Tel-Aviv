@@ -1358,8 +1358,33 @@
                     return;
                 }
                 
-                if (allResults.formulas.length > 0 || allResults.acupoints.length > 0) {
+                // Check if we have results (support both new and old format)
+                const hasResults = (allResults.totalResults && allResults.totalResults > 0) || 
+                                   (allResults.formulas && allResults.formulas.length > 0) || 
+                                   (allResults.acupoints && allResults.acupoints.length > 0);
+                
+                if (hasResults) {
                     successfulQueries++;
+                    
+                    // Show result count if using new search format
+                    if (allResults.totalResults > 0 && allResults.allResults) {
+                        const uniqueTables = [...new Set(allResults.allResults.map(r => r._source_table))];
+                        console.log(`🎉 Found ${allResults.totalResults} results from ${uniqueTables.length} tables!`);
+                        
+                        // Add success message before AI response
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'bg-green-50 p-4 rounded-lg border-2 border-green-200 mb-4 text-right';
+                        successMsg.innerHTML = `
+                            <p class="text-green-800 font-bold text-lg" dir="rtl">
+                                ✅ נמצאו ${allResults.totalResults} תוצאות מ-${uniqueTables.length} טבלאות!
+                            </p>
+                            <p class="text-green-600 text-sm mt-1" dir="rtl">
+                                טבלאות: ${uniqueTables.join(', ')}
+                            </p>
+                        `;
+                        results.appendChild(successMsg);
+                    }
+                    
                     await displaySearchResults(allResults);
                     document.getElementById('shareButtons').classList.remove('hidden');
                     document.getElementById('reportOptions').classList.remove('hidden');
@@ -1392,75 +1417,161 @@
             }
         }
 
+
+        // ========================================
+        // NEW SEARCH SYSTEM - SEARCHES ALL 10 TABLES
+        // ========================================
+
+        // Global variable to cache search configuration
+        let searchConfigCache = null;
+
+        /**
+         * Load search configuration from database
+         */
+        async function loadSearchConfig() {
+            if (searchConfigCache) {
+                return searchConfigCache;
+            }
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('search_config')
+                    .select('*')
+                    .eq('enabled', true)
+                    .order('priority');
+                
+                if (error) {
+                    console.error('❌ Error loading search config:', error);
+                    return [];
+                }
+                
+                console.log(`✅ Loaded ${data.length} searchable tables from search_config`);
+                searchConfigCache = data;
+                return data;
+            } catch (err) {
+                console.error('❌ Failed to load search config:', err);
+                return [];
+            }
+        }
+
+        /**
+         * Get default search fields for tables without config
+         */
+        function getDefaultSearchFields(tableName) {
+            const defaults = {
+                'acupuncture_points': ['point_name', 'english_name', 'chinese_name', 'indications'],
+                'dr_roni_acupuncture_points': ['point_name_heb', 'point_name_eng', 'indications', 'location', 'tcm_actions'],
+                'tcm_pulse_diagnosis': ['pulse_name_he', 'pulse_name_en', 'pulse_name_cn', 'characteristics', 'clinical_significance'],
+                'tcm_tongue_diagnosis': ['finding_he', 'finding_en', 'finding_cn', 'characteristics', 'clinical_significance'],
+                'zangfu_syndromes': ['syndrome_name_he', 'syndrome_name_en', 'main_symptoms'],
+                'yin_yang_symptoms': ['symptom_he', 'symptom_en'],
+                'v_symptom_acupoints': ['symptom_name', 'point_name'],
+                'tcm_body_images': ['body_part', 'region_name_he', 'region_name_en'],
+                'yin_yang_pattern_protocols': ['pattern_name_he', 'pattern_name_en'],
+                'acupuncture_point_warnings': ['warning_he', 'warning_en', 'point_name']
+            };
+            
+            return defaults[tableName] || ['name', 'description', 'title'];
+        }
+
+        /**
+         * NEW SEARCH FUNCTION - Searches all configured tables
+         */
         async function searchMultipleQueries(queries) {
-            const allFormulas = [];
-            const allAcupoints = [];
-            const allImages = [];
-            const csvSources = new Set();
-
-            console.log('Searching for queries:', queries);
-
-            for (const query of queries) {
+            console.log('🔍 NEW SEARCH: Starting search across all tables for:', queries);
+            
+            // Load search configuration
+            const searchConfig = await loadSearchConfig();
+            
+            if (!searchConfig || searchConfig.length === 0) {
+                console.error('❌ No search configuration found!');
+                // Fallback to old format for compatibility
+                return { formulas: [], acupoints: [], images: [] };
+            }
+            
+            console.log(`📊 Searching ${searchConfig.length} tables:`, searchConfig.map(c => c.table_name));
+            
+            const allResults = [];
+            let totalResults = 0;
+            
+            // Search each configured table
+            for (const tableConfig of searchConfig) {
                 // Check if paused
                 if (isPaused) {
-                    console.log('Search paused');
+                    console.log('⏸️ Search paused');
                     break;
                 }
                 
-                // Search formulas with Hebrew support - try multiple fields
-                const { data: formulas, error: formulaError } = await supabaseClient
-                    .from('tcm_formulas')
-                    .select('*')
-                    .or(`name_english.ilike.%${query}%,indications.ilike.%${query}%`)
-                    .order('priority', { ascending: true })
-                    .limit(15);
-
-                if (formulaError) {
-                    console.error('Formula search error:', formulaError);
-                } else if (formulas && formulas.length > 0) {
-                    console.log(`Found ${formulas.length} formulas for query: ${query}`);
-                    allFormulas.push(...formulas);
-                    formulas.forEach(f => csvSources.add(f.csv_filename));
-                } else {
-                    console.log(`No formulas found for query: ${query}`);
-                }
-
-                // Search acupoints
-                const { data: acupoints, error: acupointError } = await supabaseClient
-                    .from('tcm_acupoints')
-                    .select('*')
-                    .or(`code.ilike.%${query}%,english_name.ilike.%${query}%,body_part.ilike.%${query}%`)
-                    .limit(8);
-
-                if (acupointError) {
-                    console.error('Acupoint search error:', acupointError);
-                } else if (acupoints && acupoints.length > 0) {
-                    console.log(`Found ${acupoints.length} acupoints for query: ${query}`);
-                    allAcupoints.push(...acupoints);
-                    const imageFiles = [...new Set(acupoints.flatMap(p => p.image_files || []))];
-                    const relevantImages = imagesData.filter(img => imageFiles.includes(img.filename));
-                    allImages.push(...relevantImages);
-                } else {
-                    console.log(`No acupoints found for query: ${query}`);
+                for (const query of queries) {
+                    try {
+                        // Get search fields
+                        let searchFields = getDefaultSearchFields(tableConfig.table_name);
+                        
+                        // Build OR query for all search fields
+                        const orConditions = searchFields
+                            .map(field => `${field}.ilike.%${query}%`)
+                            .join(',');
+                        
+                        if (!orConditions) {
+                            continue;
+                        }
+                        
+                        // Execute search query
+                        const { data, error } = await supabaseClient
+                            .from(tableConfig.table_name)
+                            .select('*')
+                            .or(orConditions)
+                            .limit(20);
+                        
+                        if (error) {
+                            console.error(`  ❌ Error searching ${tableConfig.table_name}:`, error);
+                            continue;
+                        }
+                        
+                        if (data && data.length > 0) {
+                            console.log(`  ✅ Found ${data.length} results in ${tableConfig.table_name}`);
+                            
+                            // Add table metadata to each result
+                            const resultsWithMeta = data.map(row => ({
+                                ...row,
+                                _source_table: tableConfig.table_name,
+                                _source_description: tableConfig.description,
+                                _search_query: query
+                            }));
+                            
+                            allResults.push(...resultsWithMeta);
+                            totalResults += data.length;
+                        }
+                        
+                    } catch (err) {
+                        console.error(`  ❌ Exception searching ${tableConfig.table_name}:`, err);
+                    }
                 }
             }
-
+            
             // Deduplicate results
-            const uniqueFormulas = [...new Map(allFormulas.map(f => [f.id, f])).values()];
-            const uniqueAcupoints = [...new Map(allAcupoints.map(a => [a.id, a])).values()];
-            const uniqueImages = [...new Map(allImages.map(i => [i.id, i])).values()];
-
-            console.log(`Total unique results: ${uniqueFormulas.length} formulas, ${uniqueAcupoints.length} acupoints`);
-
-            totalAssets = csvSources.size + uniqueAcupoints.length;
-            highlightUsedCSVs(Array.from(csvSources));
-
+            const seen = new Set();
+            const uniqueResults = allResults.filter(result => {
+                const key = `${result._source_table}_${result.id}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+            
+            console.log(`\n✅ SEARCH COMPLETE! Total: ${uniqueResults.length} unique results`);
+            console.log(`📁 Tables with results: ${[...new Set(uniqueResults.map(r => r._source_table))].join(', ')}`);
+            
+            // Return in new format with backwards compatibility
             return {
-                formulas: uniqueFormulas,
-                acupoints: uniqueAcupoints,
-                images: uniqueImages
+                allResults: uniqueResults,
+                totalResults: uniqueResults.length,
+                // Legacy format for compatibility
+                formulas: uniqueResults.filter(r => r._source_table === 'tcm_formulas'),
+                acupoints: uniqueResults.filter(r => r._source_table.includes('acupuncture')),
+                images: []
             };
         }
+
 
         async function displaySearchResults(results) {
             const reportDetail = document.querySelector('input[name="reportDetail"]:checked').value;
@@ -1538,24 +1649,91 @@
 
         function buildAIContext(results, reportDetail) {
             const queries = currentQueries.join(', ');
-            const formulaContext = results.formulas.length > 0
+            
+            // NEW: Build context from all results if using new search format
+            if (results.allResults && results.allResults.length > 0) {
+                const groupedByTable = {};
+                results.allResults.forEach(r => {
+                    const table = r._source_table;
+                    if (!groupedByTable[table]) groupedByTable[table] = [];
+                    groupedByTable[table].push(r);
+                });
+                
+                let contextParts = [];
+                
+                // Add pulse diagnoses
+                if (groupedByTable['tcm_pulse_diagnosis']) {
+                    const pulses = groupedByTable['tcm_pulse_diagnosis'].slice(0, 5);
+                    contextParts.push(`Pulse findings: ${pulses.map(p => 
+                        `${p.pulse_name_he} (${p.pulse_name_en}) - ${p.clinical_significance}`
+                    ).join('; ')}`);
+                }
+                
+                // Add tongue diagnoses
+                if (groupedByTable['tcm_tongue_diagnosis']) {
+                    const tongues = groupedByTable['tcm_tongue_diagnosis'].slice(0, 5);
+                    contextParts.push(`Tongue findings: ${tongues.map(t => 
+                        `${t.finding_he} (${t.finding_en}) - ${t.clinical_significance}`
+                    ).join('; ')}`);
+                }
+                
+                // Add Dr. Roni's acupoints
+                if (groupedByTable['dr_roni_acupuncture_points']) {
+                    const points = groupedByTable['dr_roni_acupuncture_points'].slice(0, 10);
+                    contextParts.push(`Dr. Roni's Acupoints: ${points.map(p => 
+                        `${p.point_name_heb} (${p.point_name_eng}) - ${p.indications || ''}`
+                    ).join('; ')}`);
+                }
+                
+                // Add syndromes
+                if (groupedByTable['zangfu_syndromes']) {
+                    const syndromes = groupedByTable['zangfu_syndromes'].slice(0, 5);
+                    contextParts.push(`Syndromes: ${syndromes.map(s => 
+                        `${s.syndrome_name_he} - ${s.main_symptoms || ''}`
+                    ).join('; ')}`);
+                }
+                
+                // Add other acupoints
+                if (groupedByTable['acupuncture_points']) {
+                    const points = groupedByTable['acupuncture_points'].slice(0, 5);
+                    contextParts.push(`Standard Acupoints: ${points.map(p => 
+                        `${p.point_name} (${p.english_name}) - ${p.indications || ''}`
+                    ).join('; ')}`);
+                }
+                
+                const detailInstruction = reportDetail === 'full'
+                    ? 'Provide COMPREHENSIVE and DETAILED Hebrew report with treatment protocols, combining ALL diagnostic findings.'
+                    : 'Provide CONCISE Hebrew summary with key points only.';
+                
+                return `You are a TCM expert. Answer in HEBREW (right-to-left). 
+Queries: "${queries}"
+
+${contextParts.join('\n\n')}
+
+${detailInstruction}
+
+Based on these comprehensive findings from our database (pulse, tongue, acupoints, syndromes), provide integrated TCM analysis in Hebrew.`;
+            }
+            
+            // LEGACY: Fallback to old format if new format not available
+            const formulaContext = results.formulas && results.formulas.length > 0
                 ? `Relevant formulas: ${JSON.stringify(results.formulas.slice(0, 10))}`
                 : 'No formulas found';
-            const acupointContext = results.acupoints.length > 0
+            const acupointContext = results.acupoints && results.acupoints.length > 0
                 ? `Relevant acupoints: ${results.acupoints.map(p => `${p.code} (${p.english_name})`).join(', ')}`
                 : '';
             const detailInstruction = reportDetail === 'full'
                 ? 'Provide COMPREHENSIVE and DETAILED Hebrew report with treatment protocols.'
                 : 'Provide CONCISE Hebrew summary with key points only.';
 
-            return `You are a CM expert. Answer in HEBREW (right-to-left). Queries: "${queries}"
+            return `You are a TCM expert. Answer in HEBREW (right-to-left). Queries: "${queries}"
 
 ${formulaContext}
 ${acupointContext}
 
 ${detailInstruction}
 
-Respond in Hebrew with CM analysis.`;
+Respond in Hebrew with TCM analysis.`;
         }
 
         async function triggerFallbackSearch(queries) {
