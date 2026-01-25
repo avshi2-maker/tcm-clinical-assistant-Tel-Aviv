@@ -1612,7 +1612,14 @@
                         results.appendChild(successMsg);
                     }
                     
-                    await displaySearchResults(allResults);
+                    // ALGORITHM 2: Trigger Body Figure BOOM (if acupoints found)
+                    const bodyData = await triggerBodyFigureBoom(allResults);
+                    
+                    // ALGORITHM 3: Trigger CSV Flash (if relevant tables found)
+                    const csvData = await triggerCSVFlash(allResults);
+                    
+                    // Display all results with both algorithms
+                    await displaySearchResults(allResults, bodyData, csvData);
                     document.getElementById('shareButtons').classList.remove('hidden');
                     document.getElementById('reportOptions').classList.remove('hidden');
                     document.getElementById('fallbackBrowser').classList.add('hidden');
@@ -1686,20 +1693,273 @@
          */
         function getDefaultSearchFields(tableName) {
             const defaults = {
+                // TIER 1 - CRITICAL (Priority 1-3)
+                'dr_roni_acupuncture_points': ['point_code', 'meridian', 'chinese_name', 'english_name', 'description'],
+                'zangfu_syndromes': ['syndrome_name_he', 'syndrome_name_en', 'main_symptoms'],
+                'qa_knowledge_base': ['question_hebrew', 'answer_hebrew', 'description_hebrew', 'pharmacopeia_hebrew', 'category'],
+                
+                // TIER 2 - HIGH (Priority 4-7)
                 'acupuncture_points': ['point_name', 'english_name', 'chinese_name', 'indications'],
-                'dr_roni_acupuncture_points': ['point_name_heb', 'point_name_eng', 'indications', 'location', 'tcm_actions'],
+                'tcm_training_syllabus': ['question', 'answer', 'category', 'name_hebrew', 'name_english'],
+                'v_symptom_acupoints': ['symptom_name', 'point_name'],
+                
+                // TIER 3 - MEDIUM (Priority 8-10)
                 'tcm_pulse_diagnosis': ['pulse_name_he', 'pulse_name_en', 'pulse_name_cn', 'characteristics', 'clinical_significance'],
                 'tcm_tongue_diagnosis': ['finding_he', 'finding_en', 'finding_cn', 'characteristics', 'clinical_significance'],
-                'zangfu_syndromes': ['syndrome_name_he', 'syndrome_name_en', 'main_symptoms'],
                 'yin_yang_symptoms': ['symptom_he', 'symptom_en'],
-                'v_symptom_acupoints': ['symptom_name', 'point_name'],
-                'tcm_body_images': ['body_part', 'region_name_he', 'region_name_en'],
+                
+                // TIER 4 - SUPPORT (Priority 11-13)
                 'yin_yang_pattern_protocols': ['pattern_name_he', 'pattern_name_en'],
-                'acupuncture_point_warnings': ['warning_he', 'warning_en', 'point_name']
+                'acupuncture_point_warnings': ['warning_he', 'warning_en', 'point_name'],
+                'tcm_body_images': ['body_part', 'region_name_he', 'region_name_en']
             };
             
             return defaults[tableName] || ['name', 'description', 'title'];
         }
+        
+        /**
+         * Get tier-based result limit based on priority
+         */
+        function getResultLimit(priority) {
+            if (priority <= 3) return 30;   // Tier 1: Critical tables
+            if (priority <= 7) return 20;   // Tier 2: High priority
+            if (priority <= 10) return 10;  // Tier 3: Medium priority
+            return 5;                       // Tier 4: Support tables
+        }
+        
+        /**
+         * ALGORITHM 2: BODY FIGURE BOOM
+         * Displays body diagrams when acupoints are found
+         */
+        async function triggerBodyFigureBoom(searchResults) {
+            console.log('🎨 ALGORITHM 2: Checking for body figure triggers...');
+            
+            // Extract all acupoint codes from results
+            const acupoints = new Set();
+            
+            if (searchResults.allResults) {
+                searchResults.allResults.forEach(result => {
+                    if (result._source_table === 'dr_roni_acupuncture_points') {
+                        if (result.point_code) acupoints.add(result.point_code.trim());
+                    }
+                    if (result._source_table === 'acupuncture_points') {
+                        if (result.point_name) acupoints.add(result.point_name.trim());
+                    }
+                });
+            }
+            
+            if (acupoints.size === 0) {
+                console.log('  ℹ️ No acupoints found - skipping body figures');
+                return null;
+            }
+            
+            const acupointArray = Array.from(acupoints);
+            console.log(`  🎯 Found ${acupointArray.length} unique acupoints:`, acupointArray.slice(0, 5).join(', '), '...');
+            
+            try {
+                // Query mapping table to get body figures
+                const { data: mappings, error } = await supabaseClient
+                    .from('body_figure_acupoint_mapping')
+                    .select('body_figure_id, acupoint_code, body_part')
+                    .in('acupoint_code', acupointArray);
+                
+                if (error) {
+                    console.error('  ❌ Error loading body mappings:', error);
+                    return null;
+                }
+                
+                if (!mappings || mappings.length === 0) {
+                    console.log('  ℹ️ No body figure mappings found');
+                    return null;
+                }
+                
+                // Group by body figure
+                const figureGroups = {};
+                mappings.forEach(m => {
+                    if (!figureGroups[m.body_figure_id]) {
+                        figureGroups[m.body_figure_id] = {
+                            points: [],
+                            body_part: m.body_part
+                        };
+                    }
+                    if (!figureGroups[m.body_figure_id].points.includes(m.acupoint_code)) {
+                        figureGroups[m.body_figure_id].points.push(m.acupoint_code);
+                    }
+                });
+                
+                // Fetch actual body images (limit to 6)
+                const figureIds = Object.keys(figureGroups).slice(0, 6);
+                const { data: images, error: imgError } = await supabaseClient
+                    .from('tcm_body_images')
+                    .select('*')
+                    .in('id', figureIds);
+                
+                if (imgError || !images || images.length === 0) {
+                    console.log('  ℹ️ No body images found');
+                    return null;
+                }
+                
+                console.log(`  ✅ BOOM! Displaying ${images.length} body diagrams with ${mappings.length} points`);
+                
+                return { images, pointGroups: figureGroups };
+                
+            } catch (err) {
+                console.error('  ❌ Exception in body figure algorithm:', err);
+                return null;
+            }
+        }
+        
+        /**
+         * Display body figures with BOOM animation
+         */
+        function displayBodyFigures(bodyData) {
+            if (!bodyData || !bodyData.images || bodyData.images.length === 0) {
+                return '';
+            }
+            
+            const { images, pointGroups } = bodyData;
+            
+            return `
+                <div class="body-boom-section mt-8 p-6 rounded-xl animate-boom" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3 class="text-2xl font-bold text-white mb-4 text-right flex items-center justify-end">
+                        <span class="mr-3">🎯 מיקום נקודות הדיקור על הגוף</span>
+                        <span class="text-3xl">✨</span>
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        ${images.map(img => {
+                            const points = pointGroups[img.id]?.points || [];
+                            return `
+                                <div class="body-card bg-white rounded-xl p-4 shadow-lg hover:scale-105 transition-transform">
+                                    <img src="${img.storage_url}" 
+                                         alt="${img.body_part}" 
+                                         class="w-full h-48 object-contain mb-3"
+                                         onerror="this.style.display='none';" />
+                                    
+                                    <div class="text-center mb-2">
+                                        <span class="font-bold text-gray-800">${img.region_name_he || img.body_part}</span>
+                                    </div>
+                                    
+                                    <div class="flex flex-wrap gap-2 justify-center">
+                                        ${points.slice(0, 8).map(point => `
+                                            <span class="point-badge bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                                ${point}
+                                            </span>
+                                        `).join('')}
+                                        ${points.length > 8 ? `
+                                            <span class="text-xs text-gray-600">+${points.length - 8} נוספים</span>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes boom {
+                        0% { opacity: 0; transform: scale(0.8) translateY(50px); }
+                        60% { transform: scale(1.05) translateY(-10px); }
+                        100% { opacity: 1; transform: scale(1) translateY(0); }
+                    }
+                    .animate-boom {
+                        animation: boom 0.6s ease-out;
+                    }
+                </style>
+            `;
+        }
+        
+        /**
+         * ALGORITHM 3: CSV FLASH
+         * Shows flashing CSV cards for relevant categories
+         */
+        async function triggerCSVFlash(searchResults) {
+            console.log('📊 ALGORITHM 3: Checking for CSV flash triggers...');
+            
+            if (!searchResults.allResults || searchResults.allResults.length === 0) {
+                return null;
+            }
+            
+            // Get unique tables with results
+            const tablesWithResults = [...new Set(searchResults.allResults.map(r => r._source_table))];
+            console.log(`  📁 Tables with results:`, tablesWithResults);
+            
+            try {
+                // Get CSV flash configs for these tables
+                const { data: configs, error } = await supabaseClient
+                    .from('search_config')
+                    .select('csv_category, csv_title_he, csv_row_count')
+                    .in('table_name', tablesWithResults)
+                    .eq('triggers_csv_flash', true);
+                
+                if (error || !configs || configs.length === 0) {
+                    console.log('  ℹ️ No CSV flash triggers found');
+                    return null;
+                }
+                
+                // Remove duplicates and filter out nulls
+                const uniqueCategories = [...new Set(configs.map(c => c.csv_category))].filter(Boolean);
+                
+                if (uniqueCategories.length === 0) {
+                    return null;
+                }
+                
+                console.log(`  ✅ FLASH! Triggering ${uniqueCategories.length} CSVs:`, uniqueCategories);
+                
+                return configs.filter(c => c.csv_category);
+                
+            } catch (err) {
+                console.error('  ❌ Exception in CSV flash algorithm:', err);
+                return null;
+            }
+        }
+        
+        /**
+         * Display flashing CSV cards
+         */
+        function displayFlashingCSVs(csvData) {
+            if (!csvData || csvData.length === 0) {
+                return '';
+            }
+            
+            return `
+                <div class="csv-flash-panel mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
+                    <h4 class="text-lg font-bold mb-3 text-right text-blue-800">📚 מקורות ידע נוספים רלוונטיים</h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        ${csvData.map(csv => `
+                            <div class="csv-card flashing bg-white p-3 rounded-lg border-2 border-blue-400 shadow-md cursor-pointer hover:scale-105 transition-transform">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1 text-right">
+                                        <div class="font-bold text-blue-900">${csv.csv_title_he}</div>
+                                        <div class="text-xs text-gray-600">${csv.csv_row_count} שאלות ותשובות</div>
+                                    </div>
+                                    <span class="new-badge bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">רלוונטי!</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes csvFlash {
+                        0%, 100% { background: white; transform: scale(1); }
+                        50% { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); transform: scale(1.05); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+                    }
+                    .csv-card.flashing {
+                        animation: csvFlash 2s ease-in-out 3;
+                    }
+                    .new-badge {
+                        animation: pulse 1s infinite;
+                    }
+                    @keyframes pulse {
+                        0%, 100% { opacity: 1; }
+                        50% { opacity: 0.7; }
+                    }
+                </style>
+            `;
+        }
+
 
         /**
          * NEW SEARCH FUNCTION - Searches all configured tables
@@ -1743,12 +2003,14 @@
                             continue;
                         }
                         
-                        // Execute search query
+                        // Execute search query with tier-based limit
+                        const limit = getResultLimit(tableConfig.priority || 99);
+                        
                         const { data, error } = await supabaseClient
                             .from(tableConfig.table_name)
                             .select('*')
                             .or(orConditions)
-                            .limit(20);
+                            .limit(limit);
                         
                         if (error) {
                             console.error(`  ❌ Error searching ${tableConfig.table_name}:`, error);
@@ -1756,14 +2018,16 @@
                         }
                         
                         if (data && data.length > 0) {
-                            console.log(`  ✅ Found ${data.length} results in ${tableConfig.table_name}`);
+                            console.log(`  ✅ Found ${data.length} results in ${tableConfig.table_name} (Priority ${tableConfig.priority}, Limit ${limit})`);
                             
                             // Add table metadata to each result
                             const resultsWithMeta = data.map(row => ({
                                 ...row,
                                 _source_table: tableConfig.table_name,
                                 _source_description: tableConfig.description,
-                                _search_query: query
+                                _search_query: query,
+                                _priority: tableConfig.priority || 99,
+                                _weight: tableConfig.weight || 5
                             }));
                             
                             allResults.push(...resultsWithMeta);
@@ -1800,7 +2064,7 @@
         }
 
 
-        async function displaySearchResults(results) {
+        async function displaySearchResults(results, bodyData = null, csvData = null) {
             const reportDetail = document.querySelector('input[name="reportDetail"]:checked').value;
             const context = buildAIContext(results, reportDetail);
             
@@ -1837,22 +2101,26 @@
                     <div class="prose max-w-none whitespace-pre-wrap text-right" dir="rtl">${aiResponse}</div>
                 </div>
                 
-                ${results.acupoints.length > 0 ? `
+                ${displayBodyFigures(bodyData)}
+                
+                ${displayFlashingCSVs(csvData)}
+                
+                ${results.acupoints && results.acupoints.length > 0 ? `
                     <div class="bg-green-50 p-6 rounded-xl border-2 border-green-300 mb-6">
                         <h4 class="text-xl font-bold mb-4 text-right">🎯 נקודות דיקור מתאימות (${results.acupoints.length}):</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             ${results.acupoints.map(point => `
                                 <div class="bg-white p-3 rounded-lg shadow text-right">
-                                    <div class="font-bold text-red-600">${point.code}</div>
-                                    <div class="text-sm text-gray-700">${point.english_name || 'N/A'}</div>
-                                    <div class="text-xs text-gray-500">${point.body_part} · ${point.meridian}</div>
+                                    <div class="font-bold text-red-600">${point.code || point.point_code || point.point_name}</div>
+                                    <div class="text-sm text-gray-700">${point.english_name || point.point_name_eng || 'N/A'}</div>
+                                    <div class="text-xs text-gray-500">${point.body_part || ''} · ${point.meridian || ''}</div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
                 ` : ''}
                 
-                ${results.images.length > 0 ? `
+                ${results.images && results.images.length > 0 ? `
                     <div class="bg-purple-50 p-6 rounded-xl border-2 border-purple-300">
                         <h4 class="text-xl font-bold mb-4 text-right">🖼️ דיאגרמות גוף רלוונטיות (${results.images.length}):</h4>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
