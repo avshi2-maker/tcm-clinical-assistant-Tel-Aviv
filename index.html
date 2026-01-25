@@ -307,173 +307,6 @@
             margin-top: 8px;
             border-radius: 4px;
         }
-        
-        /* Training Syllabus Styles */
-        .training-syllabus-box {
-            background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 12px;
-            box-shadow: 0 8px 20px rgba(156, 39, 176, 0.3);
-        }
-        .training-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            margin-bottom: 15px;
-        }
-        .training-title {
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .training-toggle-icon {
-            cursor: pointer;
-            font-size: 20px;
-            transition: transform 0.3s;
-        }
-        .training-toggle-icon.open {
-            transform: rotate(180deg);
-        }
-        .training-stats {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 12px;
-            border-radius: 10px;
-            color: white;
-            font-size: 13px;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .training-button {
-            width: 100%;
-            padding: 12px;
-            background: white;
-            color: #9C27B0;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .training-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .training-content {
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
-            display: none;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .training-content.active {
-            display: block;
-        }
-        .training-filters {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            direction: rtl;
-        }
-        .training-filter-btn {
-            padding: 6px 12px;
-            border-radius: 15px;
-            border: 2px solid #9C27B0;
-            background: white;
-            color: #9C27B0;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            transition: all 0.3s;
-        }
-        .training-filter-btn:hover {
-            transform: scale(1.05);
-        }
-        .training-filter-btn.active {
-            background: #9C27B0;
-            color: white;
-        }
-        .training-search-box {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 12px;
-            direction: rtl;
-        }
-        .training-search-box:focus {
-            outline: none;
-            border-color: #9C27B0;
-        }
-        .training-item {
-            background: #f5f5f5;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-right: 4px solid #9C27B0;
-            direction: rtl;
-            font-size: 13px;
-        }
-        .training-item.pulse-type {
-            border-right-color: #e74c3c;
-        }
-        .training-item.tongue-type {
-            border-right-color: #e91e63;
-        }
-        .training-item.element-type {
-            border-right-color: #9C27B0;
-        }
-        .training-item-name {
-            font-size: 14px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 8px;
-        }
-        .training-item-desc {
-            font-size: 12px;
-            color: #555;
-            line-height: 1.4;
-            margin-bottom: 8px;
-        }
-        .training-item-points {
-            background: #fff3cd;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            color: #856404;
-            margin-bottom: 6px;
-        }
-        .training-item-treatment {
-            background: #d1ecf1;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            color: #0c5460;
-        }
-        .training-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: bold;
-            margin-left: 6px;
-        }
-        .badge-intermediate {
-            background: #3498db;
-            color: white;
-        }
-        .badge-advanced {
-            background: #e74c3c;
-            color: white;
-        }
     
 </style>
 <!-- Supabase JS Library -->
@@ -527,7 +360,17 @@
                 </select>
             </div>
             
-            <div id="quickQuestions" class="p-3 space-y-2"></div>
+            <div id="quickQuestions" class="p-3 space-y-2" style="max-height: 60vh; overflow-y: auto;"></div>
+            
+            <!-- CSV Files Box (Now Visible!) -->
+            <div class="p-3 mt-4">
+                <div class="bg-white border-2 border-gray-300 rounded-lg p-3">
+                    <h4 class="font-bold text-sm mb-2 text-center">📁 קבצי RAG</h4>
+                    <p class="text-xs text-gray-600 text-center">
+                        כאן יופיעו קבצי CSV לשימוש עתידי
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- CENTER PANEL: Main Dashboard -->
@@ -598,6 +441,7 @@
                                 class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
                                 dir="rtl"
                                 oninput="updateQueryBox(1)"
+                                onfocus="setFocusedQueryBox(1)"
                             >
                         </div>
 
@@ -610,6 +454,7 @@
                                 class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
                                 dir="rtl"
                                 oninput="updateQueryBox(2)"
+                                onfocus="setFocusedQueryBox(2)"
                             >
                         </div>
 
@@ -622,6 +467,7 @@
                                 class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
                                 dir="rtl"
                                 oninput="updateQueryBox(3)"
+                                onfocus="setFocusedQueryBox(3)"
                             >
                         </div>
                     </div>
@@ -750,66 +596,6 @@
                     התחל הערכה
                 </button>
             </div>
-
-            <!-- Module 4: Training Syllabus -->
-            <div class="training-syllabus-box">
-                <div class="training-header">
-                    <div class="training-title" dir="rtl">
-                        <span>🎓</span>
-                        <span>סילבוס מקצועי</span>
-                    </div>
-                    <span class="training-toggle-icon" onclick="toggleTrainingSyllabus()">
-                        🔽
-                    </span>
-                </div>
-                
-                <div class="training-stats" dir="rtl">
-                    <div style="font-weight: bold;">📚 48 נושאי לימוד</div>
-                    <div style="font-size: 11px; opacity: 0.9; margin-top: 5px;">
-                        23 דופק • 20 לשון • 5 אלמנטים
-                    </div>
-                </div>
-                
-                <button class="training-button" onclick="openTrainingFullView()">
-                    פתח מדריך מלא
-                </button>
-                
-                <div class="training-content" id="trainingContent">
-                    <!-- Filters -->
-                    <div class="training-filters">
-                        <button class="training-filter-btn active" onclick="filterTraining('all')">
-                            הכל
-                        </button>
-                        <button class="training-filter-btn" onclick="filterTraining('pulse')">
-                            דופק
-                        </button>
-                        <button class="training-filter-btn" onclick="filterTraining('tongue')">
-                            לשון
-                        </button>
-                        <button class="training-filter-btn" onclick="filterTraining('elements')">
-                            אלמנטים ⭐
-                        </button>
-                    </div>
-                    
-                    <!-- Search -->
-                    <input 
-                        type="text" 
-                        class="training-search-box"
-                        id="trainingSearchBox"
-                        placeholder="חפש במדריך..."
-                        oninput="searchTraining()"
-                    />
-                    
-                    <!-- Loading -->
-                    <div id="trainingLoading" style="text-align: center; padding: 20px; color: #666;">
-                        <div style="font-size: 28px;">🔄</div>
-                        <div style="margin-top: 10px; font-size: 12px;">טוען...</div>
-                    </div>
-                    
-                    <!-- Results -->
-                    <div id="trainingResults"></div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -893,6 +679,9 @@
         // Pause/Continue state
         let isPaused = false;
         let searchAbortController = null;
+        
+        // Track which query box has focus (for pasting questions)
+        let lastFocusedQueryBox = 1; // Default to box 1
 
         // ===== 450 HEBREW QUESTIONS =====
         const hebrewQuestions = [
@@ -1484,6 +1273,12 @@
                 </div>
             `).join('');
         }
+        
+        // Track which query box was last focused
+        function setFocusedQueryBox(boxNumber) {
+            lastFocusedQueryBox = boxNumber;
+            console.log(`✅ Focus set to Query Box ${boxNumber}`);
+        }
 
         function applyQuickQuestion(category, index) {
             const filtered = category === 'all' 
@@ -1492,18 +1287,15 @@
             
             const question = filtered[index];
             
-            // Find first empty query box, or use query 1 if all filled
-            let targetBox = 1;
-            for (let i = 1; i <= 3; i++) {
-                if (!document.getElementById(`searchInput${i}`).value.trim()) {
-                    targetBox = i;
-                    break;
-                }
-            }
+            // Use the last focused query box (or default to 1)
+            const targetBox = lastFocusedQueryBox || 1;
             
-            // Fill the query box (but DON'T auto-search!)
+            // Fill the focused query box
             document.getElementById(`searchInput${targetBox}`).value = question.text;
             updateQueryBox(targetBox);
+            
+            // Show confirmation
+            console.log(`✅ Question pasted into Query Box ${targetBox}: ${question.text.substring(0, 50)}...`);
             
             // Animate the Run Query button to draw attention
             const runButton = document.querySelector('.run-query-button');
@@ -3443,168 +3235,6 @@ function showYinYang() {
 function hideYinYang() {
     document.getElementById('yinyang-module').style.display = 'none';
     document.body.style.overflow = 'auto';
-}
-
-// Training Syllabus Functions
-let trainingData = [];
-let currentTrainingFilter = 'all';
-
-function toggleTrainingSyllabus() {
-    const content = document.getElementById('trainingContent');
-    const icon = document.querySelector('.training-toggle-icon');
-    
-    if (content.classList.contains('active')) {
-        content.classList.remove('active');
-        icon.classList.remove('open');
-    } else {
-        content.classList.add('active');
-        icon.classList.add('open');
-        
-        if (trainingData.length === 0) {
-            loadTrainingData();
-        }
-    }
-}
-
-function openTrainingFullView() {
-    const content = document.getElementById('trainingContent');
-    const icon = document.querySelector('.training-toggle-icon');
-    
-    if (!content.classList.contains('active')) {
-        content.classList.add('active');
-        icon.classList.add('open');
-        
-        if (trainingData.length === 0) {
-            loadTrainingData();
-        }
-    }
-}
-
-async function loadTrainingData() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('tcm_training_syllabus')
-            .select('*')
-            .order('category')
-            .order('number');
-        
-        if (error) {
-            console.error('Error loading training:', error);
-            document.getElementById('trainingLoading').innerHTML = 
-                '<div style="color: red; font-size: 12px;">❌ שגיאה בטעינה</div>';
-            return;
-        }
-        
-        trainingData = data;
-        console.log(`✅ Loaded ${data.length} training items`);
-        
-        document.getElementById('trainingLoading').style.display = 'none';
-        displayTrainingItems(trainingData);
-        
-    } catch (err) {
-        console.error('Exception loading training:', err);
-        document.getElementById('trainingLoading').innerHTML = 
-            '<div style="color: red; font-size: 12px;">❌ שגיאה</div>';
-    }
-}
-
-function filterTraining(category) {
-    currentTrainingFilter = category;
-    
-    document.querySelectorAll('.training-filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    
-    let filtered = trainingData;
-    if (category !== 'all') {
-        const categoryMap = {
-            'pulse': 'Pulse Diagnosis',
-            'tongue': 'Tongue Diagnosis',
-            'elements': 'Five Elements'
-        };
-        filtered = trainingData.filter(item => item.category === categoryMap[category]);
-    }
-    
-    displayTrainingItems(filtered);
-}
-
-function searchTraining() {
-    const searchTerm = document.getElementById('trainingSearchBox').value.toLowerCase();
-    
-    let filtered = trainingData;
-    
-    if (currentTrainingFilter !== 'all') {
-        const categoryMap = {
-            'pulse': 'Pulse Diagnosis',
-            'tongue': 'Tongue Diagnosis',
-            'elements': 'Five Elements'
-        };
-        filtered = filtered.filter(item => item.category === categoryMap[currentTrainingFilter]);
-    }
-    
-    if (searchTerm) {
-        filtered = filtered.filter(item => 
-            item.name_hebrew.toLowerCase().includes(searchTerm) ||
-            item.name_english.toLowerCase().includes(searchTerm) ||
-            item.clinical_description.toLowerCase().includes(searchTerm) ||
-            item.acupuncture_points.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    displayTrainingItems(filtered);
-}
-
-function displayTrainingItems(items) {
-    const container = document.getElementById('trainingResults');
-    
-    if (items.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
-                <div style="font-size: 28px;">🔍</div>
-                <div style="margin-top: 10px;">לא נמצאו תוצאות</div>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = '';
-    
-    items.forEach(item => {
-        const categoryClass = item.category === 'Pulse Diagnosis' ? 'pulse-type' : 
-                             item.category === 'Tongue Diagnosis' ? 'tongue-type' : 'element-type';
-        
-        const badge = item.difficulty_level === 'Advanced' ? 
-            '<span class="training-badge badge-advanced">מתקדם</span>' :
-            '<span class="training-badge badge-intermediate">בינוני</span>';
-        
-        html += `
-            <div class="training-item ${categoryClass}">
-                <div class="training-item-name">
-                    ${item.name_hebrew}
-                    ${badge}
-                </div>
-                
-                <div class="training-item-desc">
-                    ${item.clinical_description}
-                </div>
-                
-                ${item.acupuncture_points ? `
-                <div class="training-item-points">
-                    <strong>נקודות:</strong> ${item.acupuncture_points}
-                </div>
-                ` : ''}
-                
-                ${item.treatment_principle ? `
-                <div class="training-item-treatment">
-                    <strong>טיפול:</strong> ${item.treatment_principle}
-                </div>
-                ` : ''}
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
 }
 </script>
 
