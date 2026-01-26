@@ -899,11 +899,171 @@
         
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
+        // ============================================================================
+        // SAFETY SYSTEM: CACHING & CONFLICT DETECTION
+        // ============================================================================
+        
+        // Cache for storing previous query results (saves API costs)
+        const queryCache = new Map();
+        const MAX_CACHE_SIZE = 50; // Store last 50 unique queries
+        
+        // Audit log for liability tracking
+        const auditLog = [];
+        
+        /**
+         * Check if we've answered this query before (exact match)
+         */
+        function getCachedResponse(queries) {
+            const cacheKey = queries.sort().join('|').toLowerCase();
+            const cached = queryCache.get(cacheKey);
+            
+            if (cached) {
+                console.log('💾 Cache HIT! Returning saved response (saves $0.002)');
+                cached.hits = (cached.hits || 0) + 1;
+                cached.lastAccessed = new Date();
+                return cached.response;
+            }
+            
+            console.log('🔍 Cache MISS - will search database');
+            return null;
+        }
+        
+        /**
+         * Save response to cache for future use
+         */
+        function cacheResponse(queries, response, results) {
+            const cacheKey = queries.sort().join('|').toLowerCase();
+            
+            // Limit cache size (remove oldest if full)
+            if (queryCache.size >= MAX_CACHE_SIZE) {
+                const oldestKey = Array.from(queryCache.keys())[0];
+                queryCache.delete(oldestKey);
+                console.log('🗑️ Cache full - removed oldest entry');
+            }
+            
+            queryCache.set(cacheKey, {
+                response: response,
+                results: results,
+                timestamp: new Date(),
+                hits: 0,
+                queries: queries
+            });
+            
+            console.log(`💾 Cached response for future use (cache size: ${queryCache.size}/${MAX_CACHE_SIZE})`);
+        }
+        
+        /**
+         * Categorize search results by safety priority
+         */
+        function categorizeResults(allResults) {
+            const categories = {
+                warnings: [],       // ⚠️ Safety warnings - HIGHEST PRIORITY
+                treatments: [],     // 🎯 Treatment recommendations
+                diagnostics: [],    // 🔍 Diagnostic information
+                education: [],      // 📚 Educational content
+                conflicts: []       // ⚠️ Detected conflicts
+            };
+            
+            allResults.forEach(result => {
+                const table = result._source_table;
+                
+                // PRIORITY 1: Safety Warnings
+                if (table === 'acupuncture_point_warnings') {
+                    categories.warnings.push(result);
+                }
+                // PRIORITY 2: Treatment recommendations
+                else if (table.includes('acupuncture') || table.includes('protocol')) {
+                    categories.treatments.push(result);
+                }
+                // PRIORITY 3: Diagnostic info
+                else if (table.includes('pulse') || table.includes('tongue') || table.includes('syndrome')) {
+                    categories.diagnostics.push(result);
+                }
+                // PRIORITY 4: Educational
+                else if (table === 'qa_knowledge_base' || table === 'tcm_training_syllabus') {
+                    categories.education.push(result);
+                }
+            });
+            
+            return categories;
+        }
+        
+        /**
+         * Detect conflicts between treatments and warnings
+         */
+        function detectConflicts(categories) {
+            const conflicts = [];
+            
+            // Check if any treatment point appears in warnings
+            categories.treatments.forEach(treatment => {
+                const treatmentPoints = extractPointCodes(treatment);
+                
+                categories.warnings.forEach(warning => {
+                    const warningPoints = extractPointCodes(warning);
+                    
+                    // Find overlap
+                    const overlap = treatmentPoints.filter(p => warningPoints.includes(p));
+                    
+                    if (overlap.length > 0) {
+                        conflicts.push({
+                            type: 'point_warning_conflict',
+                            points: overlap,
+                            treatment: treatment,
+                            warning: warning,
+                            severity: 'CRITICAL',
+                            message: `נקודת הטיפול ${overlap.join(', ')} מופיעה גם באזהרות בטיחות!`
+                        });
+                    }
+                });
+            });
+            
+            categories.conflicts = conflicts;
+            return conflicts;
+        }
+        
+        /**
+         * Extract point codes from result (e.g., "LI4", "ST36", "GB20")
+         */
+        function extractPointCodes(result) {
+            const points = [];
+            const text = JSON.stringify(result).toUpperCase();
+            
+            // Common point patterns: LI4, ST36, GB20, etc.
+            const pointRegex = /\b[A-Z]{2,3}\d{1,2}\b/g;
+            const matches = text.match(pointRegex);
+            
+            if (matches) {
+                points.push(...matches);
+            }
+            
+            // Also check specific fields
+            if (result.point_code) points.push(result.point_code.toUpperCase());
+            if (result.point_number) points.push(result.point_number.toUpperCase());
+            if (result.acupoint_code) points.push(result.acupoint_code.toUpperCase());
+            
+            return [...new Set(points)]; // Remove duplicates
+        }
+        
+        /**
+         * Add entry to audit log (for legal compliance)
+         */
+        function addToAuditLog(entry) {
+            entry.timestamp = new Date().toISOString();
+            entry.sessionId = sessionStorage.getItem('sessionId') || 'anonymous';
+            auditLog.push(entry);
+            
+            // Keep only last 100 entries in memory
+            if (auditLog.length > 100) {
+                auditLog.shift();
+            }
+            
+            console.log('📝 Added to audit log:', entry);
+        }
+        
         // Global state
         let formulasData = [];
         let acupointsData = [];
         let imagesData = [];
-        let csvPriorities = {}; // DEPRECATED: Now using search_config table directly
         let currentQueries = [];
         let lastSearchResults = '';
         let usedCSVs = new Set();
@@ -1985,30 +2145,6 @@
         }
 
         /**
-         * Get default search fields for tables without config
-         */
-        function getDefaultSearchFields(tableName) {
-            const defaults = {
-                // Main tables (13 total)
-                'dr_roni_acupuncture_points': ['point_name_heb', 'point_name_eng', 'indications', 'location', 'tcm_actions'],
-                'zangfu_syndromes': ['syndrome_name_he', 'syndrome_name_en', 'main_symptoms', 'key_symptoms'],
-                'qa_knowledge_base': ['question', 'answer', 'category', 'tags'],
-                'acupuncture_points': ['point_name', 'english_name', 'chinese_name', 'indications', 'functions'],
-                'tcm_training_syllabus': ['topic_he', 'topic_en', 'content', 'description'],
-                'v_symptom_acupoints': ['symptom_name', 'point_name', 'description'],
-                'tcm_pulse_diagnosis': ['pulse_name_he', 'pulse_name_en', 'pulse_name_cn', 'characteristics', 'clinical_significance'],
-                'tcm_tongue_diagnosis': ['finding_he', 'finding_en', 'finding_cn', 'characteristics', 'clinical_significance'],
-                'yin_yang_symptoms': ['symptom_he', 'symptom_en', 'description'],
-                'yin_yang_pattern_protocols': ['pattern_name_he', 'pattern_name_en', 'description'],
-                'acupuncture_point_warnings': ['warning_he', 'warning_en', 'point_name', 'severity'],
-                'tcm_body_images': ['body_part', 'region_name_he', 'region_name_en', 'description']
-            };
-            
-            // Return configured fields or safe fallback
-            return defaults[tableName] || ['id']; // Just search ID if unknown (won't find much but won't crash)
-        }
-
-        /**
          * NEW SEARCH FUNCTION - Searches all configured tables
          */
         async function searchMultipleQueries(queries) {
@@ -2038,35 +2174,68 @@
                 
                 for (const query of queries) {
                     try {
-                        // Get search fields
-                        let searchFields = getDefaultSearchFields(tableConfig.table_name);
+                        // Get search fields from database config (NOT hardcoded!)
+                        let searchFields = tableConfig.search_fields;
                         
-                        // Build OR query for all search fields
-                        const orConditions = searchFields
-                            .map(field => `${field}.ilike.%${query}%`)
-                            .join(',');
+                        // Parse if it's a JSON string
+                        if (typeof searchFields === 'string') {
+                            try {
+                                searchFields = JSON.parse(searchFields);
+                            } catch (e) {
+                                // Maybe it's comma-separated
+                                searchFields = searchFields.split(',').map(f => f.trim());
+                            }
+                        }
                         
-                        if (!orConditions) {
+                        // Ensure it's an array
+                        if (!Array.isArray(searchFields)) {
+                            console.warn(`  ⚠️ Invalid search_fields for ${tableConfig.table_name}:`, searchFields);
                             continue;
                         }
                         
-                        // Execute search query
-                        const { data, error } = await supabaseClient
-                            .from(tableConfig.table_name)
-                            .select('*')
-                            .or(orConditions)
-                            .limit(20);
-                        
-                        if (error) {
-                            console.error(`  ❌ Error searching ${tableConfig.table_name}:`, error);
+                        if (searchFields.length === 0) {
+                            console.warn(`  ⚠️ No search fields configured for ${tableConfig.table_name}`);
                             continue;
                         }
                         
-                        if (data && data.length > 0) {
-                            console.log(`  ✅ Found ${data.length} results in ${tableConfig.table_name}`);
+                        console.log(`  🔍 Searching ${tableConfig.table_name} in ${searchFields.length} fields:`, searchFields);
+                        
+                        // Try searching each field individually to avoid 400 errors
+                        let tableResults = [];
+                        
+                        for (const field of searchFields) {
+                            try {
+                                const { data, error } = await supabaseClient
+                                    .from(tableConfig.table_name)
+                                    .select('*')
+                                    .ilike(field, `%${query}%`)
+                                    .limit(20);
+                                
+                                if (error) {
+                                    console.warn(`    ⚠️ Field "${field}" search failed:`, error.message);
+                                    continue; // Skip this field, try next one
+                                }
+                                
+                                if (data && data.length > 0) {
+                                    console.log(`    ✅ Found ${data.length} in field "${field}"`);
+                                    tableResults.push(...data);
+                                }
+                            } catch (fieldError) {
+                                console.warn(`    ⚠️ Exception searching field "${field}":`, fieldError.message);
+                                continue;
+                            }
+                        }
+                        
+                        // Remove duplicates (same row found in multiple fields)
+                        const uniqueResults = Array.from(
+                            new Map(tableResults.map(item => [item.id, item])).values()
+                        );
+                        
+                        if (uniqueResults.length > 0) {
+                            console.log(`  ✅ Total ${uniqueResults.length} unique results in ${tableConfig.table_name}`);
                             
                             // Add table metadata to each result
-                            const resultsWithMeta = data.map(row => ({
+                            const resultsWithMeta = uniqueResults.map(row => ({
                                 ...row,
                                 _source_table: tableConfig.table_name,
                                 _source_description: tableConfig.description,
@@ -2074,7 +2243,9 @@
                             }));
                             
                             allResults.push(...resultsWithMeta);
-                            totalResults += data.length;
+                            totalResults += uniqueResults.length;
+                        } else {
+                            console.log(`  ℹ️ No results in ${tableConfig.table_name}`);
                         }
                         
                     } catch (err) {
@@ -2108,8 +2279,50 @@
 
 
         async function displaySearchResults(results) {
+            // ============================================================================
+            // STEP 1: Check cache first (saves money!)
+            // ============================================================================
+            const cachedResponse = getCachedResponse(currentQueries);
+            
+            if (cachedResponse) {
+                // Use cached response - NO API call needed!
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = `
+                    <div class="bg-yellow-50 p-3 rounded-lg border-2 border-yellow-300 mb-4 text-right" dir="rtl">
+                        <span class="text-xl">💾</span>
+                        <strong>תשובה שמורה</strong> - שאלה זו כבר נענתה בעבר (חסכון בעלות!)
+                        <span class="text-xs text-gray-600">נשאלה ${cachedResponse.hits} פעמים נוספות</span>
+                    </div>
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-200 mb-6">
+                        <h4 class="text-xl font-bold mb-4 flex items-center justify-end">
+                            <span class="mr-3">תשובת AI (מופעל על ידי RAG)</span>
+                            <span class="text-3xl">🤖</span>
+                        </h4>
+                        <div class="prose max-w-none whitespace-pre-wrap text-right" dir="rtl">${cachedResponse}</div>
+                    </div>
+                `;
+                
+                lastSearchResults = cachedResponse;
+                
+                // Add to audit log
+                addToAuditLog({
+                    type: 'cached_response',
+                    queries: currentQueries,
+                    cacheHit: true,
+                    costSaved: 0.002
+                });
+                
+                return; // Done - no API call needed!
+            }
+            
+            // ============================================================================
+            // STEP 2: No cache - make API call
+            // ============================================================================
             const reportDetail = document.querySelector('input[name="reportDetail"]:checked').value;
             const context = buildAIContext(results, reportDetail);
+            
+            console.log('🤖 Sending query to AI...');
+            console.log(`📊 Context size: ${context.length} characters (~${Math.ceil(context.length/4)} tokens)`);
             
             const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
             const response = await fetch(apiUrl, {
@@ -2133,6 +2346,25 @@
             
             updateMetrics(inputTokens, outputTokens);
             lastSearchResults = aiResponse;
+            
+            // ============================================================================
+            // STEP 3: Cache this response for future use
+            // ============================================================================
+            cacheResponse(currentQueries, aiResponse, results);
+            
+            // ============================================================================
+            // STEP 4: Add to audit log (legal compliance)
+            // ============================================================================
+            addToAuditLog({
+                type: 'new_query',
+                queries: currentQueries,
+                resultCount: results.allResults ? results.allResults.length : 0,
+                warningsFound: results.allResults ? results.allResults.filter(r => r._source_table === 'acupuncture_point_warnings').length : 0,
+                inputTokens: inputTokens,
+                outputTokens: outputTokens,
+                cost: (inputTokens * INPUT_TOKEN_COST) + (outputTokens * OUTPUT_TOKEN_COST),
+                cacheHit: false
+            });
 
             const resultsDiv = document.getElementById('searchResults');
             resultsDiv.innerHTML = `
@@ -2144,7 +2376,7 @@
                     <div class="prose max-w-none whitespace-pre-wrap text-right" dir="rtl">${aiResponse}</div>
                 </div>
                 
-                ${results.acupoints.length > 0 ? `
+                ${results.acupoints && results.acupoints.length > 0 ? `
                     <div class="bg-green-50 p-6 rounded-xl border-2 border-green-300 mb-6">
                         <h4 class="text-xl font-bold mb-4 text-right">🎯 נקודות דיקור מתאימות (${results.acupoints.length}):</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -2159,7 +2391,7 @@
                     </div>
                 ` : ''}
                 
-                ${results.images.length > 0 ? `
+                ${results.images && results.images.length > 0 ? `
                     <div class="bg-purple-50 p-6 rounded-xl border-2 border-purple-300">
                         <h4 class="text-xl font-bold mb-4 text-right">🖼️ דיאגרמות גוף רלוונטיות (${results.images.length}):</h4>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -2186,6 +2418,57 @@
             
             // NEW: Build context from all results if using new search format
             if (results.allResults && results.allResults.length > 0) {
+                // ============================================================================
+                // SAFETY SYSTEM: Categorize and detect conflicts
+                // ============================================================================
+                
+                const categories = categorizeResults(results.allResults);
+                const conflicts = detectConflicts(categories);
+                
+                console.log('🛡️ Safety Analysis:');
+                console.log(`  ⚠️ Warnings found: ${categories.warnings.length}`);
+                console.log(`  🎯 Treatments found: ${categories.treatments.length}`);
+                console.log(`  ⚠️ Conflicts detected: ${conflicts.length}`);
+                
+                // Build context parts with SAFETY PRIORITY
+                let contextParts = [];
+                
+                // ============================================================================
+                // PRIORITY 1: WARNINGS (Show first, cannot be skipped!)
+                // ============================================================================
+                if (categories.warnings.length > 0) {
+                    const warningText = categories.warnings.map(w => {
+                        return `⚠️ אזהרה: ${w.warning_he || w.explanation || w.point_number_hebrew || 'אזהרת בטיחות'} - רמת חומרה: ${w.warning_level || w.severity || 'גבוהה'}`;
+                    }).join('\n');
+                    
+                    contextParts.push(`
+════════════════════════════════════════════════════════
+⚠️ אזהרות בטיחות קריטיות - חובה לקרוא לפני טיפול! ⚠️
+════════════════════════════════════════════════════════
+${warningText}
+════════════════════════════════════════════════════════`);
+                }
+                
+                // ============================================================================
+                // PRIORITY 2: CONFLICTS (If treatment contradicts warning)
+                // ============================================================================
+                if (conflicts.length > 0) {
+                    const conflictText = conflicts.map(c => {
+                        return `🚨 סתירה קריטית: ${c.message}
+   טיפול מוצע: ${JSON.stringify(c.treatment).substring(0, 100)}
+   אזהרה: ${JSON.stringify(c.warning).substring(0, 100)}
+   המלצה: אל תשתמש בנקודות ${c.points.join(', ')} - קיימת אזהרת בטיחות!`;
+                    }).join('\n\n');
+                    
+                    contextParts.push(`
+════════════════════════════════════════════════════════
+🚨 זוהו סתירות בין טיפול מוצע לאזהרות בטיחות! 🚨
+════════════════════════════════════════════════════════
+${conflictText}
+════════════════════════════════════════════════════════`);
+                }
+                
+                // Group remaining results by table for organized presentation
                 const groupedByTable = {};
                 results.allResults.forEach(r => {
                     const table = r._source_table;
@@ -2193,12 +2476,10 @@
                     groupedByTable[table].push(r);
                 });
                 
-                let contextParts = [];
-                
                 // Add pulse diagnoses
                 if (groupedByTable['tcm_pulse_diagnosis']) {
                     const pulses = groupedByTable['tcm_pulse_diagnosis'].slice(0, 5);
-                    contextParts.push(`Pulse findings: ${pulses.map(p => 
+                    contextParts.push(`ממצאי דופק: ${pulses.map(p => 
                         `${p.pulse_name_he} (${p.pulse_name_en}) - ${p.clinical_significance}`
                     ).join('; ')}`);
                 }
@@ -2206,47 +2487,99 @@
                 // Add tongue diagnoses
                 if (groupedByTable['tcm_tongue_diagnosis']) {
                     const tongues = groupedByTable['tcm_tongue_diagnosis'].slice(0, 5);
-                    contextParts.push(`Tongue findings: ${tongues.map(t => 
+                    contextParts.push(`ממצאי לשון: ${tongues.map(t => 
                         `${t.finding_he} (${t.finding_en}) - ${t.clinical_significance}`
                     ).join('; ')}`);
                 }
                 
-                // Add Dr. Roni's acupoints
+                // Add Dr. Roni's acupoints (excluding any with warnings)
                 if (groupedByTable['dr_roni_acupuncture_points']) {
                     const points = groupedByTable['dr_roni_acupuncture_points'].slice(0, 10);
-                    contextParts.push(`Dr. Roni's Acupoints: ${points.map(p => 
-                        `${p.point_name_heb} (${p.point_name_eng}) - ${p.indications || ''}`
-                    ).join('; ')}`);
+                    const safePoints = conflicts.length > 0 
+                        ? points.filter(p => {
+                            const pointCodes = extractPointCodes(p);
+                            return !conflicts.some(c => c.points.some(cp => pointCodes.includes(cp)));
+                        })
+                        : points;
+                    
+                    if (safePoints.length > 0) {
+                        contextParts.push(`נקודות דיקור של ד"ר רוני: ${safePoints.map(p => 
+                            `${p.chinese_name} (${p.english_name}) - ${p.description || ''}`
+                        ).join('; ')}`);
+                    }
                 }
                 
                 // Add syndromes
                 if (groupedByTable['zangfu_syndromes']) {
                     const syndromes = groupedByTable['zangfu_syndromes'].slice(0, 5);
-                    contextParts.push(`Syndromes: ${syndromes.map(s => 
-                        `${s.syndrome_name_he} - ${s.main_symptoms || ''}`
+                    contextParts.push(`תסמונות: ${syndromes.map(s => 
+                        `${s.name_he} - ${s.symptoms_he || ''}`
                     ).join('; ')}`);
                 }
                 
-                // Add other acupoints
-                if (groupedByTable['acupuncture_points']) {
-                    const points = groupedByTable['acupuncture_points'].slice(0, 5);
-                    contextParts.push(`Standard Acupoints: ${points.map(p => 
-                        `${p.point_name} (${p.english_name}) - ${p.indications || ''}`
-                    ).join('; ')}`);
+                // Add Q&A knowledge (educational)
+                if (groupedByTable['qa_knowledge_base']) {
+                    const qaItems = groupedByTable['qa_knowledge_base'].slice(0, 3);
+                    contextParts.push(`מידע חינוכי: ${qaItems.map(q => 
+                        `שאלה: ${q.question_hebrew} | תשובה: ${(q.answer_hebrew || '').substring(0, 150)}...`
+                    ).join('\n')}`);
                 }
                 
                 const detailInstruction = reportDetail === 'full'
-                    ? 'Provide COMPREHENSIVE and DETAILED Hebrew report with treatment protocols, combining ALL diagnostic findings.'
-                    : 'Provide CONCISE Hebrew summary with key points only.';
+                    ? 'ספק דוח מקיף ומפורט בעברית עם פרוטוקולי טיפול, תוך שילוב של כל הממצאים האבחנתיים.'
+                    : 'ספק סיכום תמציתי בעברית עם נקודות מפתח בלבד.';
                 
-                return `You are a TCM expert. Answer in HEBREW (right-to-left). 
-Queries: "${queries}"
+                // ============================================================================
+                // SAFETY-FIRST AI PROMPT WITH STRICT RULES
+                // ============================================================================
+                return `אתה עוזר קליני מומחה ברפואה סינית. חובה לעקוב אחר חוקים אלה בקפדנות:
+
+🚨 חוקי בטיחות קריטיים (לא ניתן להתעלם!):
+═══════════════════════════════════════════════════════════════════
+1. אם יש אזהרות בטיחות - הצג אותן תחילה ב־3 שורות הראשונות במסגרת אדומה
+2. אם זוהו סתירות בין טיפול לאזהרה - אסור לכלול את הטיפול הסותר!
+3. אם מקורות סותרים זה את זה - הצג שתי אופציות ואפשר למטפל לבחור
+4. ציין תמיד מקור למידע (מאיזו טבלה)
+5. הוסף תמיד כתב ויתור משפטי בסוף
+
+שאילתות: "${queries}"
 
 ${contextParts.join('\n\n')}
 
 ${detailInstruction}
 
-Based on these comprehensive findings from our database (pulse, tongue, acupoints, syndromes), provide integrated TCM analysis in Hebrew.`;
+פורמט החובה לתשובה:
+═══════════════════════════════════════════════════════════════════
+אם יש אזהרות:
+┌─────────────────────────────────────────────────────────────────┐
+│ ⚠️ אזהרות בטיחות קריטיות - קרא לפני טיפול! ⚠️                  │
+├─────────────────────────────────────────────────────────────────┤
+│ [רשום כאן את כל האזהרות]                                        │
+└─────────────────────────────────────────────────────────────────┘
+
+🎯 טיפול מומלץ:
+[רשום כאן את הטיפול, תוך הוצאת נקודות עם אזהרות]
+
+🔄 חלופות (אם מקורות חלוקים):
+[רשום אופציות שונות אם יש]
+
+📚 מקורות:
+[ציין מאיזו טבלה כל מידע]
+
+אם זוהו סתירות:
+🚨 שים לב: מצאנו מידע סותר
+   [הסבר את הסתירה]
+   [המלצה: בחר את האופציה הבטוחה יותר]
+
+⚖️ כתב ויתור משפטי:
+המערכת מספקת מידע עזר בלבד. אינה מהווה תחליף לשיקול קליני מקצועי.
+המטפל אחראי באופן בלעדי: לאימות התווית נגד, לאישור בטיחות הנקודות, 
+לקבלת הסכמה מדעת, ולמילוי אחר כל הרגולציות המקומיות.
+שימוש במערכת מהווה הסכמה שאתה מטפל מוסמך ברפואה סינית ושאתה תאמת 
+את כל ההמלצות לפני יישום.
+═══════════════════════════════════════════════════════════════════
+
+ענה בעברית (מימין לשמאל) עם ניתוח רפואה סינית משולב.`;
             }
             
             // LEGACY: Fallback to old format if new format not available
