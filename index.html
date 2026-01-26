@@ -1036,10 +1036,21 @@
                 points.push(...matches);
             }
             
-            // Also check specific fields
-            if (result.point_code) points.push(result.point_code.toUpperCase());
-            if (result.point_number) points.push(result.point_number.toUpperCase());
-            if (result.acupoint_code) points.push(result.acupoint_code.toUpperCase());
+            // Also check specific fields (with type safety)
+            if (result.point_code && typeof result.point_code === 'string') {
+                points.push(result.point_code.toUpperCase());
+            }
+            if (result.point_number && typeof result.point_number === 'string') {
+                points.push(result.point_number.toUpperCase());
+            }
+            if (result.acupoint_code && typeof result.acupoint_code === 'string') {
+                points.push(result.acupoint_code.toUpperCase());
+            }
+            
+            // Check acupoint_codes array (from tcm_body_images)
+            if (result.acupoint_codes && Array.isArray(result.acupoint_codes)) {
+                points.push(...result.acupoint_codes.map(code => String(code).toUpperCase()));
+            }
             
             return [...new Set(points)]; // Remove duplicates
         }
