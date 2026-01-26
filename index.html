@@ -884,7 +884,7 @@
         let formulasData = [];
         let acupointsData = [];
         let imagesData = [];
-        let csvPriorities = {};
+        let csvPriorities = {}; // DEPRECATED: Now using search_config table directly
         let currentQueries = [];
         let lastSearchResults = '';
         let usedCSVs = new Set();
@@ -2290,10 +2290,8 @@ Respond in Hebrew with TCM analysis.`;
         }
 
         async function loadRAGData() {
-            const { data: priorities } = await supabaseClient.from('csv_priorities').select('*');
-            if (priorities) {
-                priorities.forEach(p => csvPriorities[p.filename] = p.priority);
-            }
+            // NOTE: csv_priorities table removed - now using search_config in createCSVIndicators()
+            // csvPriorities object no longer needed
             
             const { data: acupoints } = await supabaseClient.from('tcm_acupoints').select('*');
             if (acupoints) acupointsData = acupoints;
