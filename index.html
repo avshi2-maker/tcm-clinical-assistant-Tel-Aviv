@@ -1464,8 +1464,14 @@
         }
         
         function startQueryTimer() {
+            const queryTimerEl = document.getElementById('queryTimer');
+            if (!queryTimerEl) {
+                console.warn('queryTimer element not found');
+                return;
+            }
+            
             queryStartTime = Date.now();
-            document.getElementById('queryTimer').textContent = '0.00s';
+            queryTimerEl.textContent = '0.00s';
             
             if (queryTimerInterval) {
                 clearInterval(queryTimerInterval);
@@ -1474,7 +1480,10 @@
             queryTimerInterval = setInterval(() => {
                 if (!isPaused) {
                     const elapsed = ((Date.now() - queryStartTime) / 1000).toFixed(2);
-                    document.getElementById('queryTimer').textContent = `${elapsed}s`;
+                    const el = document.getElementById('queryTimer');
+                    if (el) {
+                        el.textContent = `${elapsed}s`;
+                    }
                 }
             }, 100); // Update every 100ms for smooth counting
         }
@@ -1485,9 +1494,15 @@
                 queryTimerInterval = null;
             }
             
+            const queryTimerEl = document.getElementById('queryTimer');
+            if (!queryTimerEl) {
+                console.warn('queryTimer element not found');
+                return;
+            }
+            
             queryEndTime = Date.now();
             const totalTime = ((queryEndTime - queryStartTime) / 1000).toFixed(2);
-            document.getElementById('queryTimer').textContent = `${totalTime}s`;
+            queryTimerEl.textContent = `${totalTime}s`;
             
             console.log(`⏱️ Query completed in ${totalTime}s`);
         }
@@ -1497,16 +1512,26 @@
                 clearInterval(queryTimerInterval);
                 queryTimerInterval = null;
             }
-            document.getElementById('queryTimer').textContent = '0.00s';
+            
+            const queryTimerEl = document.getElementById('queryTimer');
+            if (queryTimerEl) {
+                queryTimerEl.textContent = '0.00s';
+            }
         }
 
         // Session Management - Real-time Clock
         function startSessionTimer() {
             function updateClock() {
+                const sessionTimerEl = document.getElementById('sessionTimer');
+                if (!sessionTimerEl) {
+                    console.warn('sessionTimer element not found');
+                    return;
+                }
+                
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const dateStr = now.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                document.getElementById('sessionTimer').textContent = `${timeStr} • ${dateStr}`;
+                sessionTimerEl.textContent = `${timeStr} • ${dateStr}`;
             }
             updateClock(); // Update immediately
             timerInterval = setInterval(updateClock, 1000); // Update every second
@@ -1524,12 +1549,29 @@
             totalCost = calculateCost(totalInputTokens, totalOutputTokens);
             
             const totalTokens = totalInputTokens + totalOutputTokens;
-            document.getElementById('tokenCount').textContent = totalTokens.toLocaleString();
-            document.getElementById('totalCost').textContent = `$${totalCost.toFixed(4)}`;
-            document.getElementById('assetsSearched').textContent = totalAssets;
             
-            const successRate = totalQueries > 0 ? Math.round((successfulQueries / totalQueries) * 100) : 0;
-            document.getElementById('successRate').textContent = `${successRate}%`;
+            // Update elements with safety checks
+            const tokenCountEl = document.getElementById('tokenCount');
+            if (tokenCountEl) {
+                tokenCountEl.textContent = totalTokens.toLocaleString();
+            }
+            
+            const totalCostEl = document.getElementById('totalCost');
+            if (totalCostEl) {
+                totalCostEl.textContent = `$${totalCost.toFixed(4)}`;
+            }
+            
+            // These elements no longer exist - skip them
+            const assetsEl = document.getElementById('assetsSearched');
+            if (assetsEl) {
+                assetsEl.textContent = totalAssets;
+            }
+            
+            const successRateEl = document.getElementById('successRate');
+            if (successRateEl) {
+                const successRate = totalQueries > 0 ? Math.round((successfulQueries / totalQueries) * 100) : 0;
+                successRateEl.textContent = `${successRate}%`;
+            }
         }
 
         function resetSession() {
