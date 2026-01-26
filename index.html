@@ -673,6 +673,25 @@
                                 oninput="updateQueryBox(3)"
                             >
                         </div>
+
+                        <div class="query-box" id="queryBox4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 text-right">🎤 שאלה חופשית (טקסט או קול)</label>
+                            <div class="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    id="searchInput4" 
+                                    placeholder="הקלד שאלה חופשית או לחץ על המיקרופון..."
+                                    class="flex-1 p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-right"
+                                    dir="rtl"
+                                    oninput="updateQueryBox(4)"
+                                >
+                                <button 
+                                    onclick="startVoiceInput(4)" 
+                                    class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold transition">
+                                    🎤
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex gap-3 mt-4">
@@ -1705,7 +1724,7 @@
             
             // Find first empty query box, or use query 1 if all filled
             let targetBox = 1;
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 4; i++) {
                 if (!document.getElementById(`searchInput${i}`).value.trim()) {
                     targetBox = i;
                     break;
@@ -1736,8 +1755,54 @@
             }
         }
 
+        // Voice Input Function
+        function startVoiceInput(boxNumber) {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('הדפדפן שלך אינו תומך בזיהוי קולי. נסה להשתמש ב-Chrome.');
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.lang = 'he-IL'; // Hebrew
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            const inputEl = document.getElementById(`searchInput${boxNumber}`);
+            const button = event.target;
+            
+            // Visual feedback
+            button.textContent = '🎙️';
+            button.classList.add('bg-red-600');
+            
+            recognition.onstart = function() {
+                console.log('🎤 Voice recognition started');
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                inputEl.value = transcript;
+                updateQueryBox(boxNumber);
+                console.log('🎤 Voice input:', transcript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('🎤 Voice recognition error:', event.error);
+                alert('שגיאה בזיהוי קולי: ' + event.error);
+            };
+            
+            recognition.onend = function() {
+                button.textContent = '🎤';
+                button.classList.remove('bg-red-600');
+                console.log('🎤 Voice recognition ended');
+            };
+            
+            recognition.start();
+        }
+
         function clearAllQueries() {
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 4; i++) {
                 document.getElementById(`searchInput${i}`).value = '';
                 document.getElementById(`queryBox${i}`).classList.remove('filled');
             }
@@ -1754,7 +1819,7 @@
             
             // Get queries
             currentQueries = [];
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 4; i++) {
                 const val = document.getElementById(`searchInput${i}`).value.trim();
                 if (val) currentQueries.push(val);
             }
@@ -1924,19 +1989,23 @@
          */
         function getDefaultSearchFields(tableName) {
             const defaults = {
-                'acupuncture_points': ['point_name', 'english_name', 'chinese_name', 'indications'],
+                // Main tables (13 total)
                 'dr_roni_acupuncture_points': ['point_name_heb', 'point_name_eng', 'indications', 'location', 'tcm_actions'],
+                'zangfu_syndromes': ['syndrome_name_he', 'syndrome_name_en', 'main_symptoms', 'key_symptoms'],
+                'qa_knowledge_base': ['question', 'answer', 'category', 'tags'],
+                'acupuncture_points': ['point_name', 'english_name', 'chinese_name', 'indications', 'functions'],
+                'tcm_training_syllabus': ['topic_he', 'topic_en', 'content', 'description'],
+                'v_symptom_acupoints': ['symptom_name', 'point_name', 'description'],
                 'tcm_pulse_diagnosis': ['pulse_name_he', 'pulse_name_en', 'pulse_name_cn', 'characteristics', 'clinical_significance'],
                 'tcm_tongue_diagnosis': ['finding_he', 'finding_en', 'finding_cn', 'characteristics', 'clinical_significance'],
-                'zangfu_syndromes': ['syndrome_name_he', 'syndrome_name_en', 'main_symptoms'],
-                'yin_yang_symptoms': ['symptom_he', 'symptom_en'],
-                'v_symptom_acupoints': ['symptom_name', 'point_name'],
-                'tcm_body_images': ['body_part', 'region_name_he', 'region_name_en'],
-                'yin_yang_pattern_protocols': ['pattern_name_he', 'pattern_name_en'],
-                'acupuncture_point_warnings': ['warning_he', 'warning_en', 'point_name']
+                'yin_yang_symptoms': ['symptom_he', 'symptom_en', 'description'],
+                'yin_yang_pattern_protocols': ['pattern_name_he', 'pattern_name_en', 'description'],
+                'acupuncture_point_warnings': ['warning_he', 'warning_en', 'point_name', 'severity'],
+                'tcm_body_images': ['body_part', 'region_name_he', 'region_name_en', 'description']
             };
             
-            return defaults[tableName] || ['name', 'description', 'title'];
+            // Return configured fields or safe fallback
+            return defaults[tableName] || ['id']; // Just search ID if unknown (won't find much but won't crash)
         }
 
         /**
