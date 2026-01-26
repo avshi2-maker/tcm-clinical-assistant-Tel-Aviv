@@ -2283,8 +2283,22 @@
                 totalResults: uniqueResults.length,
                 // Legacy format for compatibility
                 formulas: uniqueResults.filter(r => r._source_table === 'tcm_formulas'),
-                acupoints: uniqueResults.filter(r => r._source_table.includes('acupuncture')),
-                images: []
+                acupoints: uniqueResults
+                    .filter(r => r._source_table.includes('acupuncture') && r._source_table !== 'tcm_body_images')
+                    .map(point => ({
+                        code: point.point_code || point.point_number || point.code || 'N/A',
+                        english_name: point.english_name || point.point_name_eng || point.name_en || 'N/A',
+                        body_part: point.body_part || 'N/A',
+                        meridian: point.meridian || point.channel || 'N/A'
+                    })),
+                images: uniqueResults.filter(r => r._source_table === 'tcm_body_images').map(img => ({
+                    id: img.id,
+                    body_part: img.body_part_hebrew || img.body_part,
+                    body_part_en: img.body_part,
+                    storage_url: img.image_url,
+                    filename: img.body_part,
+                    acupoint_codes: img.acupoint_codes || []
+                }))
             };
         }
 
