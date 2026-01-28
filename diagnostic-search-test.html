@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Button Diagnostic Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-2xl font-bold mb-4">🔍 Search Button Diagnostic Test</h1>
+        
+        <!-- Test 1: Simple onclick -->
+        <div class="mb-6 p-4 border-2 border-blue-300 rounded">
+            <h2 class="font-bold mb-2">Test 1: Simple onclick attribute</h2>
+            <button onclick="test1()" class="px-4 py-2 bg-blue-500 text-white rounded">
+                Click Test 1
+            </button>
+            <div id="result1" class="mt-2 text-sm"></div>
+        </div>
+        
+        <!-- Test 2: addEventListener -->
+        <div class="mb-6 p-4 border-2 border-green-300 rounded">
+            <h2 class="font-bold mb-2">Test 2: addEventListener</h2>
+            <button id="test2Btn" class="px-4 py-2 bg-green-500 text-white rounded">
+                Click Test 2
+            </button>
+            <div id="result2" class="mt-2 text-sm"></div>
+        </div>
+        
+        <!-- Test 3: Async function -->
+        <div class="mb-6 p-4 border-2 border-purple-300 rounded">
+            <h2 class="font-bold mb-2">Test 3: Async function with onclick</h2>
+            <input type="text" id="testInput" placeholder="Enter text..." class="p-2 border rounded mr-2">
+            <button onclick="test3Async()" class="px-4 py-2 bg-purple-500 text-white rounded">
+                Click Test 3 (Async)
+            </button>
+            <div id="result3" class="mt-2 text-sm"></div>
+        </div>
+        
+        <!-- Test 4: Exact replica of your search button -->
+        <div class="mb-6 p-4 border-2 border-red-300 rounded">
+            <h2 class="font-bold mb-2">Test 4: Exact replica of your search button</h2>
+            <div class="space-y-2">
+                <input type="text" id="searchInput1" placeholder="שאלה 1..." class="w-full p-2 border rounded" dir="rtl">
+                <input type="text" id="searchInput2" placeholder="שאלה 2..." class="w-full p-2 border rounded" dir="rtl">
+                <input type="text" id="searchInput3" placeholder="שאלה 3..." class="w-full p-2 border rounded" dir="rtl">
+                <button 
+                    onclick="performMultiQuery()" 
+                    class="w-full px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md font-semibold">
+                    🔍 הרץ חיפוש
+                </button>
+            </div>
+            <div id="result4" class="mt-2 text-sm"></div>
+        </div>
+        
+        <div class="p-4 bg-gray-100 rounded">
+            <h3 class="font-bold mb-2">Console Output:</h3>
+            <div id="console" class="text-xs font-mono"></div>
+        </div>
+    </div>
+
+    <script>
+        // Console logger
+        function log(msg) {
+            const consoleDiv = document.getElementById('console');
+            const time = new Date().toLocaleTimeString();
+            consoleDiv.innerHTML += `[${time}] ${msg}<br>`;
+            console.log(msg);
+        }
+        
+        // Test 1: Simple function
+        function test1() {
+            log('✅ Test 1: Simple onclick works!');
+            document.getElementById('result1').innerHTML = '<span class="text-green-600">✅ SUCCESS</span>';
+        }
+        
+        // Test 2: addEventListener
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Page loaded, setting up Test 2 listener...');
+            document.getElementById('test2Btn').addEventListener('click', function() {
+                log('✅ Test 2: addEventListener works!');
+                document.getElementById('result2').innerHTML = '<span class="text-green-600">✅ SUCCESS</span>';
+            });
+        });
+        
+        // Test 3: Async function
+        async function test3Async() {
+            log('Test 3: Async function called');
+            const input = document.getElementById('testInput').value;
+            document.getElementById('result3').innerHTML = '<span class="text-gray-600">Processing...</span>';
+            
+            // Simulate async operation
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            log(`✅ Test 3: Async completed with input: "${input}"`);
+            document.getElementById('result3').innerHTML = `<span class="text-green-600">✅ SUCCESS: ${input}</span>`;
+        }
+        
+        // Test 4: Exact replica of performMultiQuery
+        async function performMultiQuery() {
+            log('🔍 performMultiQuery() called!');
+            
+            const queries = [];
+            for (let i = 1; i <= 3; i++) {
+                const val = document.getElementById(`searchInput${i}`).value.trim();
+                if (val) queries.push(val);
+            }
+            
+            log(`Found ${queries.length} queries: ${JSON.stringify(queries)}`);
+            
+            if (queries.length === 0) {
+                log('❌ No queries entered');
+                alert('נא להזין לפחות שאלה אחת');
+                document.getElementById('result4').innerHTML = '<span class="text-red-600">❌ No queries</span>';
+                return;
+            }
+            
+            document.getElementById('result4').innerHTML = '<span class="text-blue-600">🔄 Searching...</span>';
+            
+            // Simulate search
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            log('✅ performMultiQuery() completed successfully!');
+            document.getElementById('result4').innerHTML = `
+                <span class="text-green-600">✅ SUCCESS</span><br>
+                <span class="text-sm">Queries: ${queries.join(', ')}</span>
+            `;
+        }
+        
+        // Initial log
+        log('Script loaded successfully');
+        log('All functions are defined and ready');
+    </script>
+</body>
+</html>

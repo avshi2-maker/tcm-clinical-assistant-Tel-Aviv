@@ -1,0 +1,96 @@
+<!-- ================================================================ -->
+<!-- ADD THESE HTML ELEMENTS TO YOUR INDEX.HTML -->
+<!-- ================================================================ -->
+
+<!-- 1. ADD THIS STATUS DIV NEAR THE TOP (after your header) -->
+<div id="searchStatus" class="p-4">
+    <!-- Search status will appear here -->
+</div>
+
+<!-- 2. ADD THIS BODY PARTS DISPLAY SECTION -->
+<!-- Place this where you want body diagrams to appear -->
+<div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+    <h3 class="text-xl font-bold text-blue-800 text-right mb-4">
+        🎯 חלקי גוף ונקודות דיקור
+    </h3>
+    <div id="bodyPartsDisplay">
+        <!-- Body parts with acupoints will appear here -->
+        <p class="text-gray-400 text-center">התוצאות יופיעו לאחר חיפוש</p>
+    </div>
+</div>
+
+<!-- 3. MAKE SURE YOUR SEARCH RESULTS DIV EXISTS -->
+<div id="searchResults" class="mb-4">
+    <!-- Search results will appear here -->
+</div>
+
+<!-- 4. MAKE SURE YOUR QUERY INPUT BOXES HAVE THESE IDs -->
+<input type="text" id="query1" placeholder="שאילתה 1" class="query-box" />
+<input type="text" id="query2" placeholder="שאילתה 2" class="query-box" />
+<input type="text" id="query3" placeholder="שאילתה 3" class="query-box" />
+<textarea id="freeQuery" placeholder="שאילתה חופשית" class="query-box"></textarea>
+
+<!-- 5. MAKE SURE YOUR RUN BUTTON HAS THIS ID -->
+<button id="runSearchButton" class="run-query-button">
+    🔍 הרץ חיפוש
+</button>
+
+<!-- ================================================================ -->
+<!-- OPTIONAL: ADD VOICE ACTIVATION BUTTON -->
+<!-- ================================================================ -->
+<button id="voiceButton" class="voice-button">
+    🎤 חיפוש קולי
+</button>
+
+<script>
+// Voice activation setup
+function setupVoiceActivation() {
+    const voiceButton = document.getElementById('voiceButton');
+    if (!voiceButton) return;
+    
+    // Check if browser supports speech recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        console.warn('⚠️ Speech recognition not supported in this browser');
+        voiceButton.style.display = 'none';
+        return;
+    }
+    
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'he-IL'; // Hebrew
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    voiceButton.addEventListener('click', () => {
+        recognition.start();
+        voiceButton.textContent = '🎤 מאזין...';
+        voiceButton.classList.add('recording');
+    });
+    
+    recognition.addEventListener('result', (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('🎤 Voice input:', transcript);
+        
+        // Put voice input in free query box
+        const freeQuery = document.getElementById('freeQuery');
+        if (freeQuery) {
+            freeQuery.value = transcript;
+            freeQuery.classList.add('filled');
+        }
+        
+        voiceButton.textContent = '🎤 חיפוש קולי';
+        voiceButton.classList.remove('recording');
+        
+        // Auto-run search
+        performMultiQuery();
+    });
+    
+    recognition.addEventListener('error', (event) => {
+        console.error('❌ Voice recognition error:', event.error);
+        voiceButton.textContent = '🎤 חיפוש קולי';
+        voiceButton.classList.remove('recording');
+    });
+    
+    console.log('✅ Voice activation enabled');
+}
+</script>

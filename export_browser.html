@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Dr. Roni Data - Browser Method</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        #progress {
+            display: none;
+            margin: 20px 0;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Export Dr. Roni Data - Browser Method</h1>
+        
+        <div class="instructions">
+            <strong>📋 What this does:</strong>
+            <ol>
+                <li>Connects to your Supabase database (using your browser)</li>
+                <li>Downloads all 313 points from dr_roni_complete table</li>
+                <li>Saves as <code>dr_roni_points_to_translate.json</code></li>
+                <li>You can then use this file for offline translation!</li>
+            </ol>
+        </div>
+
+        <button id="exportBtn" onclick="exportData()">📥 Export Data from Supabase</button>
+        
+        <div id="progress"></div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://oaitwmdwuoionjbmgkws.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9haXR3bWR3dW9pb25qYm1na3dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY5MzA4NjcsImV4cCI6MjA1MjUwNjg2N30.qkNjQUtUQgY8qRQnb-rjBnqI-BH7XfGfLr52HQxTPcs";
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showProgress(message) {
+            const progressDiv = document.getElementById('progress');
+            progressDiv.style.display = 'block';
+            progressDiv.innerHTML = `<div class="status info">${message}</div>`;
+        }
+
+        function hideProgress() {
+            document.getElementById('progress').style.display = 'none';
+        }
+
+        async function exportData() {
+            const btn = document.getElementById('exportBtn');
+            btn.disabled = true;
+            
+            try {
+                showProgress('🔗 Connecting to Supabase...');
+                
+                // Fetch data from Supabase
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/dr_roni_complete?select=*&order=point_code`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                showProgress('📊 Downloading data...');
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    throw new Error('No data received from Supabase');
+                }
+
+                showProgress(`✅ Downloaded ${data.length} points`);
+                
+                // Convert to JSON string
+                const jsonString = JSON.stringify(data, null, 2);
+                
+                // Create download link
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'dr_roni_points_to_translate.json';
+                
+                showProgress('💾 Preparing download...');
+                
+                // Trigger download
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                hideProgress();
+                showStatus(`
+                    🎉 <strong>SUCCESS!</strong><br><br>
+                    ✅ Exported ${data.length} acupuncture points<br>
+                    ✅ File saved: <code>dr_roni_points_to_translate.json</code><br>
+                    ✅ File size: ${(blob.size / 1024).toFixed(2)} KB<br><br>
+                    
+                    📁 <strong>Next steps:</strong><br>
+                    1. Find the downloaded file in your Downloads folder<br>
+                    2. Move it to: <code>C:\\tcm-clinical-assistant-Tel-Aviv\\</code><br>
+                    3. Run: <code>python translate_offline.py</code><br>
+                    4. Wait 40 minutes for translation!<br><br>
+                    
+                    💡 <strong>The file contains:</strong><br>
+                    - All ${data.length} acupuncture points<br>
+                    - Complete English data (11 fields per point)<br>
+                    - Ready for Hebrew translation!
+                `, 'success');
+                
+            } catch (error) {
+                hideProgress();
+                showStatus(`
+                    ❌ <strong>ERROR:</strong> ${error.message}<br><br>
+                    
+                    🔧 <strong>Troubleshooting:</strong><br>
+                    1. Make sure you're connected to the internet<br>
+                    2. Check if Supabase is accessible<br>
+                    3. Try refreshing this page<br>
+                    4. If still fails, use the CSV export method instead
+                `, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Show initial ready message
+        showStatus('✅ Ready to export! Click the button above to download your data.', 'info');
+    </script>
+</body>
+</html>

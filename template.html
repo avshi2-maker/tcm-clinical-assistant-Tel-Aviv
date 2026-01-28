@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCM Clinical Assistant - [PAGE_NAME]</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Core Module (Supabase Connection) -->
+    <script src="../js/core.js"></script>
+    
+    <!-- Page-Specific JavaScript -->
+    <!-- <script src="../js/[page-name].js"></script> -->
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9fafb;
+        }
+        
+        /* Navigation Bar */
+        .nav-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .nav-link.active {
+            background: rgba(255,255,255,0.3);
+            font-weight: bold;
+        }
+        
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        /* Footer */
+        .footer {
+            background: #1f2937;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <div class="logo" style="color: white; font-size: 1.5rem; font-weight: bold;">
+            🏥 TCM Clinical Assistant
+        </div>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">🔍 חיפוש</a>
+            <a href="gate.html" class="nav-link">🚪 תיאוריית השער</a>
+            <a href="tier.html" class="nav-link">📊 מערכת רמות</a>
+            <a href="crm.html" class="nav-link">👥 CRM</a>
+            <a href="sessions.html" class="nav-link">🎥 שיעורים</a>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <h1 class="page-title">[PAGE TITLE IN HEBREW]</h1>
+        
+        <div class="content-card">
+            <h2>ברוכים הבאים!</h2>
+            <p>זהו תבנית לדפים חדשים במערכת TCM Clinical Assistant.</p>
+            
+            <h3>📋 מה לעשות:</h3>
+            <ol>
+                <li><strong>שנה כותרת:</strong> החלף [PAGE_NAME] ו-[PAGE TITLE IN HEBREW]</li>
+                <li><strong>הוסף תוכן:</strong> החלף את התוכן הזה בתוכן שלך</li>
+                <li><strong>התאם עיצוב:</strong> שנה CSS לפי הצורך</li>
+                <li><strong>הוסף לוגיקה:</strong> הוסף JavaScript בסוף הדף</li>
+                <li><strong>שמור:</strong> שמור בתיקיית pages/</li>
+            </ol>
+            
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-right: 4px solid #f59e0b; margin-top: 15px;">
+                <strong>💡 טיפ:</strong> הדף הזה כבר מחובר ל-Supabase! תוכל לבצע שאילתות מיד.
+            </div>
+        </div>
+        
+        <div class="content-card">
+            <h2>🔧 דוגמה: טעינת נתונים מSupabase</h2>
+            
+            <button onclick="loadExampleData()" style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                📥 טען דוגמה (10 נקודות דיקור)
+            </button>
+            
+            <div id="example-data" style="margin-top: 20px;"></div>
+        </div>
+        
+        <div class="content-card">
+            <h2>✅ בדיקת חיבור</h2>
+            <p>לחץ כדי לבדוק שהחיבור ל-Supabase עובד:</p>
+            
+            <button onclick="testConnection()" style="background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                בדוק חיבור
+            </button>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <p>TCM Clinical Assistant © 2026 | Built with ❤️ for Traditional Chinese Medicine</p>
+    </footer>
+    
+    <!-- Page-Specific JavaScript -->
+    <script>
+        // Test Supabase connection
+        async function testConnection() {
+            const container = document.createElement('div');
+            container.style.cssText = 'position: fixed; top: 20px; right: 20px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000;';
+            container.innerHTML = '⏳ בודק חיבור...';
+            document.body.appendChild(container);
+            
+            try {
+                const { data, error } = await window.TCM.supabase
+                    .from('search_config')
+                    .select('table_name')
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                container.innerHTML = '✅ חיבור לSupabase עובד!<br><small>נמצאו ' + (data?.length || 0) + ' טבלאות</small>';
+                container.style.background = '#d1fae5';
+                container.style.borderRight = '4px solid #10b981';
+                
+                setTimeout(() => container.remove(), 3000);
+            } catch (error) {
+                container.innerHTML = '❌ שגיאה: ' + error.message;
+                container.style.background = '#fee2e2';
+                container.style.borderRight = '4px solid #ef4444';
+                
+                setTimeout(() => container.remove(), 5000);
+            }
+        }
+        
+        // Load example data
+        async function loadExampleData() {
+            const container = document.getElementById('example-data');
+            container.innerHTML = '⏳ טוען נקודות דיקור...';
+            
+            try {
+                const { data, error } = await window.TCM.supabase
+                    .from('dr_roni_acupuncture_points')
+                    .select('point_code, english_name, english_name_hebrew')
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                let html = '<div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-top: 10px;">';
+                html += '<h3>✅ נטענו ' + data.length + ' נקודות:</h3>';
+                html += '<ul style="list-style: none; padding: 0;">';
+                
+                data.forEach(point => {
+                    html += `
+                        <li style="padding: 8px; margin: 5px 0; background: white; border-radius: 6px; border-right: 3px solid #667eea;">
+                            <strong>${point.point_code}</strong> - 
+                            ${point.english_name_hebrew || point.english_name}
+                        </li>
+                    `;
+                });
+                
+                html += '</ul></div>';
+                container.innerHTML = html;
+                
+            } catch (error) {
+                container.innerHTML = '❌ שגיאה: ' + error.message;
+            }
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Highlight active page in navigation
+            const currentPage = window.location.pathname.split('/').pop();
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('href').includes(currentPage)) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Your page-specific initialization here
+            console.log('✅ Page loaded successfully!');
+            console.log('✅ Supabase available:', typeof window.TCM.supabase !== 'undefined');
+        });
+    </script>
+</body>
+</html>

@@ -1,417 +1,421 @@
-# 🌿 TCM Knowledge Base - Hebrew Deep Thinking Module
+# 🏥 TCM Clinical Assistant - IRONCLAD BASELINE
 
-A professional Traditional Chinese Medicine (TCM) knowledge base system with Hebrew-first interface, semantic search, and AI-powered Q&A capabilities using Claude API.
-
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)
-![Python](https://img.shields.io/badge/python-%3E%3D3.9-blue.svg)
+**Version:** 1.0.0 BASELINE  
+**Date:** 2026-01-28  
+**Status:** ✅ STABLE - PROTECTED BASELINE
 
 ---
 
-## 🎯 Features
+## ⚠️ **CRITICAL: READ BEFORE MAKING ANY CHANGES!**
 
-### ✨ Core Capabilities
-
-- **📚 Bilingual Knowledge Base**: English source documents automatically translated to Hebrew
-- **🔍 Semantic Search**: Vector embeddings for intelligent content matching
-- **🤖 AI-Powered Q&A**: Claude Sonnet 4 provides expert TCM answers in Hebrew
-- **📊 RAG System**: Retrieval-Augmented Generation ensures accurate, sourced responses
-- **🎨 Professional UI**: Hebrew-first interface designed for therapists
-- **📝 Source Attribution**: Shows which acupuncture points or syndromes informed each answer
-- **💾 Export Capability**: Save consultations for patient records
-- **⚡ Fast Performance**: Sub-second semantic search with pgvector
-
-### 📖 Supported Content Types
-
-- **Acupuncture Points**: Full database with locations, functions, and indications
-- **Zang-Fu Syndromes**: Complete TCM pathology with symptoms and treatments
-- **Extensible**: Easy to add more TCM document types
+This is the **IRONCLAD BASELINE** version. This document defines:
+1. What sections are **PROTECTED** (never touch)
+2. What sections are **MODIFIABLE** (safe to change)
+3. How to make changes safely
+4. How to deploy
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ **APPLICATION STRUCTURE**
+
+### **Three-Panel Layout:**
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   Frontend (Next.js)                     │
-│         Hebrew UI + Deep Thinking Module                 │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ↓
-┌─────────────────────────────────────────────────────────┐
-│               API Layer (Next.js Routes)                 │
-│    • Question processing                                 │
-│    • Embedding generation                                │
-│    • Vector search                                       │
-│    • Claude API integration                              │
-└────────────────────┬────────────────────────────────────┘
-                     │
-        ┌────────────┴────────────┐
-        │                         │
-        ↓                         ↓
-┌──────────────┐          ┌──────────────┐
-│   Supabase   │          │  Claude API  │
-│   Database   │          │   (Sonnet)   │
-│              │          │              │
-│ • pgvector   │          │ • Hebrew NLU │
-│ • PostgreSQL │          │ • TCM Expert │
-│ • Full-text  │          │ • RAG        │
-└──────┬───────┘          └──────────────┘
-       │
-       │ Data Processing Pipeline
-       │
-┌──────────────────────────────┐
-│   Document Processor         │
-│   (Python)                   │
-│                              │
-│ • DOCX extraction            │
-│ • Hebrew translation         │
-│ • Embedding generation       │
-│ • Database population        │
-└──────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                      BROWSER WINDOW (RTL)                           │
+├──────────────────┬────────────────────────┬────────────────────────┤
+│                  │                        │                        │
+│  RIGHT PANEL     │    CENTER PANEL        │    LEFT PANEL          │
+│  (Screen LEFT)   │    (Middle)            │    (Screen RIGHT)      │
+│  🔒 PROTECTED    │    ⚠️ MODIFIABLE      │    🔒 PROTECTED        │
+│                  │                        │                        │
+│  Clinical        │    Query Boxes         │    450 Questions       │
+│  Modules:        │    +                   │    +                   │
+│  - DR Roni (341) │    Results Area        │    Category Dropdown   │
+│  - Zang-Fu (11)  │    +                   │                        │
+│  - Symptoms (52) │    Share Buttons       │    Clickable to        │
+│  - Pulse Gallery │                        │    populate queries    │
+│  - Yin-Yang      │                        │                        │
+│  - Training      │                        │                        │
+│                  │                        │                        │
+└──────────────────┴────────────────────────┴────────────────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🔒 **PROTECTED SECTIONS - NEVER TOUCH!**
 
-### Prerequisites
+### **1. LEFT PANEL (Screen RIGHT - 450 Questions)**
 
-- **Node.js 18+** and npm
-- **Python 3.9+** and pip
-- **Supabase account** (free tier works)
-- **Anthropic API key** (Claude)
-- **OpenAI API key** (optional, for embeddings)
+**File location:** Lines 527-570  
+**Status:** ✅ WORKING PERFECTLY  
+**Last modified:** BASELINE
 
-### Installation
+**Contains:**
+- Category dropdown (30 categories)
+- 450 pre-made Hebrew questions
+- Auto-load on page load
+- Click-to-populate functionality
 
-#### Option 1: Automated Setup (Recommended)
+**Why protected:**
+- Critical user interface
+- Users rely on this daily
+- Any bug breaks workflow
+- 10 hours wasted last time!
+
+**DO NOT:**
+- ❌ Change HTML structure
+- ❌ Modify JavaScript functions
+- ❌ Alter CSS styling
+- ❌ Touch dropdown options
+
+**CAN DO:**
+- ✅ Add NEW questions (append only)
+- ✅ Fix typos in question text
+- ✅ Update category names (with testing)
+
+---
+
+### **2. RIGHT PANEL (Screen LEFT - Clinical Modules)**
+
+**File location:** Lines 784-900  
+**Status:** ✅ WORKING PERFECTLY  
+**Last modified:** BASELINE
+
+**Contains:**
+- DR Roni Points Database (341 points)
+- Zang-Fu Syndromes (11 syndromes)
+- Clinical Diagnosis (52 symptoms)
+- Pulse & Tongue Gallery
+- Yin-Yang Assessment
+- Training Syllabus
+
+**Why protected:**
+- Complex Supabase integration
+- Dropdown menus working perfectly
+- Selection logic functioning
+- Data flows to query boxes
+
+**DO NOT:**
+- ❌ Change module box structure
+- ❌ Modify dropdown behavior
+- ❌ Alter Supabase queries
+- ❌ Touch selection functions
+
+**CAN DO:**
+- ✅ Update text labels
+- ✅ Change colors (with testing)
+- ✅ Add new modules (below existing)
+
+---
+
+## ⚠️ **MODIFIABLE SECTION - SAFE TO CHANGE**
+
+### **3. CENTER PANEL (Middle - Query & Results)**
+
+**File location:** Lines 572-783  
+**Status:** ⚠️ STABLE - Can be improved  
+**Last modified:** Header updated to thin version
+
+**Contains:**
+- Metrics bar (cost, timer, tokens)
+- Blue header (thin version) ✅ NEW
+- 4 query input boxes
+- Search button
+- Results display area
+- Share buttons
+
+**Current issues:**
+- ❌ No body diagrams yet
+- ❌ Not 50/50 split yet
+- ❌ Results area not organized
+
+**SAFE TO MODIFY:**
+- ✅ Add body diagram section
+- ✅ Create 50/50 split layout
+- ✅ Improve results display
+- ✅ Add new features
+
+**MUST TEST:**
+- ✅ Query box functionality
+- ✅ Search button works
+- ✅ Results display properly
+- ✅ Share buttons function
+
+---
+
+## 📋 **FILE STRUCTURE**
+
+```
+tcm-clinical-assistant/
+│
+├── index.html                    # Main application (4562 lines)
+│   ├── Lines 1-500              # CSS Styles
+│   ├── Lines 501-526            # Body & Layout Start
+│   ├── Lines 527-570            # 🔒 LEFT PANEL (450 Questions)
+│   ├── Lines 571-783            # ⚠️ CENTER PANEL (Query & Results)
+│   ├── Lines 784-900            # 🔒 RIGHT PANEL (Clinical Modules)
+│   ├── Lines 901-1500           # JavaScript Functions
+│   └── Lines 1501-4562          # More JavaScript + Yin-Yang Module
+│
+├── README.md                     # This file
+├── STRUCTURE.md                  # Detailed code map
+├── DEPLOYMENT.md                 # Deployment instructions
+├── .gitignore                    # Git ignore rules
+│
+└── docs/
+    ├── API.md                    # Supabase API documentation
+    ├── CHANGELOG.md              # Version history
+    └── TESTING.md                # Testing procedures
+```
+
+---
+
+## 🛡️ **SAFE DEVELOPMENT WORKFLOW**
+
+### **Before ANY Change:**
+
+1. **Backup:**
+   ```bash
+   copy index.html index_backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%.html
+   ```
+
+2. **Check what you're modifying:**
+   - 🔒 Protected section? → STOP! Get permission first
+   - ⚠️ Modifiable section? → Proceed with testing
+
+3. **Make ONE small change at a time**
+
+4. **Test immediately:**
+   - Refresh browser
+   - Test the changed feature
+   - Test adjacent features
+   - Check protected sections still work
+
+5. **If it breaks:**
+   - Restore backup immediately
+   - Document what went wrong
+   - Ask for help
+
+6. **If it works:**
+   - Commit to Git with clear message
+   - Update CHANGELOG.md
+
+---
+
+## 🚀 **GIT DEPLOYMENT GUIDE**
+
+### **Initial Setup:**
 
 ```bash
-# Clone the repository
-git clone <your-repo>
-cd tcm-knowledge-base
+# Initialize Git repository
+cd C:\tcm-clinical-assistant-Tel-Aviv
+git init
 
-# Run quick-start script
-./quick-start.sh
+# Add remote (your GitHub repo)
+git remote add origin https://github.com/YOUR_USERNAME/tcm-clinical-assistant.git
+
+# Add files
+git add .
+
+# First commit
+git commit -m "🔒 IRONCLAD BASELINE v1.0.0 - Stable working version"
+
+# Push to GitHub
+git push -u origin main
 ```
 
-The script will:
-1. Check prerequisites
-2. Install dependencies
-3. Guide you through environment setup
-4. Provide next steps
-
-#### Option 2: Manual Setup
+### **Making Changes:**
 
 ```bash
-# 1. Install Node.js dependencies
-npm install
+# Always work on a branch
+git checkout -b feature/body-diagrams
 
-# 2. Install Python dependencies
-pip install -r requirements.txt --break-system-packages
+# Make your changes
+# Test thoroughly
 
-# 3. Create environment file
-cp .env.example .env.local
-# Edit .env.local with your credentials
+# Commit
+git add index.html
+git commit -m "feat: Add body diagram placeholders to center panel"
 
-# 4. Set up Supabase database
-# - Enable vector extension in Supabase dashboard
-# - Run supabase-schema.sql in SQL Editor
+# Push branch
+git push origin feature/body-diagrams
 
-# 5. Process TCM documents
-python3 tcm_document_processor.py
-
-# 6. Start development server
-npm run dev
+# Create Pull Request on GitHub
+# Merge only after testing!
 ```
 
-### Environment Variables
-
-Create `.env.local` with:
+### **If Something Breaks:**
 
 ```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# Revert to last working version
+git checkout main
+git pull origin main
 
-# API Keys
-ANTHROPIC_API_KEY=sk-ant-api03-...
-OPENAI_API_KEY=sk-...
+# Copy back to working directory
+git checkout index.html
 
-# Development
-NODE_ENV=development
+# Start fresh
 ```
 
 ---
 
-## 📚 Usage
+## 📊 **CURRENT FEATURES - WHAT WORKS**
 
-### For Therapists
+### ✅ **Fully Functional:**
+1. **450 Questions Panel**
+   - All 30 categories load
+   - Questions clickable
+   - Populate query boxes
+   - Scrolling works
 
-1. Navigate to `/deep-thinking` in your browser
-2. Select search context (points, syndromes, or both)
-3. Ask questions in Hebrew about TCM topics
-4. Review AI-generated answers with source attribution
-5. Export consultations for patient records
+2. **Clinical Modules Panel**
+   - DR Roni dropdown (50 points load)
+   - Zang-Fu dropdown (11 syndromes)
+   - Symptoms dropdown (30 questions)
+   - Selection populates queries
+   - Supabase integration working
 
-### Example Questions
+3. **Query System**
+   - 4 input boxes (3 text + 1 voice)
+   - Voice input functional
+   - Search executes properly
+   - Results display
 
-- `מהן נקודות הדיקור הטובות ביותר לטיפול בכאבי ראש?`
-- `תאר את תסמונת חסר צ'י של הטחול`
-- `איך מטפלים בנדודי שינה בדיקור סיני?`
-- `מהן האינדיקציות של הנקודה LI-4?`
-- `הסבר על תסמונת חסר דם של הכבד`
+4. **Share Functions**
+   - PDF export
+   - Email report
+   - WhatsApp share
+   - Print function
 
-### API Usage
+### ⚠️ **Needs Improvement:**
+1. **Center Panel Layout**
+   - No 50/50 split yet
+   - Results area not organized
+   - No body diagrams
 
-```bash
-curl -X POST http://localhost:3000/api/tcm-qa \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "מהן נקודות דיקור לכאב ראש?",
-    "context": "both",
-    "language": "he",
-    "maxResults": 5
-  }'
-```
-
----
-
-## 🛠️ Development
-
-### Project Structure
-
-```
-tcm-knowledge-base/
-├── app/
-│   ├── api/
-│   │   └── tcm-qa/
-│   │       └── route.ts          # Main Q&A API endpoint
-│   └── deep-thinking/
-│       └── page.tsx               # Deep Thinking page
-├── components/
-│   ├── DeepThinkingModule.tsx    # Main UI component
-│   └── ui/                        # Shadcn UI components
-├── lib/
-│   └── supabase.ts                # Supabase client
-├── public/
-├── scripts/
-│   ├── tcm_document_processor.py # Document processing
-│   └── quick-start.sh             # Setup automation
-├── supabase-schema.sql            # Database schema
-├── requirements.txt               # Python deps
-├── package.json                   # Node deps
-├── SETUP_GUIDE.md                # Detailed setup guide
-└── README.md                      # This file
-```
-
-### Key Technologies
-
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **UI**: Tailwind CSS, Radix UI, Lucide Icons
-- **Backend**: Next.js API Routes, Supabase
-- **Database**: PostgreSQL with pgvector extension
-- **AI**: Claude Sonnet 4 (Anthropic)
-- **Embeddings**: Sentence Transformers (MiniLM)
-- **Translation**: Deep Translator (Google Translate)
-
-### Development Workflow
-
-```bash
-# Start dev server
-npm run dev
-
-# Process new documents
-python3 tcm_document_processor.py
-
-# Run tests
-npm test
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-```
+2. **Header**
+   - ✅ Now thin version (DONE!)
+   - Could add status indicators
 
 ---
 
-## 🧪 Testing
+## 🎯 **PLANNED IMPROVEMENTS (FUTURE)**
 
-### API Testing
+### **Phase 1: Center Panel Redesign** (Next)
+- [ ] Create 50/50 vertical split
+- [ ] Top 50%: Query boxes (keep as is)
+- [ ] Bottom 50%: Results + body diagrams
+- [ ] Test: Protected panels not affected
 
-```bash
-# Test health endpoint
-curl http://localhost:3000/api/tcm-qa
+### **Phase 2: Body Diagrams**
+- [ ] Add front/back body SVG placeholders
+- [ ] Highlight points based on results
+- [ ] Interactive point info on hover
 
-# Test Q&A
-curl -X POST http://localhost:3000/api/tcm-qa \
-  -H "Content-Type: application/json" \
-  -d '{"question":"מהן נקודות דיקור לכאב ראש?"}'
-```
+### **Phase 3: Enhanced Results**
+- [ ] Organize by category
+- [ ] Collapsible sections
+- [ ] Highlight relevant points
+- [ ] Link to body diagrams
 
-### Database Testing
-
-```sql
--- Verify data
-SELECT COUNT(*) FROM acupuncture_points;
-SELECT COUNT(*) FROM zangfu_syndromes;
-
--- Test vector search
-SELECT * FROM match_acupuncture_points(
-  '[0.1, 0.2, ...]'::vector(384),
-  0.7,
-  5
-);
-```
+### **Phase 4: Mobile Responsive**
+- [ ] Test on tablets
+- [ ] Test on phones
+- [ ] Adjust panel widths
+- [ ] Ensure dropdowns work
 
 ---
 
-## 📊 Performance
+## 🆘 **EMERGENCY CONTACTS**
 
-### Benchmarks
+**If something breaks:**
 
-| Operation | Time |
-|-----------|------|
-| Vector search | < 100ms |
-| Claude API | 1-3s |
-| Total response | < 4s |
-| Document processing | 20-30min (one-time) |
+1. **Immediate:** Restore last backup
+   ```bash
+   copy index_backup_YYYYMMDD.html index.html
+   ```
 
-### Optimization Tips
+2. **Git restore:**
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
 
-1. **Caching**: Implement Redis for frequent queries
-2. **Batch Processing**: Process multiple questions together
-3. **Index Tuning**: Adjust HNSW parameters for your data
-4. **Connection Pooling**: Use Supabase connection pooling
-
----
-
-## 🔒 Security
-
-### Best Practices
-
-- ✅ Use environment variables for all secrets
-- ✅ Enable Supabase Row Level Security (RLS)
-- ✅ Validate all user inputs
-- ✅ Rate limit API endpoints
-- ✅ Use service role key only server-side
-- ✅ Enable CORS properly
-- ✅ Monitor API usage and costs
-
-### RLS Policies
-
-The database schema includes RLS policies:
-- Public read access for therapists
-- Service role only for write operations
-- Automatic timestamp updates
+3. **Ask for help:**
+   - Document what changed
+   - Screenshot the error
+   - Describe what you tried
 
 ---
 
-## 💰 Cost Estimation
+## 📝 **CHANGELOG**
 
-### Monthly Costs (100-500 queries/day)
+### **v1.0.0 - 2026-01-28 - IRONCLAD BASELINE**
+- ✅ Established protected sections
+- ✅ Added comprehensive documentation
+- ✅ Fixed blue header (now thin version)
+- ✅ Marked safe modification zones
+- ✅ Ready for Git deployment
 
-| Service | Cost |
-|---------|------|
-| Supabase | $0-25 |
-| Claude API | $10-50 |
-| OpenAI Embeddings | $1-5 |
-| Vercel Hosting | $0-20 |
-| **Total** | **$11-100/mo** |
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow TypeScript best practices
-- Write tests for new features
-- Update documentation
-- Maintain Hebrew language support
-- Follow existing code style
+**Previous changes:**
+- Fixed 450 questions scrolling (show 3 at a time)
+- Added DR Roni, Zang-Fu, Symptoms modules
+- Integrated Supabase database
+- Added clinical tools
 
 ---
 
-## 📝 License
+## 🔐 **VERSION CONTROL RULES**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. **main branch** = Production (always working)
+2. **develop branch** = Testing (may have bugs)
+3. **feature/* branches** = New features
+4. **hotfix/* branches** = Emergency fixes
 
-### Important Notes
-
-- Ensure you have proper licensing for source TCM documents
-- Verify translation rights
-- Medical information usage compliance
-- Attribution requirements
+**Never commit directly to main!**
 
 ---
 
-## 🆘 Support
+## 🎓 **KEY LESSONS LEARNED**
 
-### Documentation
+### **What went wrong before:**
+1. ❌ Changed multiple sections at once
+2. ❌ Didn't test immediately
+3. ❌ No backups
+4. ❌ Confused left/right (RTL layout)
+5. ❌ Broke protected sections
 
-- **Setup Guide**: See [SETUP_GUIDE.md](SETUP_GUIDE.md)
-- **Supabase Docs**: https://supabase.com/docs
-- **Claude API Docs**: https://docs.anthropic.com
-- **pgvector Guide**: https://github.com/pgvector/pgvector
-
-### Troubleshooting
-
-Common issues and solutions are documented in [SETUP_GUIDE.md](SETUP_GUIDE.md#troubleshooting)
-
-### Community
-
-- File issues on GitHub
-- Join our discussion forum
-- Contact: support@your-domain.com
+### **What works now:**
+1. ✅ Clear section markers
+2. ✅ Protected vs Modifiable zones
+3. ✅ One change at a time
+4. ✅ Immediate testing
+5. ✅ Git version control
 
 ---
 
-## 🙏 Acknowledgments
+## 📚 **ADDITIONAL DOCUMENTATION**
 
-- **Anthropic** for Claude API
-- **Supabase** for database infrastructure
-- **pgvector** for vector search capabilities
-- **TCM community** for domain knowledge
-- **Open source community** for tools and libraries
-
----
-
-## 🗺️ Roadmap
-
-### Upcoming Features
-
-- [ ] Multi-user support with therapist accounts
-- [ ] Patient consultation history
-- [ ] Advanced filtering and search
-- [ ] Mobile app (React Native)
-- [ ] Additional TCM content types
-- [ ] Offline mode for embeddings
-- [ ] Admin dashboard
-- [ ] Analytics and reporting
+- **STRUCTURE.md** - Detailed code walkthrough
+- **DEPLOYMENT.md** - Step-by-step deployment
+- **API.md** - Supabase API reference
+- **TESTING.md** - Testing procedures
 
 ---
 
-## 📞 Contact
+## ✅ **CURRENT STATUS: STABLE & PROTECTED**
 
-**Project Maintainer**: Your Organization  
-**Email**: support@your-domain.com  
-**Website**: https://your-domain.com  
+**This is your IRONCLAD baseline.**
+
+**Use this as reference when making changes.**
+
+**Push to Git. Sleep peacefully.** 😴
+
+**No more 10-hour debugging sessions!** 🎊
 
 ---
 
-**Made with ❤️ for TCM practitioners worldwide**
-
-*Last updated: January 2026*
+**Last Updated:** 2026-01-28  
+**Maintained by:** Dr. Roni Sapir TCM Team  
+**Status:** 🔒 PROTECTED BASELINE

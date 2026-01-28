@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCM Clinical Assistant - תומך אבחנה קליני ברפואה סינית</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .module {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .module:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .module-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .module-icon {
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .test-button:hover {
+            box-shadow: 0 5px 15px rgba(253, 160, 133, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 1.2em;
+            padding: 20px;
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 15px;
+            border-radius: 8px;
+            border-right: 4px solid #dc3545;
+            margin-top: 15px;
+        }
+
+        /* Deep Thinking Results */
+        .deep-thinking-results {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+
+        .deep-thinking-results-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .deep-thinking-result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-right: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .deep-thinking-result-item:hover {
+            background: #e9ecef;
+            transform: translateX(-5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .deep-thinking-result-item h3 {
+            color: #764ba2;
+            margin-bottom: 8px;
+            font-size: 1.2em;
+        }
+
+        .deep-thinking-result-item p {
+            color: #666;
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+
+        .deep-thinking-result-item .view-image {
+            color: #667eea;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-top: 8px;
+            display: block;
+        }
+
+        /* Modal Styles */
+        .body-image-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .body-image-modal-overlay.active {
+            display: flex;
+        }
+
+        .body-image-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            animation: bodyImageModalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes bodyImageModalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .body-image-modal-close {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+            background: none;
+            border: none;
+            width: auto;
+            padding: 5px 10px;
+        }
+
+        .body-image-modal-close:hover {
+            color: #dc3545;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .body-image-modal-title {
+            font-size: 2em;
+            color: #764ba2;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .body-image-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .body-image {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .image-loading {
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .image-placeholder {
+            text-align: center;
+            color: #999;
+        }
+
+        .image-placeholder-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .point-details {
+            margin-top: 20px;
+        }
+
+        .detail-row {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-right: 3px solid #667eea;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #764ba2;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .detail-value {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Debug Console */
+        .deep-thinking-debug-console {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 2000;
+            display: none;
+        }
+
+        .deep-thinking-debug-console.active {
+            display: block;
+        }
+
+        .deep-thinking-debug-console .log-entry {
+            margin-bottom: 5px;
+            padding: 3px;
+            border-bottom: 1px solid #333;
+        }
+
+        .deep-thinking-debug-console .log-error {
+            color: #f00;
+        }
+
+        .deep-thinking-debug-console .log-success {
+            color: #0f0;
+        }
+
+        .deep-thinking-debug-console .log-info {
+            color: #0ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 TCM Clinical Assistant</h1>
+            <p>תומך אבחנה קליני ברפואה סינית מסורתית</p>
+        </div>
+
+        <div class="modules-grid">
+            <!-- Deep Thinking Module -->
+            <div class="module">
+                <div class="module-title">
+                    <span class="module-icon">🧠</span>
+                    חשיבה עמוקה
+                </div>
+                <div class="form-group">
+                    <label for="deepThinkingCategory">קטגוריה:</label>
+                    <select id="deepThinkingCategory">
+                        <option value="">בחר קטגוריה...</option>
+                        <option value="תסמינים">תסמינים</option>
+                        <option value="נקודות דיקור">נקודות דיקור</option>
+                        <option value="תבניות">תבניות</option>
+                        <option value="עשבי תרופה">עשבי תרופה</option>
+                        <option value="ערוצים">ערוצים</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="deepThinkingQuery">שאילתת חיפוש:</label>
+                    <input type="text" id="deepThinkingQuery" placeholder="הקלד מונח לחיפוש...">
+                </div>
+                <button onclick="performDeepThinking()">חפש</button>
+                <button class="test-button" onclick="testBodyImageModal()">🧪 TEST: פתח עם דאטה</button>
+                <button class="test-button" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin-top: 5px;" onclick="testListBodyImages()">🔍 TEST: בדוק נקודות בתמונות</button>
+                <div id="deepThinkingResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Body Image Modal -->
+    <div id="bodyImageModal" class="body-image-modal-overlay">
+        <div class="body-image-modal-content">
+            <button class="body-image-modal-close" onclick="closeBodyImageModal()">✕</button>
+            <h2 class="body-image-modal-title" id="modalTitle">טוען...</h2>
+            
+            <div class="body-image-container" id="bodyImageContainer">
+                <div class="image-loading">⏳ טוען תמונה...</div>
+            </div>
+
+            <div class="point-details" id="pointDetails">
+                <!-- Details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Console -->
+    <div id="deepThinkingDebugConsole" class="deep-thinking-debug-console active">
+        <div style="color: #fff; font-weight: bold; margin-bottom: 5px;">Debug Console:</div>
+        <div id="deepThinkingDebugLogs"></div>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const DEEP_THINKING_SUPABASE_URL = 'https://iqfglrwjemogoycbzltt.supabase.co';
+        const DEEP_THINKING_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxZmdscndqZW1vZ295Y2J6bHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NTM4ODMsImV4cCI6MjA4NDEyOTg4M30.DTREv3efs86_HzESyWm-7480ImfEVgC6T-xBdS6A2F8';
+
+        // Debug logging
+        let deepThinkingDebugEnabled = true;
+
+        function deepThinkingDebugLog(message, type = 'info') {
+            if (!deepThinkingDebugEnabled) return;
+            
+            console.log(`[DEEP THINKING ${type.toUpperCase()}]`, message);
+            
+            const debugConsole = document.getElementById('deepThinkingDebugConsole');
+            const debugLogs = document.getElementById('deepThinkingDebugLogs');
+            
+            if (debugConsole && debugLogs) {
+                debugConsole.classList.add('active');
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                
+                debugLogs.appendChild(logEntry);
+                debugLogs.scrollTop = debugLogs.scrollHeight;
+                
+                while (debugLogs.children.length > 20) {
+                    debugLogs.removeChild(debugLogs.firstChild);
+                }
+            }
+        }
+
+        // Simple fetch wrapper
+        async function deepThinkingFetch(endpoint, params = {}) {
+            let queryString = '';
+            if (Object.keys(params).length > 0) {
+                const queryParts = [];
+                for (const [key, value] of Object.entries(params)) {
+                    if (key === 'select' || key === 'limit') {
+                        queryParts.push(`${key}=${encodeURIComponent(value)}`);
+                    } else {
+                        queryParts.push(`${key}=${value}`);
+                    }
+                }
+                queryString = '?' + queryParts.join('&');
+            }
+            
+            const fullUrl = `${DEEP_THINKING_SUPABASE_URL}/rest/v1/${endpoint}${queryString}`;
+            deepThinkingDebugLog(`Fetching: ${fullUrl}`, 'info');
+            
+            try {
+                const response = await fetch(fullUrl, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': DEEP_THINKING_SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + DEEP_THINKING_SUPABASE_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                deepThinkingDebugLog(`Response status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                deepThinkingDebugLog(`Received ${data.length} rows`, 'success');
+                return data;
+                
+            } catch (error) {
+                deepThinkingDebugLog(`Fetch error: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        // Point code mapping
+        function mapPointCode(pointCode) {
+            if (!pointCode) return pointCode;
+            
+            const mapping = {
+                'CO': 'LI', 'SI': 'SI', 'ST': 'ST', 'SP': 'SP',
+                'HT': 'HT', 'BL': 'BL', 'KI': 'KI', 'KID': 'KI',
+                'PC': 'PC', 'TB': 'TB', 'GB': 'GB', 'LV': 'LV',
+                'LU': 'LU', 'DU': 'DU', 'REN': 'REN', 'GV': 'GV', 'GEN': 'GEN'
+            };
+            
+            const match = pointCode.match(/^([A-Z]+)-?(\d+)$/i);
+            if (!match) return pointCode;
+            
+            const [, meridian, number] = match;
+            const mappedMeridian = mapping[meridian.toUpperCase()] || meridian.toUpperCase();
+            const mappedCode = mappedMeridian + number;
+            
+            deepThinkingDebugLog(`Mapping point code: ${pointCode} → ${mappedCode}`, 'info');
+            return mappedCode;
+        }
+
+        // Store current point data
+        let deepThinkingCurrentPointData = null;
+
+        // Deep Thinking Search
+        async function performDeepThinking() {
+            const category = document.getElementById('deepThinkingCategory').value;
+            const query = document.getElementById('deepThinkingQuery').value.trim();
+            const resultsDiv = document.getElementById('deepThinkingResults');
+
+            deepThinkingDebugLog(`Search initiated: category="${category}", query="${query}"`, 'info');
+
+            if (!category || !query) {
+                resultsDiv.innerHTML = '<div class="error">נא לבחור קטגוריה ולהזין שאילתה</div>';
+                deepThinkingDebugLog('Search failed: missing category or query', 'error');
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading">מחפש...</div>';
+
+            try {
+                let tableName, searchColumn;
+                
+                switch(category) {
+                    case 'תסמינים':
+                        tableName = 'tcm_symptoms';
+                        searchColumn = 'symptom_name_hebrew';
+                        break;
+                    case 'נקודות דיקור':
+                        tableName = 'tcm_acupoints';
+                        searchColumn = 'point_code';
+                        break;
+                    case 'תבניות':
+                        tableName = 'tcm_patterns';
+                        searchColumn = 'pattern_name_hebrew';
+                        break;
+                    case 'עשבי תרופה':
+                        tableName = 'tcm_herbs';
+                        searchColumn = 'herb_name_hebrew';
+                        break;
+                    case 'ערוצים':
+                        tableName = 'tcm_meridians';
+                        searchColumn = 'meridian_code';
+                        break;
+                    default:
+                        throw new Error('קטגוריה לא חוקית');
+                }
+
+                deepThinkingDebugLog(`Querying table: ${tableName}, column: ${searchColumn}`, 'info');
+
+                const data = await deepThinkingFetch(tableName, {
+                    [searchColumn]: `ilike.*${query}*`,
+                    'limit': '10'
+                });
+
+                deepThinkingDebugLog(`Found ${data.length} results`, 'success');
+
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="error">לא נמצאו תוצאות</div>';
+                    return;
+                }
+
+                displayDeepThinkingResults(data, category, resultsDiv);
+            } catch (error) {
+                deepThinkingDebugLog(`Search error: ${error.message}`, 'error');
+                console.error('Full error:', error);
+                resultsDiv.innerHTML = `<div class="error">שגיאה: ${error.message}</div>`;
+            }
+        }
+
+        // Display search results
+        function displayDeepThinkingResults(data, category, resultsDiv) {
+            let html = '<div class="deep-thinking-results"><div class="deep-thinking-results-title">תוצאות חיפוש:</div>';
+
+            data.forEach(item => {
+                if (category === 'נקודות דיקור') {
+                    const safeData = {
+                        point_code: item.point_code,
+                        meridian_code: item.meridian_code,
+                        indications_hebrew: item.indications_hebrew,
+                        point_location_hebrew: item.point_location_hebrew
+                    };
+
+                    const dataAttr = encodeURIComponent(JSON.stringify(safeData));
+
+                    html += `
+                        <div class="deep-thinking-result-item" data-point='${dataAttr}' onclick='openBodyImagePopupFromElement(this)'>
+                            <h3>${item.point_code || 'N/A'}</h3>
+                            <p><strong>ערוץ:</strong> ${item.meridian_code || 'N/A'}</p>
+                            <p><strong>אינדיקציות:</strong> ${(item.indications_hebrew || 'N/A').substring(0, 100)}...</p>
+                            <span class="view-image">👁️ לחץ לצפייה בתמונה</span>
+                        </div>
+                    `;
+                } else {
+                    html += `<div class="deep-thinking-result-item">`;
+                    
+                    Object.entries(item).forEach(([key, value]) => {
+                        if (key !== 'id' && value) {
+                            html += `<p><strong>${key}:</strong> ${String(value).substring(0, 200)}</p>`;
+                        }
+                    });
+                    
+                    html += `</div>`;
+                }
+            });
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // Open modal from element click
+        function openBodyImagePopupFromElement(element) {
+            const dataAttr = element.getAttribute('data-point');
+            if (dataAttr) {
+                const pointData = JSON.parse(decodeURIComponent(dataAttr));
+                openBodyImagePopup(pointData);
+            }
+        }
+
+        // Open body image modal
+        async function openBodyImagePopup(pointData) {
+            deepThinkingDebugLog(`Opening modal for point: ${pointData.point_code}`, 'info');
+            
+            deepThinkingCurrentPointData = pointData || {
+                point_code: 'TEST-1',
+                meridian_code: 'TEST',
+                indications_hebrew: 'זוהי נקודת בדיקה לצורכי פיתוח'
+            };
+
+            const modal = document.getElementById('bodyImageModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const bodyImageContainer = document.getElementById('bodyImageContainer');
+            const pointDetails = document.getElementById('pointDetails');
+
+            modal.classList.add('active');
+            modalTitle.textContent = deepThinkingCurrentPointData.point_code || 'נקודת דיקור';
+
+            bodyImageContainer.innerHTML = '<div class="image-loading">⏳ טוען תמונה...</div>';
+            deepThinkingDebugLog('Modal opened, loading image...', 'info');
+
+            try {
+                const pointCode = deepThinkingCurrentPointData.point_code;
+                const mappedCode = mapPointCode(pointCode);
+                
+                deepThinkingDebugLog(`Searching for body image with point code: ${pointCode} (mapped: ${mappedCode})`, 'info');
+
+                const bodyImages = await deepThinkingFetch('tcm_body_images', {
+                    'select': 'body_part,image_url,acupoint_codes',
+                    'acupoint_codes': `cs.{${mappedCode}}`
+                });
+
+                deepThinkingDebugLog(`Found ${bodyImages.length} body images for ${pointCode} (searched as ${mappedCode})`, bodyImages.length > 0 ? 'success' : 'info');
+
+                if (bodyImages && bodyImages.length > 0) {
+                    const bodyImage = bodyImages[0];
+                    deepThinkingDebugLog(`✓ Loaded body image: ${bodyImage.body_part}`, 'success');
+                    deepThinkingDebugLog(`  Image contains points: [${bodyImage.acupoint_codes.join(', ')}]`, 'info');
+                    
+                    bodyImageContainer.innerHTML = `
+                        <img src="${bodyImage.image_url}" 
+                             alt="${bodyImage.body_part}" 
+                             class="body-image"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'image-placeholder\\'><div class=\\'image-placeholder-icon\\'>⚠️</div><div>שגיאה בטעינת קובץ התמונה</div></div>';">
+                    `;
+                } else {
+                    deepThinkingDebugLog(`✗ No body image found for point: ${pointCode} (searched as ${mappedCode})`, 'error');
+                    bodyImageContainer.innerHTML = `
+                        <div class="image-placeholder">
+                            <div class="image-placeholder-icon">🖼️</div>
+                            <div>אין תמונה זמינה עבור נקודה זו</div>
+                            <div style="font-size: 0.9em; color: #999; margin-top: 10px;">${pointCode} → ${mappedCode}</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                deepThinkingDebugLog(`Error loading body image: ${error.message}`, 'error');
+                bodyImageContainer.innerHTML = `
+                    <div class="image-placeholder">
+                        <div class="image-placeholder-icon">⚠️</div>
+                        <div style="color: #dc3545;">שגיאה בטעינת התמונה</div>
+                    </div>
+                `;
+            }
+
+            // Display point details
+            let detailsHTML = '';
+            
+            if (deepThinkingCurrentPointData.point_code) {
+                detailsHTML += `<div class="detail-row"><div class="detail-label">קוד נקודה:</div><div class="detail-value">${deepThinkingCurrentPointData.point_code}</div></div>`;
+            }
+            
+            if (deepThinkingCurrentPointData.meridian_code) {
+                detailsHTML += `<div class="detail-row"><div class="detail-label">ערוץ:</div><div class="detail-value">${deepThinkingCurrentPointData.meridian_code}</div></div>`;
+            }
+            
+            if (deepThinkingCurrentPointData.indications_hebrew) {
+                detailsHTML += `<div class="detail-row"><div class="detail-label">אינדיקציות:</div><div class="detail-value">${deepThinkingCurrentPointData.indications_hebrew}</div></div>`;
+            }
+            
+            if (deepThinkingCurrentPointData.point_location_hebrew) {
+                detailsHTML += `<div class="detail-row"><div class="detail-label">מיקום:</div><div class="detail-value">${deepThinkingCurrentPointData.point_location_hebrew}</div></div>`;
+            }
+
+            pointDetails.innerHTML = detailsHTML;
+            deepThinkingDebugLog('Point details displayed', 'success');
+        }
+
+        // Close modal
+        function closeBodyImageModal() {
+            deepThinkingDebugLog('Closing modal', 'info');
+            const modal = document.getElementById('bodyImageModal');
+            modal.classList.remove('active');
+            deepThinkingCurrentPointData = null;
+        }
+
+        // Close modal when clicking outside
+        if (document.getElementById('bodyImageModal')) {
+            document.getElementById('bodyImageModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeBodyImageModal();
+                }
+            });
+        }
+
+        // Test function
+        function testBodyImageModal() {
+            deepThinkingDebugLog('TEST button clicked!', 'success');
+            
+            const testData = {
+                point_code: 'LI4',
+                meridian_code: 'LI',
+                indications_hebrew: 'כאבי ראש, כאבי שיניים, כאבי פנים, נזלת, דלקת אף',
+                point_location_hebrew: 'על גב כף היד, בין העצמות המטאקרפליות'
+            };
+            
+            openBodyImagePopup(testData);
+        }
+
+        // Test list body images
+        async function testListBodyImages() {
+            deepThinkingDebugLog('🔍 Listing all body images and their point codes...', 'info');
+            
+            try {
+                const bodyImages = await deepThinkingFetch('tcm_body_images', {
+                    'select': 'body_part,acupoint_codes'
+                });
+                
+                deepThinkingDebugLog(`Found ${bodyImages.length} body image records`, 'success');
+                
+                bodyImages.forEach((img, index) => {
+                    deepThinkingDebugLog(`${index + 1}. ${img.body_part}: [${img.acupoint_codes.join(', ')}]`, 'info');
+                });
+                
+                alert('Check Debug Console to see all point codes in body images!');
+                
+            } catch (error) {
+                deepThinkingDebugLog(`Error listing body images: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            deepThinkingDebugLog('🎉 Deep Thinking module loaded successfully!', 'success');
+            deepThinkingDebugLog('Using Direct REST API', 'success');
+            deepThinkingDebugLog('Ready for searches!', 'info');
+            deepThinkingDebugLog('💡 Click blue button to see all available point codes', 'info');
+        });
+
+        // Log any JavaScript errors
+        window.addEventListener('error', function(e) {
+            deepThinkingDebugLog(`JavaScript Error: ${e.message}`, 'error');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+{
+  "/page": "app/page.js",
+  "/api/tcm-qa/route": "app/api/tcm-qa/route.js"
+}
