@@ -1058,7 +1058,7 @@
                 else if (table.includes('pulse') || table.includes('tongue') || table.includes('syndrome')) {
                     categories.diagnostics.push(result);
                 }
-                else if (table === 'qa_knowledge_base' || table === 'tcm_training_syllabus') {
+                else if (table === 'qa_knowledge_base' || table === 'bible_rag_training_syllabus_20260129') {
                     categories.education.push(result);
                 }
             });
@@ -1172,7 +1172,7 @@
         async function loadModule1Questions() {
             try {
                 const { data, error } = await supabaseClient
-                    .from('module_1_quick_questions_450')
+                    .from('module_ui_quick_questions_20260129')
                     .select('*')
                     .order('display_order');
                 
@@ -1426,7 +1426,7 @@
             
             try {
                 const { data: searchConfig, error } = await supabaseClient
-                    .from('search_config')
+                    .from('system_search_config_20260129')
                     .select('table_name, priority, description')
                     .eq('enabled', true)
                     .order('priority');
@@ -1445,7 +1445,7 @@
                 container.innerHTML = searchConfig.map(config => {
                     const isDrRoni = config.table_name.toLowerCase().includes('dr_roni') || 
                                      config.table_name.toLowerCase().includes('bible');
-                    const isZangfu = config.table_name === 'zangfu_syndromes';
+                    const isZangfu = config.table_name === 'bible_rag_zangfu_syndromes_20260129';
                     const displayName = config.description || config.table_name;
                     const shortName = displayName.length > 30 ? displayName.substring(0, 30) + '...' : displayName;
                     
@@ -1723,7 +1723,7 @@
             
             try {
                 const { data, error } = await supabaseClient
-                    .from('search_config')
+                    .from('system_search_config_20260129')
                     .select('*')
                     .eq('enabled', true)
                     .order('priority');
@@ -1851,14 +1851,14 @@
                 totalResults: uniqueResults.length,
                 formulas: uniqueResults.filter(r => r._source_table === 'tcm_formulas'),
                 acupoints: uniqueResults
-                    .filter(r => r._source_table.includes('acupuncture') && r._source_table !== 'tcm_body_images')
+                    .filter(r => r._source_table.includes('acupuncture') && r._source_table !== 'reference_rag_body_images_20260129')
                     .map(point => ({
                         code: point.point_code || point.point_number || point.code || 'N/A',
                         english_name: point.english_name || point.point_name_eng || point.name_en || 'N/A',
                         body_part: point.body_part || 'N/A',
                         meridian: point.meridian || point.channel || 'N/A'
                     })),
-                images: uniqueResults.filter(r => r._source_table === 'tcm_body_images').map(img => ({
+                images: uniqueResults.filter(r => r._source_table === 'reference_rag_body_images_20260129').map(img => ({
                     id: img.id,
                     body_part: img.body_part_hebrew || img.body_part,
                     body_part_en: img.body_part,
@@ -2050,15 +2050,15 @@ ${conflictText}
                     groupedByTable[table].push(r);
                 });
                 
-                if (groupedByTable['tcm_pulse_diagnosis']) {
-                    const pulses = groupedByTable['tcm_pulse_diagnosis'].slice(0, 5);
+                if (groupedByTable['diagnostic_rag_pulse_patterns_20260129']) {
+                    const pulses = groupedByTable['diagnostic_rag_pulse_patterns_20260129'].slice(0, 5);
                     contextParts.push(`ממצאי דופק: ${pulses.map(p => 
                         `${p.pulse_name_he} (${p.pulse_name_en}) - ${p.clinical_significance}`
                     ).join('; ')}`);
                 }
                 
-                if (groupedByTable['tcm_tongue_diagnosis']) {
-                    const tongues = groupedByTable['tcm_tongue_diagnosis'].slice(0, 5);
+                if (groupedByTable['diagnostic_rag_tongue_findings_20260129']) {
+                    const tongues = groupedByTable['diagnostic_rag_tongue_findings_20260129'].slice(0, 5);
                     contextParts.push(`ממצאי לשון: ${tongues.map(t => 
                         `${t.finding_he} (${t.finding_en}) - ${t.clinical_significance}`
                     ).join('; ')}`);
@@ -2080,8 +2080,8 @@ ${conflictText}
                     }
                 }
                 
-                if (groupedByTable['zangfu_syndromes']) {
-                    const syndromes = groupedByTable['zangfu_syndromes'].slice(0, 5);
+                if (groupedByTable['bible_rag_zangfu_syndromes_20260129']) {
+                    const syndromes = groupedByTable['bible_rag_zangfu_syndromes_20260129'].slice(0, 5);
                     contextParts.push(`תסמונות: ${syndromes.map(s => 
                         `${s.name_he} - ${s.symptoms_he || ''}`
                     ).join('; ')}`);
@@ -2258,10 +2258,10 @@ Respond in Hebrew with TCM analysis.`;
         async function loadRAGData() {
             // NOTE: csv_priorities table removed - now using search_config in createCSVIndicators()
             
-            const { data: acupoints } = await supabaseClient.from('tcm_acupoints').select('*');
+            const { data: acupoints } = await supabaseClient.from('treatment_rag_acupoints_gallery_20260129').select('*');
             if (acupoints) acupointsData = acupoints;
             
-            const { data: images } = await supabaseClient.from('tcm_body_images').select('*');
+            const { data: images } = await supabaseClient.from('reference_rag_body_images_20260129').select('*');
             if (images) imagesData = images;
         }
 
@@ -3631,7 +3631,7 @@ function openTrainingFullView() {
 async function loadTrainingData() {
     try {
         const { data, error } = await supabaseClient
-            .from('tcm_training_syllabus')
+            .from('bible_rag_training_syllabus_20260129')
             .select('*')
             .order('category')
             .order('number');
@@ -3808,7 +3808,7 @@ function toggleClinicalSymptoms() {
 async function loadDrRoniPoints() {
     try {
         const { data, error } = await supabaseClient
-            .from('dr_roni_complete')
+            .from('treatment_rag_acupoints_gallery_20260129')
             .select('point_code, english_name_hebrew')
             .order('point_code')
             .limit(50); // Load first 50 to keep it fast
@@ -3851,7 +3851,7 @@ function displayDrRoniPoints(points) {
 async function loadZangFuSyndromes() {
     try {
         const { data, error } = await supabaseClient
-            .from('zangfu_syndromes')
+            .from('bible_rag_zangfu_syndromes_20260129')
             .select('syndrome_code, syndrome_name_he')
             .order('syndrome_code');
         
@@ -3893,7 +3893,7 @@ function displayZangFuSyndromes(syndromes) {
 async function loadClinicalSymptoms() {
     try {
         const { data, error } = await supabaseClient
-            .from('diagnostic_questions')
+            .from('diagnostic_rag_yinyang_symptoms_20260129')
             .select('symptom_code, question_he, category')
             .order('category')
             .order('question_he');
